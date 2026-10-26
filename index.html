@@ -1,0 +1,1946 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CAMPUS-ER | Samar State University Emergency Reporting System</title>
+<meta name="description" content="CAMPUS-ER — Embedded Campus-Wide Emergency Reporting and Alert System for Samar State University">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1a3a6e">
+<link rel="apple-touch-icon" href="images/SSULOGO.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ─── TOKENS ─────────────────────────────────────────────────── */
+:root {
+  --ssu-navy:    #1a3a6e;
+  --ssu-gold:    #c9973a;
+  --ssu-green:   #2d6a2d;
+  --ink:         #111827;
+  --ink-2:       #374151;
+  --ink-3:       #6b7280;
+  --ground:      #f8f9fb;
+  --surface:     #ffffff;
+  --border:      #e5e7eb;
+  --border-2:    #d1d5db;
+  --positive:    #16a34a;
+  --negative:    #dc2626;
+  --warn:        #d97706;
+
+  /* role themes */
+  --role-hue:    #1a3a6e;
+  --role-hue-2:  #e8edf5;
+  --role-hue-3:  #c7d4ea;
+
+  --sidebar-w:   236px;
+  --topbar-h:    56px;
+  --radius:      8px;
+  --gap:         20px;
+}
+
+/* ─── RESET ──────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 16px; -webkit-font-smoothing: antialiased; }
+body { font-family: 'Inter', system-ui, sans-serif; background: var(--ground); color: var(--ink); line-height: 1.5; min-height: 100vh; }
+img { max-width: 100%; display: block; }
+button { font-family: inherit; cursor: pointer; border: none; outline: none; }
+button:focus-visible { outline: 2px solid var(--role-hue); outline-offset: 2px; }
+input, select { font-family: inherit; }
+
+/* ─── SCREEN MANAGEMENT ──────────────────────────────────────── */
+.screen { display: none; width: 100%; min-height: 100vh; }
+.screen.active { display: flex; }
+
+/* ─── LOGIN PAGE ─────────────────────────────────────────────── */
+#screen-login {
+  flex-direction: row;
+  min-height: 100vh;
+}
+.login-left {
+  flex: 1;
+  background: var(--ssu-navy);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 48px;
+  position: relative;
+  overflow: hidden;
+}
+.login-left::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: url('images/SSU.png') center/cover no-repeat;
+  opacity: 0.18;
+}
+.login-brand {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  color: #fff;
+}
+.login-brand img.seal {
+  width: 96px;
+  height: 96px;
+  object-fit: contain;
+  margin: 0 auto 20px;
+  border-radius: 50%;
+  background: #fff;
+  padding: 6px;
+}
+.login-brand .univ-name {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.9;
+  margin-bottom: 20px;
+}
+.login-brand .app-name {
+  font-size: 48px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  margin-bottom: 10px;
+}
+.login-brand .app-subtitle {
+  font-size: 13px;
+  font-weight: 400;
+  opacity: 0.75;
+  max-width: 280px;
+  line-height: 1.6;
+}
+.login-brand .badge-row {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin-top: 32px;
+  flex-wrap: wrap;
+}
+.login-brand .badge {
+  background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.2);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 4px 10px;
+  border-radius: 4px;
+}
+.login-right {
+  width: 440px;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 60px 48px;
+  border-left: 1px solid var(--border);
+}
+.login-right h1 {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 6px;
+}
+.login-right .login-sub {
+  font-size: 14px;
+  color: var(--ink-3);
+  margin-bottom: 36px;
+}
+.form-group { margin-bottom: 18px; }
+.form-group label {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-2);
+  margin-bottom: 6px;
+}
+.form-group input, .form-group select {
+  width: 100%;
+  height: 40px;
+  border: 1px solid var(--border-2);
+  border-radius: 6px;
+  padding: 0 12px;
+  font-size: 14px;
+  color: var(--ink);
+  background: #fff;
+  transition: border-color 0.15s;
+}
+.form-group input:focus, .form-group select:focus {
+  border-color: var(--ssu-navy);
+  outline: none;
+}
+.btn-login {
+  width: 100%;
+  height: 44px;
+  background: var(--ssu-navy);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 6px;
+  transition: background 0.15s;
+  margin-top: 8px;
+}
+.btn-login:hover { background: #142d55; }
+.login-note {
+  font-size: 12px;
+  color: var(--ink-3);
+  text-align: center;
+  margin-top: 20px;
+}
+.login-demo-hint {
+  margin-top: 28px;
+  background: var(--ground);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 12px 14px;
+  font-size: 12px;
+  color: var(--ink-3);
+}
+.login-demo-hint strong { color: var(--ink-2); }
+
+/* ─── APP SHELL ──────────────────────────────────────────────── */
+#screen-app {
+  flex-direction: column;
+}
+.app-topbar {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: var(--topbar-h);
+  background: #fff;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 20px 0 0;
+  z-index: 200;
+  gap: 0;
+}
+.topbar-brand {
+  width: var(--sidebar-w);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 20px;
+  border-right: 1px solid var(--border);
+  height: 100%;
+  flex-shrink: 0;
+}
+.topbar-brand img { width: 32px; height: 32px; object-fit: contain; border-radius: 50%; background: var(--ssu-navy); padding: 3px; }
+.topbar-brand-text { }
+.topbar-brand-text .tb-univ { font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-3); line-height: 1; }
+.topbar-brand-text .tb-app  { font-size: 13px; font-weight: 700; color: var(--role-hue); line-height: 1.2; }
+.topbar-center { flex: 1; display: flex; align-items: center; padding-left: 24px; }
+.topbar-page-name { font-size: 14px; font-weight: 600; color: var(--ink); }
+.topbar-right { display: flex; align-items: center; gap: 12px; }
+.topbar-alert-btn {
+  position: relative;
+  width: 36px; height: 36px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px;
+  color: var(--ink-2);
+  transition: background 0.12s;
+}
+.topbar-alert-btn:hover { background: var(--ground); }
+.topbar-alert-btn .badge-dot {
+  position: absolute;
+  top: 6px; right: 6px;
+  width: 8px; height: 8px;
+  background: var(--negative);
+  border-radius: 50%;
+  border: 2px solid #fff;
+}
+.topbar-user {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 10px 4px 4px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+  background: #fff;
+  transition: background 0.12s;
+}
+.topbar-user:hover { background: var(--ground); }
+.user-avatar {
+  width: 28px; height: 28px;
+  border-radius: 4px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700; color: #fff;
+  background: var(--role-hue);
+  flex-shrink: 0;
+}
+.user-info { }
+.user-info .ui-name { font-size: 12px; font-weight: 600; color: var(--ink); line-height: 1; }
+.user-info .ui-role { font-size: 11px; color: var(--ink-3); line-height: 1.3; }
+.btn-logout {
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: #fff;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink-2);
+  transition: background 0.12s;
+}
+.btn-logout:hover { background: var(--ground); }
+
+/* ─── SIDEBAR ────────────────────────────────────────────────── */
+.app-body { display: flex; min-height: 100vh; padding-top: var(--topbar-h); }
+.sidebar {
+  width: var(--sidebar-w);
+  background: #fff;
+  border-right: 1px solid var(--border);
+  position: fixed;
+  top: var(--topbar-h);
+  left: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  z-index: 100;
+}
+.sidebar-section { padding: 16px 12px 8px; }
+.sidebar-section-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink-3);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0 8px;
+  margin-bottom: 4px;
+}
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-2);
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+  width: 100%;
+  background: none;
+  border: none;
+  text-align: left;
+  position: relative;
+}
+.nav-item:hover { background: var(--ground); color: var(--ink); }
+.nav-item.active { background: var(--role-hue-2); color: var(--role-hue); font-weight: 600; }
+.nav-item .nav-icon { font-size: 15px; flex-shrink: 0; width: 18px; text-align: center; }
+.nav-item .nav-badge {
+  margin-left: auto;
+  background: var(--negative);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 10px;
+  min-width: 18px;
+  text-align: center;
+}
+.sidebar-bottom { margin-top: auto; padding: 12px; border-top: 1px solid var(--border); }
+.sidebar-role-card {
+  background: var(--role-hue-2);
+  border: 1px solid var(--role-hue-3);
+  border-radius: 6px;
+  padding: 10px 12px;
+}
+.sidebar-role-card .src-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--role-hue); opacity: 0.7; }
+.sidebar-role-card .src-name { font-size: 13px; font-weight: 700; color: var(--role-hue); }
+
+/* ─── MAIN CANVAS ────────────────────────────────────────────── */
+.main-canvas {
+  margin-left: var(--sidebar-w);
+  flex: 1;
+  padding: 28px var(--gap);
+  min-height: 100%;
+}
+.page { display: none; }
+.page.active { display: block; }
+
+/* ─── PAGE HEADER ────────────────────────────────────────────── */
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  gap: 16px;
+}
+.page-header-left .page-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--ink);
+  line-height: 1.2;
+}
+.page-header-left .page-sub {
+  font-size: 13px;
+  color: var(--ink-3);
+  margin-top: 2px;
+}
+.page-header-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.btn { display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 14px; border-radius: 6px; font-size: 13px; font-weight: 500; cursor: pointer; transition: background 0.12s, opacity 0.12s; border: none; }
+.btn-primary { background: var(--role-hue); color: #fff; }
+.btn-primary:hover { opacity: 0.88; }
+.btn-secondary { background: #fff; color: var(--ink-2); border: 1px solid var(--border-2); }
+.btn-secondary:hover { background: var(--ground); }
+.btn-danger { background: var(--negative); color: #fff; }
+.btn-danger:hover { opacity: 0.88; }
+.btn-success { background: var(--positive); color: #fff; }
+.btn-success:hover { opacity: 0.88; }
+
+/* ─── STAT CARDS ─────────────────────────────────────────────── */
+.stat-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--gap);
+  margin-bottom: 24px;
+}
+.stat-row.cols-8 { grid-template-columns: repeat(4, 1fr); }
+.stat-card {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+}
+.stat-label { font-size: 12px; font-weight: 600; color: var(--ink-3); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.03em; }
+.stat-value { font-size: 28px; font-weight: 700; color: var(--ink); line-height: 1; font-variant-numeric: tabular-nums; }
+.stat-value.accent { color: var(--role-hue); }
+.stat-value.negative { color: var(--negative); }
+.stat-value.positive { color: var(--positive); }
+.stat-delta { font-size: 12px; color: var(--ink-3); margin-top: 4px; }
+.stat-delta.up { color: var(--positive); }
+.stat-delta.down { color: var(--negative); }
+
+/* ─── GRID LAYOUTS ───────────────────────────────────────────── */
+.two-col { display: grid; grid-template-columns: 1fr 360px; gap: var(--gap); align-items: start; }
+.three-col { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--gap); }
+.full-row { display: grid; grid-template-columns: 1fr; gap: var(--gap); }
+
+/* ─── PANELS ─────────────────────────────────────────────────── */
+.panel {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+}
+.panel-title { font-size: 14px; font-weight: 600; color: var(--ink); }
+.panel-action { font-size: 12px; font-weight: 500; color: var(--role-hue); cursor: pointer; background: none; border: none; }
+.panel-action:hover { text-decoration: underline; }
+.panel-body { padding: 16px 18px; }
+
+/* ─── CAMPUS MAP ─────────────────────────────────────────────── */
+.campus-map-wrap {
+  position: relative;
+  background: #e8f0e4;
+  border-radius: 6px;
+  overflow: hidden;
+  height: 480px;
+}
+.campus-map-svg { width: 100%; height: 100%; }
+.map-building {
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.map-building:hover { opacity: 0.85; }
+.map-building.emergency rect { animation: pulse-red 1.2s ease-in-out infinite; }
+.map-building.emergency .bld-label { fill: #fff; }
+@keyframes pulse-red {
+  0%, 100% { fill: #dc2626; opacity: 1; }
+  50% { fill: #ef4444; opacity: 0.7; }
+}
+.map-legend {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  background: rgba(255,255,255,0.95);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.map-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--ink-2);
+}
+.legend-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.map-tooltip {
+  position: absolute;
+  background: var(--ink);
+  color: #fff;
+  font-size: 11px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s;
+  z-index: 10;
+  white-space: nowrap;
+}
+
+/* ─── ALERT PANEL ────────────────────────────────────────────── */
+.alert-panel { }
+.alert-item {
+  border-bottom: 1px solid var(--border);
+  padding: 14px 18px;
+  transition: background 0.12s;
+}
+.alert-item:last-child { border-bottom: none; }
+.alert-item:hover { background: var(--ground); }
+.alert-item.active-alert { background: #fff5f5; border-left: 3px solid var(--negative); }
+.alert-item .al-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+.alert-item .al-type { font-size: 12px; font-weight: 700; color: var(--ink); }
+.alert-item .al-time { font-size: 11px; color: var(--ink-3); }
+.alert-item .al-location { font-size: 12px; color: var(--ink-2); margin-bottom: 6px; }
+.alert-item .al-actions { display: flex; gap: 6px; }
+.al-btn {
+  font-size: 11px;
+  font-weight: 500;
+  padding: 3px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  border: none;
+  transition: opacity 0.12s;
+}
+.al-btn:hover { opacity: 0.85; }
+.al-btn.ack { background: var(--ssu-navy); color: #fff; }
+.al-btn.dispatch { background: var(--warn); color: #fff; }
+.al-btn.resolve { background: var(--positive); color: #fff; }
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 10px;
+}
+.status-pill.active { background: #fee2e2; color: var(--negative); }
+.status-pill.pending { background: #fef3c7; color: #92400e; }
+.status-pill.resolved { background: #dcfce7; color: #166534; }
+.status-pill.acknowledged { background: #dbeafe; color: #1e40af; }
+
+/* ─── PANIC ALERT MODAL ──────────────────────────────────────── */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+  z-index: 500;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.modal-overlay.open { display: flex; }
+.panic-modal {
+  background: #fff;
+  border-radius: 10px;
+  width: 100%;
+  max-width: 520px;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+  animation: slide-up 0.25s ease;
+}
+@keyframes slide-up { from { transform: translateY(24px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+.panic-header {
+  background: var(--negative);
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.panic-icon { font-size: 28px; animation: pulse-icon 0.8s ease-in-out infinite; }
+@keyframes pulse-icon { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.15); } }
+.panic-header-text .ph-title { font-size: 16px; font-weight: 700; color: #fff; }
+.panic-header-text .ph-sub { font-size: 12px; color: rgba(255,255,255,0.8); }
+.panic-body { padding: 20px; }
+.panic-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+.panic-field label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-3); display: block; margin-bottom: 2px; }
+.panic-field .pf-val { font-size: 14px; font-weight: 600; color: var(--ink); }
+.panic-signal {
+  background: var(--ground);
+  border-radius: 6px;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+.signal-bars { display: flex; gap: 3px; align-items: flex-end; }
+.signal-bar {
+  width: 6px;
+  background: var(--positive);
+  border-radius: 2px;
+}
+.panic-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.panic-actions .btn { justify-content: center; height: 40px; font-size: 13px; }
+.audio-bar {
+  background: var(--ground);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.audio-bar .audio-icon { font-size: 18px; }
+.audio-bar .audio-text { font-size: 12px; color: var(--ink-2); font-style: italic; flex: 1; }
+.audio-play-btn {
+  width: 30px; height: 30px;
+  border-radius: 50%;
+  background: var(--role-hue);
+  color: #fff;
+  border: none;
+  font-size: 12px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+
+/* ─── INCIDENT TABLE ─────────────────────────────────────────── */
+.incident-table { width: 100%; border-collapse: collapse; }
+.incident-table th {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ink-3);
+  padding: 10px 16px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+  background: var(--ground);
+}
+.incident-table td {
+  font-size: 13px;
+  color: var(--ink-2);
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+.incident-table tr:last-child td { border-bottom: none; }
+.incident-table tr:hover td { background: var(--ground); }
+.incident-table td .inc-type { font-weight: 600; color: var(--ink); }
+.type-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 4px;
+}
+.type-medical  { background: #dcfce7; color: #166534; }
+.type-security { background: #dbeafe; color: #1e40af; }
+.type-fire     { background: #fef3c7; color: #92400e; }
+.type-general  { background: #f3e8ff; color: #6b21a8; }
+.priority-badge {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+.priority-high     { background: #fee2e2; color: var(--negative); }
+.priority-medium   { background: #fef3c7; color: #92400e; }
+.priority-low      { background: #f3f4f6; color: var(--ink-3); }
+.btn-row-action {
+  font-size: 11px;
+  font-weight: 500;
+  padding: 3px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  border: 1px solid var(--border-2);
+  background: #fff;
+  color: var(--ink-2);
+  transition: background 0.12s;
+}
+.btn-row-action:hover { background: var(--ground); }
+
+/* ─── INCIDENT DETAIL MODAL ──────────────────────────────────── */
+.detail-modal {
+  background: #fff;
+  border-radius: 10px;
+  width: 100%;
+  max-width: 640px;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+  animation: slide-up 0.25s ease;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+.detail-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.detail-header h2 { font-size: 17px; font-weight: 700; color: var(--ink); }
+.detail-header .dh-sub { font-size: 13px; color: var(--ink-3); margin-top: 2px; }
+.detail-close { background: none; border: none; font-size: 18px; color: var(--ink-3); cursor: pointer; padding: 2px; }
+.detail-body { padding: 20px; }
+.detail-section-title { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-3); margin-bottom: 10px; margin-top: 16px; }
+.detail-section-title:first-child { margin-top: 0; }
+.detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.detail-field label { font-size: 11px; font-weight: 600; color: var(--ink-3); display: block; margin-bottom: 3px; }
+.detail-field .df-val { font-size: 14px; color: var(--ink); }
+.detail-timeline { }
+.timeline-item {
+  display: flex;
+  gap: 12px;
+  position: relative;
+  padding-bottom: 16px;
+}
+.timeline-item:last-child { padding-bottom: 0; }
+.timeline-item::before {
+  content: '';
+  position: absolute;
+  left: 5px;
+  top: 16px;
+  bottom: 0;
+  width: 1px;
+  background: var(--border);
+}
+.timeline-item:last-child::before { display: none; }
+.tl-dot { width: 12px; height: 12px; border-radius: 50%; background: var(--role-hue); margin-top: 3px; flex-shrink: 0; }
+.tl-content .tl-time { font-size: 11px; color: var(--ink-3); }
+.tl-content .tl-text { font-size: 13px; color: var(--ink-2); }
+.detail-footer { padding: 16px 20px; border-top: 1px solid var(--border); display: flex; gap: 8px; justify-content: flex-end; }
+
+/* ─── ANALYTICS / CHARTS ─────────────────────────────────────── */
+.chart-bar-list { }
+.chart-bar-item { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.chart-bar-item:last-child { margin-bottom: 0; }
+.chart-bar-label { font-size: 12px; color: var(--ink-2); width: 130px; flex-shrink: 0; }
+.chart-bar-track { flex: 1; height: 8px; background: var(--ground); border-radius: 4px; overflow: hidden; }
+.chart-bar-fill { height: 100%; border-radius: 4px; background: var(--role-hue); transition: width 0.6s ease; }
+.chart-bar-val { font-size: 12px; color: var(--ink-3); font-variant-numeric: tabular-nums; width: 28px; text-align: right; flex-shrink: 0; }
+
+/* ─── MINI SVG CHART ─────────────────────────────────────────── */
+.mini-line-chart { width: 100%; }
+.chart-axis-label { font-size: 10px; fill: #9ca3af; font-family: 'Inter', sans-serif; }
+
+/* ─── SECURITY TIMELINE ──────────────────────────────────────── */
+.timeline-list { }
+.tl-row {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+.tl-row:last-child { border-bottom: none; }
+.tl-time-col { font-size: 11px; color: var(--ink-3); width: 72px; flex-shrink: 0; font-variant-numeric: tabular-nums; padding-top: 2px; }
+.tl-dot-col { flex-shrink: 0; display: flex; flex-direction: column; align-items: center; }
+.tl-dot-big { width: 10px; height: 10px; border-radius: 50%; background: var(--role-hue); }
+.tl-text-col { flex: 1; }
+.tl-text-col .tl-event { font-size: 13px; font-weight: 600; color: var(--ink); }
+.tl-text-col .tl-detail { font-size: 12px; color: var(--ink-3); }
+
+/* ─── PATROL STATUS ──────────────────────────────────────────── */
+.patrol-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.patrol-card {
+  background: var(--ground);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px 12px;
+}
+.patrol-card .pc-name { font-size: 12px; font-weight: 600; color: var(--ink); }
+.patrol-card .pc-zone { font-size: 11px; color: var(--ink-3); }
+.patrol-card .pc-status { font-size: 11px; font-weight: 600; margin-top: 4px; }
+.pc-status.on-duty { color: var(--positive); }
+.pc-status.responding { color: var(--warn); }
+
+/* ─── HAZARD TABLE ───────────────────────────────────────────── */
+.hazard-row { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+.hazard-row:last-child { border-bottom: none; }
+.hazard-icon { font-size: 18px; flex-shrink: 0; }
+.hazard-info { flex: 1; }
+.hazard-info .hi-name { font-size: 13px; font-weight: 600; color: var(--ink); }
+.hazard-info .hi-loc { font-size: 11px; color: var(--ink-3); }
+.hazard-level { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 3px; }
+.hazard-level.low { background: #dcfce7; color: #166534; }
+.hazard-level.moderate { background: #fef3c7; color: #92400e; }
+.hazard-level.high { background: #fee2e2; color: var(--negative); }
+.hazard-level.critical { background: #7f1d1d; color: #fff; }
+
+/* ─── ADMIN ANALYTICS ────────────────────────────────────────── */
+.office-perf-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+.office-perf-row:last-child { border-bottom: none; }
+.opr-office { font-size: 13px; font-weight: 600; color: var(--ink); width: 130px; flex-shrink: 0; }
+.opr-bar-wrap { flex: 1; }
+.opr-bar-track { height: 6px; background: var(--ground); border-radius: 3px; overflow: hidden; margin-bottom: 3px; }
+.opr-bar-fill { height: 100%; border-radius: 3px; }
+.opr-stats { display: flex; gap: 12px; }
+.opr-stat { font-size: 11px; color: var(--ink-3); }
+.opr-stat span { font-weight: 600; color: var(--ink); }
+
+/* ─── EMPTY STATE ────────────────────────────────────────────── */
+.empty-state { text-align: center; padding: 40px 20px; color: var(--ink-3); }
+.empty-state .es-icon { font-size: 36px; margin-bottom: 8px; }
+.empty-state .es-text { font-size: 13px; }
+
+/* ─── MOBILE ─────────────────────────────────────────────────── */
+.hamburger { display: none; background: none; border: none; font-size: 20px; padding: 4px; cursor: pointer; color: var(--ink-2); }
+
+@media (max-width: 900px) {
+  .login-left { display: none; }
+  .login-right { width: 100%; }
+  .sidebar { transform: translateX(-100%); transition: transform 0.25s; }
+  .sidebar.open { transform: translateX(0); }
+  .main-canvas { margin-left: 0; }
+  .hamburger { display: flex; }
+  .topbar-brand { width: auto; }
+  .stat-row { grid-template-columns: repeat(2, 1fr); }
+  .stat-row.cols-8 { grid-template-columns: repeat(2, 1fr); }
+  .two-col { grid-template-columns: 1fr; }
+  .three-col { grid-template-columns: 1fr; }
+  .panic-grid { grid-template-columns: 1fr; }
+  .detail-grid { grid-template-columns: 1fr; }
+}
+
+/* ─── ANIMATIONS ─────────────────────────────────────────────── */
+.page.active .stat-card { animation: fade-up 0.3s ease both; }
+.page.active .stat-card:nth-child(2) { animation-delay: 0.05s; }
+.page.active .stat-card:nth-child(3) { animation-delay: 0.1s; }
+.page.active .stat-card:nth-child(4) { animation-delay: 0.15s; }
+.page.active .stat-card:nth-child(5) { animation-delay: 0.2s; }
+.page.active .stat-card:nth-child(6) { animation-delay: 0.25s; }
+.page.active .stat-card:nth-child(7) { animation-delay: 0.3s; }
+.page.active .stat-card:nth-child(8) { animation-delay: 0.35s; }
+@keyframes fade-up { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+.panel { animation: fade-up 0.35s ease both; }
+
+/* role theme overrides */
+body.role-clinic { --role-hue: #166534; --role-hue-2: #f0fdf4; --role-hue-3: #bbf7d0; }
+body.role-security { --role-hue: #1e3a8a; --role-hue-2: #eff6ff; --role-hue-3: #bfdbfe; }
+body.role-drrmo { --role-hue: #b45309; --role-hue-2: #fffbeb; --role-hue-3: #fde68a; }
+body.role-admin { --role-hue: #6b21a8; --role-hue-2: #faf5ff; --role-hue-3: #e9d5ff; }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!--  LOGIN SCREEN                                              -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div id="screen-login" class="screen active">
+  <div class="login-left">
+    <div class="login-brand">
+      <img class="seal" src="images/SSULOGO.png" alt="Samar State University Seal">
+      <div class="univ-name">Samar State University</div>
+      <div class="app-name">CAMPUS-ER</div>
+      <div class="app-subtitle">Embedded Campus-Wide Emergency Reporting and Alert System</div>
+      <div class="badge-row">
+        <div class="badge">🏥 Medical</div>
+        <div class="badge">🔒 Security</div>
+        <div class="badge">🔥 DRRMO</div>
+        <div class="badge">📋 Admin</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="login-right">
+    <h1>Sign In</h1>
+    <p class="login-sub">Access your CAMPUS-ER dashboard</p>
+
+    <form id="login-form" onsubmit="doLogin(event)">
+      <div class="form-group">
+        <label for="email">Email Address</label>
+        <input type="email" id="email" placeholder="Enter your official email" value="admin@ssu.edu.ph" required>
+      </div>
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input type="password" id="password" placeholder="Enter your password" value="••••••••" required>
+      </div>
+      <div class="form-group">
+        <label for="role-select">Role</label>
+        <select id="role-select">
+          <option value="admin">Administrator</option>
+          <option value="clinic">School Clinic</option>
+          <option value="security">Campus Security</option>
+          <option value="drrmo">DRRMO</option>
+        </select>
+      </div>
+      <button type="submit" id="login-btn" class="btn-login">Sign In to CAMPUS-ER</button>
+    </form>
+
+    <div class="login-demo-hint">
+      <strong>Demo Credentials:</strong> Any email &amp; password. Select a role above to preview each dashboard.
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!--  APP SCREEN                                                -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div id="screen-app" class="screen">
+  <!-- Top Bar -->
+  <header class="app-topbar">
+    <div class="topbar-brand">
+      <button class="hamburger" id="hamburger-btn" aria-label="Toggle sidebar">☰</button>
+      <img src="images/SSULOGO.png" alt="SSU Seal">
+      <div class="topbar-brand-text">
+        <div class="tb-univ">Samar State University</div>
+        <div class="tb-app" id="topbar-app-name">CAMPUS-ER</div>
+      </div>
+    </div>
+    <div class="topbar-center">
+      <span class="topbar-page-name" id="topbar-page-name">Overview</span>
+    </div>
+    <div class="topbar-right">
+      <button class="topbar-alert-btn" id="panic-trigger-btn" title="Active Alerts" onclick="openPanicModal()">
+        🔔
+        <span class="badge-dot"></span>
+      </button>
+      <div class="topbar-user">
+        <div class="user-avatar" id="user-avatar">AD</div>
+        <div class="user-info">
+          <div class="ui-name" id="user-name">SSU Admin</div>
+          <div class="ui-role" id="user-role">Administrator</div>
+        </div>
+      </div>
+      <button class="btn-logout" onclick="doLogout()">Sign Out</button>
+    </div>
+  </header>
+
+  <div class="app-body">
+    <!-- Sidebar -->
+    <nav class="sidebar" id="sidebar" aria-label="Main navigation">
+      <div class="sidebar-section" id="sidebar-nav"></div>
+      <div class="sidebar-bottom">
+        <div class="sidebar-role-card">
+          <div class="src-label">Logged in as</div>
+          <div class="src-name" id="sidebar-role-name">Administrator</div>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Main Canvas -->
+    <main class="main-canvas" id="main-canvas">
+      <!-- Pages injected by JS -->
+    </main>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!--  PANIC ALERT MODAL                                         -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="panic-modal">
+  <div class="panic-modal">
+    <div class="panic-header">
+      <div class="panic-icon">🚨</div>
+      <div class="panic-header-text">
+        <div class="ph-title">PANIC ALERT ACTIVATED</div>
+        <div class="ph-sub">Emergency signal received — immediate response required</div>
+      </div>
+    </div>
+    <div class="panic-body">
+      <div class="audio-bar">
+        <div class="audio-icon">🔊</div>
+        <div class="audio-text">"Medical Emergency activated in Room 101, Engineering Building"</div>
+        <button class="audio-play-btn" onclick="playAlert()" title="Play audio alert">▶</button>
+      </div>
+      <div class="panic-grid">
+        <div class="panic-field"><label>Emergency Type</label><div class="pf-val">🏥 Medical Emergency</div></div>
+        <div class="panic-field"><label>Status</label><div class="pf-val"><span class="status-pill active">● Active</span></div></div>
+        <div class="panic-field"><label>Building</label><div class="pf-val">Engineering Building</div></div>
+        <div class="panic-field"><label>Floor</label><div class="pf-val">Ground Floor</div></div>
+        <div class="panic-field"><label>Room</label><div class="pf-val">Room 101</div></div>
+        <div class="panic-field"><label>Assigned Office</label><div class="pf-val">School Clinic</div></div>
+        <div class="panic-field"><label>Date</label><div class="pf-val">Oct 26, 2026</div></div>
+        <div class="panic-field"><label>Time</label><div class="pf-val">12:14 PM</div></div>
+      </div>
+      <div class="panic-signal">
+        <div>
+          <div style="font-size:11px;font-weight:600;color:var(--ink-3);margin-bottom:3px;">Signal Strength</div>
+          <div style="font-size:13px;font-weight:600;color:var(--ink);">Strong (–62 dBm)</div>
+        </div>
+        <div class="signal-bars">
+          <div class="signal-bar" style="height:8px;"></div>
+          <div class="signal-bar" style="height:12px;"></div>
+          <div class="signal-bar" style="height:16px;"></div>
+          <div class="signal-bar" style="height:20px;"></div>
+        </div>
+        <div>
+          <div style="font-size:11px;font-weight:600;color:var(--ink-3);margin-bottom:3px;">Transmission</div>
+          <div style="font-size:13px;font-weight:600;color:var(--ink);">Wi-Fi / IoT Sensor</div>
+        </div>
+      </div>
+      <div class="panic-actions">
+        <button class="btn btn-primary" onclick="acknowledgeAlert()">✔ Acknowledge</button>
+        <button class="btn" style="background:var(--warn);color:#fff;" onclick="dispatchResponders()">🚑 Dispatch Responders</button>
+        <button class="btn btn-secondary" onclick="closePanicModal()">Dismiss</button>
+        <button class="btn btn-success" onclick="resolveAlert()">✓ Mark Resolved</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!--  INCIDENT DETAIL MODAL                                     -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="detail-modal">
+  <div class="detail-modal">
+    <div class="detail-header">
+      <div>
+        <h2 id="detail-title">Incident Details</h2>
+        <div class="dh-sub" id="detail-subtitle">Incident Report</div>
+      </div>
+      <button class="detail-close" onclick="closeDetailModal()" aria-label="Close">✕</button>
+    </div>
+    <div class="detail-body" id="detail-body"></div>
+    <div class="detail-footer">
+      <button class="btn btn-secondary" onclick="closeDetailModal()">Close</button>
+      <button class="btn btn-primary" onclick="acknowledgeAlert();closeDetailModal()">Acknowledge</button>
+      <button class="btn btn-success" onclick="resolveAlert();closeDetailModal()">Resolve</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ─── MOCK DATA ───────────────────────────────────────────────── */
+const INCIDENTS = [
+  { id:'INC-001', type:'Medical Emergency', category:'medical', building:'Engineering Building', floor:'Ground Floor', room:'Room 101', location:'College of Engineering', date:'Oct 26, 2026', time:'12:14 PM', status:'active', priority:'high', office:'School Clinic', reporter:'Prof. Santos', notes:'Student collapsed during class. Unresponsive.' },
+  { id:'INC-002', type:'Theft', category:'security', building:'University Library', floor:'2nd Floor', room:'Study Area B', location:'University Library', date:'Oct 26, 2026', time:'11:40 AM', status:'acknowledged', priority:'medium', office:'Campus Security', reporter:'Librarian Cruz', notes:'Missing laptop bag reported at study area.' },
+  { id:'INC-003', type:'Fire Incident', category:'fire', building:'Science Building', floor:'3rd Floor', room:'Laboratory 302', location:'Science Building', date:'Oct 26, 2026', time:'10:55 AM', status:'active', priority:'high', office:'DRRMO', reporter:'Lab Assistant Reyes', notes:'Small fire in chemistry laboratory. Evacuation in progress.' },
+  { id:'INC-004', type:'Fainting Incident', category:'medical', building:'College of Education', floor:'2nd Floor', room:'Room 205', location:'College of Education', date:'Oct 26, 2026', time:'10:20 AM', status:'resolved', priority:'medium', office:'School Clinic', reporter:'Faculty Mendoza', notes:'Student fainted in classroom. Revived on-site.' },
+  { id:'INC-005', type:'Suspicious Activity', category:'security', building:'ICT Building', floor:'Ground Floor', room:'Entrance Gate', location:'ICT Building', date:'Oct 26, 2026', time:'09:45 AM', status:'pending', priority:'medium', office:'Campus Security', reporter:'Guard Villanueva', notes:'Unidentified individual loitering near server room.' },
+  { id:'INC-006', type:'Flood Incident', category:'fire', building:'Administration Building', floor:'Basement', room:'Storage Room', location:'Admin Building', date:'Oct 25, 2026', time:'03:30 PM', status:'resolved', priority:'high', office:'DRRMO', reporter:'Janitor Lim', notes:'Flooding due to heavy rain. Drainage system cleared.' },
+  { id:'INC-007', type:'Cardiac Emergency', category:'medical', building:'University Clinic', floor:'Ground Floor', room:'Treatment Room 1', location:'University Clinic', date:'Oct 25, 2026', time:'02:10 PM', status:'resolved', priority:'high', office:'School Clinic', reporter:'Nurse Aquino', notes:'Faculty member experienced chest pains. Ambulance called.' },
+  { id:'INC-008', type:'Unauthorized Entry', category:'security', building:'DRRMO Office', floor:'Ground Floor', room:'Equipment Room', location:'DRRMO Office', date:'Oct 25, 2026', time:'01:00 PM', status:'resolved', priority:'medium', office:'Campus Security', reporter:'Officer De Leon', notes:'Unauthorized person found in restricted area.' },
+  { id:'INC-009', type:'Earthquake Alert', category:'fire', building:'All Buildings', floor:'All Floors', room:'Campus-Wide', location:'Samar State University', date:'Oct 25, 2026', time:'11:20 AM', status:'resolved', priority:'high', office:'DRRMO', reporter:'Seismic Sensor System', notes:'Magnitude 4.2 tremor detected. Minor cracks in older structures.' },
+  { id:'INC-010', type:'Campus Disturbance', category:'security', building:'College of Arts and Sciences', floor:'Ground Floor', room:'Lobby', location:'Arts & Sciences', date:'Oct 24, 2026', time:'04:50 PM', status:'resolved', priority:'low', office:'Campus Security', reporter:'Student Council Rep', notes:'Altercation between student groups. Dispersed peacefully.' },
+  { id:'INC-011', type:'Hazard Report', category:'fire', building:'College of Engineering', floor:'2nd Floor', room:'Workshop', location:'Engineering Workshop', date:'Oct 24, 2026', time:'02:30 PM', status:'pending', priority:'medium', office:'DRRMO', reporter:'Technician Bautista', notes:'Gas leak smell reported. Awaiting DRRMO inspection.' },
+  { id:'INC-012', type:'General Emergency', category:'general', building:'Security Office', floor:'Ground Floor', room:'Control Room', location:'Security Office', date:'Oct 24, 2026', time:'09:00 AM', status:'resolved', priority:'low', office:'Administrator', reporter:'System Alert', notes:'Power outage affecting CCTV systems.' },
+];
+
+const ROLES = {
+  admin:    { label:'Administrator',   avatar:'AD', theme:'admin',    menu:['overview','incidents','map','analytics','reports','settings'], bgColor:'#6b21a8' },
+  clinic:   { label:'School Clinic',   avatar:'SC', theme:'clinic',   menu:['overview','incidents','map','reports'], bgColor:'#166534' },
+  security: { label:'Campus Security', avatar:'CS', theme:'security', menu:['overview','incidents','timeline','patrol','map','reports'], bgColor:'#1e3a8a' },
+  drrmo:    { label:'DRRMO',           avatar:'DR', theme:'drrmo',    menu:['overview','incidents','hazards','map','reports'], bgColor:'#b45309' },
+};
+
+const MENU_CONFIG = {
+  overview:  { icon:'🏠', label:'Overview' },
+  incidents: { icon:'📋', label:'Incident Reports' },
+  map:       { icon:'🗺️', label:'Campus Map' },
+  analytics: { icon:'📊', label:'Analytics' },
+  reports:   { icon:'📄', label:'Reports' },
+  settings:  { icon:'⚙️', label:'Settings' },
+  timeline:  { icon:'🕐', label:'Security Timeline' },
+  patrol:    { icon:'👮', label:'Patrol Status' },
+  hazards:   { icon:'⚠️', label:'Hazard Monitor' },
+};
+
+let currentRole = 'admin';
+let currentPage = 'overview';
+
+/* ─── AUTH ───────────────────────────────────────────────────── */
+function doLogin(e) {
+  e.preventDefault();
+  currentRole = document.getElementById('role-select').value;
+  showApp();
+}
+function doLogout() {
+  document.getElementById('screen-app').classList.remove('active');
+  document.getElementById('screen-login').classList.add('active');
+  document.body.className = '';
+}
+function showApp() {
+  document.getElementById('screen-login').classList.remove('active');
+  document.getElementById('screen-app').classList.add('active');
+  const r = ROLES[currentRole];
+  document.body.className = 'role-' + r.theme;
+  document.getElementById('user-avatar').textContent = r.avatar;
+  document.getElementById('user-avatar').style.background = r.bgColor;
+  document.getElementById('user-name').textContent = 'SSU ' + r.label;
+  document.getElementById('user-role').textContent = r.label;
+  document.getElementById('sidebar-role-name').textContent = r.label;
+  buildSidebar();
+  navigate('overview');
+}
+
+/* ─── SIDEBAR ────────────────────────────────────────────────── */
+function buildSidebar() {
+  const nav = document.getElementById('sidebar-nav');
+  const items = ROLES[currentRole].menu;
+  const activeCount = INCIDENTS.filter(i => i.status === 'active').length;
+  nav.innerHTML = items.map(key => {
+    const m = MENU_CONFIG[key];
+    const badge = key === 'incidents' && activeCount > 0 ? `<span class="nav-badge">${activeCount}</span>` : '';
+    return `<button class="nav-item" id="nav-${key}" onclick="navigate('${key}')" aria-label="${m.label}">
+      <span class="nav-icon">${m.icon}</span>${m.label}${badge}
+    </button>`;
+  }).join('');
+}
+function navigate(page) {
+  currentPage = page;
+  document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+  const btn = document.getElementById('nav-' + page);
+  if (btn) btn.classList.add('active');
+  const label = MENU_CONFIG[page]?.label || page;
+  document.getElementById('topbar-page-name').textContent = label;
+  document.getElementById('topbar-app-name').textContent = 'CAMPUS-ER | ' + ROLES[currentRole].label;
+  renderPage(page);
+  // close mobile sidebar
+  document.getElementById('sidebar').classList.remove('open');
+}
+
+/* ─── PAGE ROUTER ─────────────────────────────────────────────── */
+function renderPage(page) {
+  const canvas = document.getElementById('main-canvas');
+  canvas.innerHTML = '';
+  const div = document.createElement('div');
+  div.className = 'page active';
+  div.id = 'page-' + page;
+  switch(page) {
+    case 'overview':  div.innerHTML = buildOverview(); break;
+    case 'incidents': div.innerHTML = buildIncidents(); break;
+    case 'map':       div.innerHTML = buildMapPage(); break;
+    case 'analytics': div.innerHTML = buildAnalytics(); break;
+    case 'reports':   div.innerHTML = buildReports(); break;
+    case 'settings':  div.innerHTML = buildSettings(); break;
+    case 'timeline':  div.innerHTML = buildTimeline(); break;
+    case 'patrol':    div.innerHTML = buildPatrol(); break;
+    case 'hazards':   div.innerHTML = buildHazards(); break;
+    default: div.innerHTML = `<div class="empty-state"><div class="es-icon">🚧</div><div class="es-text">Page not found</div></div>`;
+  }
+  canvas.appendChild(div);
+  initMapIfNeeded();
+  animateCharts();
+}
+
+/* ─── FILTER INCIDENTS BY ROLE ────────────────────────────────── */
+function myIncidents() {
+  if (currentRole === 'admin') return INCIDENTS;
+  const map = { clinic:'medical', security:'security', drrmo:'fire' };
+  return INCIDENTS.filter(i => i.category === map[currentRole]);
+}
+
+/* ─── OVERVIEW PAGE ───────────────────────────────────────────── */
+function buildOverview() {
+  const all = myIncidents();
+  const active = all.filter(i => i.status === 'active').length;
+  const pending = all.filter(i => i.status === 'pending').length;
+  const resolved = all.filter(i => i.status === 'resolved').length;
+  const medical = INCIDENTS.filter(i => i.category === 'medical').length;
+  const security = INCIDENTS.filter(i => i.category === 'security').length;
+  const fire = INCIDENTS.filter(i => i.category === 'fire').length;
+  const general = INCIDENTS.filter(i => i.category === 'general').length;
+
+  const roleTitle = {
+    admin:'Executive Monitoring Center', clinic:'Medical Monitoring Center',
+    security:'Security Command Center', drrmo:'Disaster Operations Center'
+  }[currentRole];
+
+  const statsHTML = currentRole === 'admin' ? `
+    <div class="stat-row cols-8">
+      <div class="stat-card"><div class="stat-label">Total Incidents</div><div class="stat-value">${INCIDENTS.length}</div><div class="stat-delta">All time</div></div>
+      <div class="stat-card"><div class="stat-label">Active Now</div><div class="stat-value negative">${active}</div><div class="stat-delta down">Needs attention</div></div>
+      <div class="stat-card"><div class="stat-label">Medical Cases</div><div class="stat-value positive">${medical}</div><div class="stat-delta">→ School Clinic</div></div>
+      <div class="stat-card"><div class="stat-label">Security Threats</div><div class="stat-value accent">${security}</div><div class="stat-delta">→ Campus Security</div></div>
+      <div class="stat-card"><div class="stat-label">Fire / Disaster</div><div class="stat-value" style="color:var(--warn)">${fire}</div><div class="stat-delta">→ DRRMO</div></div>
+      <div class="stat-card"><div class="stat-label">General Emergency</div><div class="stat-value">${general}</div><div class="stat-delta">→ Administrator</div></div>
+      <div class="stat-card"><div class="stat-label">Pending Reports</div><div class="stat-value" style="color:var(--warn)">${pending}</div><div class="stat-delta">Awaiting action</div></div>
+      <div class="stat-card"><div class="stat-label">Resolved</div><div class="stat-value positive">${resolved}</div><div class="stat-delta up">Closed cases</div></div>
+    </div>` : `
+    <div class="stat-row">
+      <div class="stat-card"><div class="stat-label">My Total Cases</div><div class="stat-value">${all.length}</div><div class="stat-delta">Assigned reports</div></div>
+      <div class="stat-card"><div class="stat-label">Active</div><div class="stat-value negative">${active}</div><div class="stat-delta down">Needs attention</div></div>
+      <div class="stat-card"><div class="stat-label">Pending</div><div class="stat-value" style="color:var(--warn)">${pending}</div><div class="stat-delta">Awaiting action</div></div>
+      <div class="stat-card"><div class="stat-label">Resolved</div><div class="stat-value positive">${resolved}</div><div class="stat-delta up">Closed</div></div>
+    </div>`;
+
+  const recentRows = all.slice(0,5).map(inc => `
+    <tr>
+      <td><div class="inc-type">${inc.id}</div></td>
+      <td><span class="type-badge type-${inc.category}">${inc.type}</span></td>
+      <td>${inc.building}</td>
+      <td>${inc.time}</td>
+      <td><span class="status-pill ${inc.status}">${statusLabel(inc.status)}</span></td>
+      <td><button class="btn-row-action" onclick="openDetail('${inc.id}')">View</button></td>
+    </tr>`).join('');
+
+  return `
+    <div class="page-header">
+      <div class="page-header-left">
+        <h1 class="page-title">${roleTitle}</h1>
+        <div class="page-sub">Samar State University — CAMPUS-ER Emergency Dashboard · ${new Date().toLocaleDateString('en-PH',{weekday:'long',year:'numeric',month:'long',day:'numeric'})}</div>
+      </div>
+      <div class="page-header-right">
+        <button class="btn btn-secondary" onclick="openPanicModal()">🔔 Active Alert</button>
+        <button class="btn btn-primary" onclick="navigate('incidents')">View All Reports</button>
+      </div>
+    </div>
+    ${statsHTML}
+    <div class="two-col">
+      <div>
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">Campus Map — Live Status</div>
+            <button class="panel-action" onclick="navigate('map')">Full Map →</button>
+          </div>
+          <div class="panel-body" style="padding:0;">
+            ${buildCampusMap(true)}
+          </div>
+        </div>
+        <div style="height:20px;"></div>
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">Recent Incidents</div>
+            <button class="panel-action" onclick="navigate('incidents')">View All →</button>
+          </div>
+          <table class="incident-table">
+            <thead><tr><th>ID</th><th>Type</th><th>Location</th><th>Time</th><th>Status</th><th></th></tr></thead>
+            <tbody>${recentRows}</tbody>
+          </table>
+        </div>
+      </div>
+      <div>
+        ${buildAlertPanel(all.slice(0,6))}
+      </div>
+    </div>`;
+}
+
+function statusLabel(s) {
+  return {active:'● Active',pending:'⏳ Pending',resolved:'✓ Resolved',acknowledged:'✔ Acknowledged'}[s] || s;
+}
+
+/* ─── ALERT PANEL ─────────────────────────────────────────────── */
+function buildAlertPanel(incidents) {
+  const items = incidents.map(inc => `
+    <div class="alert-item ${inc.status==='active'?'active-alert':''}">
+      <div class="al-header">
+        <span class="al-type">${inc.type}</span>
+        <span class="al-time">${inc.time}</span>
+      </div>
+      <div class="al-location">📍 ${inc.room}, ${inc.building}</div>
+      <div style="margin-bottom:6px;"><span class="status-pill ${inc.status}">${statusLabel(inc.status)}</span></div>
+      <div class="al-actions">
+        <button class="al-btn ack" onclick="acknowledgeAlert()">Acknowledge</button>
+        <button class="al-btn dispatch" onclick="dispatchResponders()">Dispatch</button>
+        <button class="al-btn resolve" onclick="resolveAlert()">Resolve</button>
+      </div>
+    </div>`).join('');
+
+  return `
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">Emergency Alert Panel</div>
+        <button class="btn btn-danger" style="font-size:11px;height:28px;padding:0 10px;" onclick="openPanicModal()">🚨 Panic Alert</button>
+      </div>
+      <div class="alert-panel">${items || '<div class="empty-state"><div class="es-icon">✅</div><div class="es-text">No active alerts</div></div>'}</div>
+    </div>`;
+}
+
+/* ─── CAMPUS MAP SVG ─────────────────────────────────────────── */
+function buildCampusMap(mini=false) {
+  const h = mini ? 320 : 500;
+  return `
+    <div class="campus-map-wrap" style="height:${h}px;" id="campus-map-wrap">
+      <svg class="campus-map-svg" viewBox="0 0 700 500" xmlns="http://www.w3.org/2000/svg" id="campus-svg">
+        <!-- Ground / roads -->
+        <rect width="700" height="500" fill="#e8f0e4"/>
+        <rect x="0" y="230" width="700" height="14" fill="#d4c89a" opacity="0.6"/>
+        <rect x="310" y="0" width="14" height="500" fill="#d4c89a" opacity="0.6"/>
+        <rect x="0" y="380" width="700" height="10" fill="#d4c89a" opacity="0.4"/>
+        <!-- Trees / grass -->
+        <circle cx="50" cy="50" r="18" fill="#5a9e5a" opacity="0.4"/>
+        <circle cx="650" cy="50" r="16" fill="#5a9e5a" opacity="0.4"/>
+        <circle cx="50" cy="460" r="20" fill="#5a9e5a" opacity="0.4"/>
+        <circle cx="650" cy="460" r="18" fill="#5a9e5a" opacity="0.4"/>
+        <circle cx="350" cy="460" r="14" fill="#5a9e5a" opacity="0.3"/>
+
+        <!-- Administration Building -->
+        <g class="map-building" onclick="showBuildingTip('Administration Building','Admin')">
+          <rect x="50" y="50" width="130" height="70" rx="4" fill="#4a7ab5"/>
+          <text x="115" y="82" text-anchor="middle" fill="white" font-size="9" font-weight="600" font-family="Inter,sans-serif">Administration</text>
+          <text x="115" y="94" text-anchor="middle" fill="white" font-size="8" font-family="Inter,sans-serif">Building</text>
+          <circle cx="160" cy="60" r="5" fill="#22c55e"/>
+        </g>
+        <!-- College of Engineering (with emergency) -->
+        <g class="map-building emergency" id="bld-engineering" onclick="showBuildingTip('College of Engineering','Emergency in Room 101')">
+          <rect x="220" y="50" width="140" height="80" rx="4" fill="#dc2626"/>
+          <text x="290" y="85" text-anchor="middle" fill="white" font-size="9" font-weight="700" font-family="Inter,sans-serif">College of</text>
+          <text x="290" y="97" text-anchor="middle" fill="white" font-size="9" font-weight="700" font-family="Inter,sans-serif">Engineering</text>
+          <circle cx="350" cy="60" r="6" fill="#fff"/>
+        </g>
+        <!-- ICT Building -->
+        <g class="map-building" onclick="showBuildingTip('ICT Building','Online')">
+          <rect x="410" y="50" width="100" height="65" rx="4" fill="#4a7ab5"/>
+          <text x="460" y="79" text-anchor="middle" fill="white" font-size="9" font-weight="600" font-family="Inter,sans-serif">ICT</text>
+          <text x="460" y="91" text-anchor="middle" fill="white" font-size="8" font-family="Inter,sans-serif">Building</text>
+          <circle cx="500" cy="60" r="5" fill="#22c55e"/>
+        </g>
+        <!-- Security Office -->
+        <g class="map-building" onclick="showBuildingTip('Security Office','Online')">
+          <rect x="560" y="50" width="110" height="55" rx="4" fill="#1e3a8a"/>
+          <text x="615" y="74" text-anchor="middle" fill="white" font-size="9" font-weight="600" font-family="Inter,sans-serif">Security</text>
+          <text x="615" y="86" text-anchor="middle" fill="white" font-size="8" font-family="Inter,sans-serif">Office</text>
+          <circle cx="660" cy="60" r="5" fill="#22c55e"/>
+        </g>
+
+        <!-- College of Education -->
+        <g class="map-building" onclick="showBuildingTip('College of Education','Online')">
+          <rect x="50" y="155" width="130" height="65" rx="4" fill="#4a7ab5"/>
+          <text x="115" y="180" text-anchor="middle" fill="white" font-size="9" font-weight="600" font-family="Inter,sans-serif">College of</text>
+          <text x="115" y="192" text-anchor="middle" fill="white" font-size="9" font-weight="600" font-family="Inter,sans-serif">Education</text>
+          <circle cx="170" cy="165" r="5" fill="#22c55e"/>
+        </g>
+        <!-- College of Arts and Sciences -->
+        <g class="map-building" onclick="showBuildingTip('College of Arts and Sciences','Online')">
+          <rect x="220" y="155" width="165" height="65" rx="4" fill="#4a7ab5"/>
+          <text x="302" y="180" text-anchor="middle" fill="white" font-size="9" font-weight="600" font-family="Inter,sans-serif">College of Arts</text>
+          <text x="302" y="192" text-anchor="middle" fill="white" font-size="9" font-weight="600" font-family="Inter,sans-serif">and Sciences</text>
+          <circle cx="375" cy="165" r="5" fill="#22c55e"/>
+        </g>
+        <!-- Science Building (fire) -->
+        <g class="map-building emergency" id="bld-science" onclick="showBuildingTip('Science Building','Fire in Lab 302')">
+          <rect x="430" y="155" width="120" height="65" rx="4" fill="#dc2626"/>
+          <text x="490" y="180" text-anchor="middle" fill="white" font-size="9" font-weight="700" font-family="Inter,sans-serif">Science</text>
+          <text x="490" y="192" text-anchor="middle" fill="white" font-size="9" font-weight="700" font-family="Inter,sans-serif">Building 🔥</text>
+          <circle cx="540" cy="165" r="6" fill="#fff"/>
+        </g>
+        <!-- DRRMO Office -->
+        <g class="map-building" onclick="showBuildingTip('DRRMO Office','Online')">
+          <rect x="590" y="155" width="90" height="65" rx="4" fill="#b45309"/>
+          <text x="635" y="180" text-anchor="middle" fill="white" font-size="9" font-weight="600" font-family="Inter,sans-serif">DRRMO</text>
+          <text x="635" y="192" text-anchor="middle" fill="white" font-size="8" font-family="Inter,sans-serif">Office</text>
+          <circle cx="670" cy="165" r="5" fill="#22c55e"/>
+        </g>
+
+        <!-- University Library -->
+        <g class="map-building" onclick="showBuildingTip('University Library','Online')">
+          <rect x="50" y="260" width="140" height="65" rx="4" fill="#4a7ab5"/>
+          <text x="120" y="285" text-anchor="middle" fill="white" font-size="9" font-weight="600" font-family="Inter,sans-serif">University</text>
+          <text x="120" y="297" text-anchor="middle" fill="white" font-size="9" font-weight="600" font-family="Inter,sans-serif">Library</text>
+          <circle cx="180" cy="270" r="5" fill="#22c55e"/>
+        </g>
+        <!-- University Clinic -->
+        <g class="map-building" onclick="showBuildingTip('University Clinic','Online')">
+          <rect x="230" y="260" width="130" height="65" rx="4" fill="#166534"/>
+          <text x="295" y="285" text-anchor="middle" fill="white" font-size="9" font-weight="600" font-family="Inter,sans-serif">University</text>
+          <text x="295" y="297" text-anchor="middle" fill="white" font-size="9" font-weight="600" font-family="Inter,sans-serif">Clinic ✚</text>
+          <circle cx="350" cy="270" r="5" fill="#22c55e"/>
+        </g>
+        <!-- Rooms grid -->
+        <g>
+          <rect x="400" y="260" width="60" height="30" rx="2" fill="#6b7280" opacity="0.7"/>
+          <text x="430" y="279" text-anchor="middle" fill="white" font-size="8" font-family="Inter,sans-serif">Room 101</text>
+          <rect x="470" y="260" width="60" height="30" rx="2" fill="#6b7280" opacity="0.7"/>
+          <text x="500" y="279" text-anchor="middle" fill="white" font-size="8" font-family="Inter,sans-serif">Room 102</text>
+          <rect x="540" y="260" width="60" height="30" rx="2" fill="#6b7280" opacity="0.7"/>
+          <text x="570" y="279" text-anchor="middle" fill="white" font-size="8" font-family="Inter,sans-serif">Room 103</text>
+          <rect x="610" y="260" width="60" height="30" rx="2" fill="#6b7280" opacity="0.7"/>
+          <text x="640" y="279" text-anchor="middle" fill="white" font-size="8" font-family="Inter,sans-serif">Room 104</text>
+          <rect x="400" y="300" width="60" height="30" rx="2" fill="#6b7280" opacity="0.7"/>
+          <text x="430" y="319" text-anchor="middle" fill="white" font-size="8" font-family="Inter,sans-serif">Room 105</text>
+        </g>
+
+        <!-- Quadrangle -->
+        <rect x="50" y="395" width="300" height="80" rx="4" fill="#c8dbb8"/>
+        <text x="200" y="440" text-anchor="middle" fill="#2d5a2d" font-size="12" font-weight="600" font-family="Inter,sans-serif">University Quadrangle</text>
+
+        <!-- Parking -->
+        <rect x="380" y="395" width="300" height="80" rx="4" fill="#b8c8db"/>
+        <text x="530" y="440" text-anchor="middle" fill="#1a3a6e" font-size="11" font-weight="600" font-family="Inter,sans-serif">Parking / Grounds</text>
+
+        <!-- Emergency marker -->
+        <g id="emergency-marker" transform="translate(270,60)">
+          <circle r="12" fill="#dc2626" opacity="0.9">
+            <animate attributeName="r" values="12;18;12" dur="1.2s" repeatCount="indefinite"/>
+            <animate attributeName="opacity" values="0.9;0.3;0.9" dur="1.2s" repeatCount="indefinite"/>
+          </circle>
+          <circle r="6" fill="#fff"/>
+          <text x="0" y="4" text-anchor="middle" fill="#dc2626" font-size="8" font-weight="700" font-family="Inter,sans-serif">!</text>
+        </g>
+
+        <!-- Compass -->
+        <g transform="translate(660,460)">
+          <circle r="18" fill="rgba(255,255,255,0.9)" stroke="#ccc" stroke-width="1"/>
+          <text x="0" y="-6" text-anchor="middle" fill="#1a3a6e" font-size="9" font-weight="700" font-family="Inter,sans-serif">N</text>
+          <polygon points="0,-5 3,2 0,0 -3,2" fill="#1a3a6e"/>
+          <polygon points="0,5 3,-2 0,0 -3,-2" fill="#9ca3af"/>
+        </g>
+      </svg>
+      <!-- Legend -->
+      <div class="map-legend">
+        <div class="map-legend-item"><div class="legend-dot" style="background:#22c55e;"></div> Online</div>
+        <div class="map-legend-item"><div class="legend-dot" style="background:#9ca3af;"></div> Offline</div>
+        <div class="map-legend-item"><div class="legend-dot" style="background:#dc2626;"></div> Emergency</div>
+      </div>
+      <div class="map-tooltip" id="map-tooltip"></div>
+    </div>`;
+}
+
+function showBuildingTip(name, status) {
+  // Just show in console; actual tooltip positioning would need mouse coords
+  const tip = document.getElementById('map-tooltip');
+  if (!tip) return;
+  tip.textContent = name + ' — ' + status;
+  tip.style.opacity = '1';
+  tip.style.top = '10px';
+  tip.style.left = '50%';
+  tip.style.transform = 'translateX(-50%)';
+  setTimeout(() => { tip.style.opacity = '0'; }, 2500);
+}
+
+function initMapIfNeeded() {
+  // SVG map is fully static/animated via CSS
+}
+
+/* ─── MAP PAGE ────────────────────────────────────────────────── */
+function buildMapPage() {
+  return `
+    <div class="page-header">
+      <div class="page-header-left">
+        <h1 class="page-title">Campus Map</h1>
+        <div class="page-sub">Samar State University — Live Building Status</div>
+      </div>
+      <div class="page-header-right">
+        <button class="btn btn-secondary">🔍 Filter</button>
+        <button class="btn btn-primary" onclick="openPanicModal()">🚨 Active Alert</button>
+      </div>
+    </div>
+    <div class="panel" style="margin-bottom:20px;">
+      <div class="panel-header">
+        <div class="panel-title">Interactive Campus Map — Samar State University</div>
+        <div style="font-size:12px;color:var(--ink-3);">2 active emergencies · 8 buildings online · Oct 26, 2026, 12:14 PM</div>
+      </div>
+      <div class="panel-body" style="padding:0;">
+        ${buildCampusMap(false)}
+      </div>
+    </div>
+    <div class="three-col">
+      <div class="panel">
+        <div class="panel-header"><div class="panel-title">Building Status</div></div>
+        <div class="panel-body">
+          ${['Administration Building','College of Engineering','ICT Building','Security Office','College of Education','College of Arts and Sciences','Science Building','University Library','University Clinic','DRRMO Office'].map((b,i) => {
+            const isEmergency = b === 'College of Engineering' || b === 'Science Building';
+            return `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:12px;">
+              <span style="color:var(--ink-2);">${b}</span>
+              <span style="font-weight:600;color:${isEmergency?'var(--negative)':'var(--positive)'};">${isEmergency?'⚠️ Emergency':'● Online'}</span>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-header"><div class="panel-title">Room Status</div></div>
+        <div class="panel-body">
+          ${['Room 101 — Engineering Bldg','Room 102 — Engineering Bldg','Room 103 — Science Bldg','Room 104 — Education Bldg','Room 105 — Arts & Sciences','Room 205 — Education Bldg','Room 302 — Science Bldg','Lab 302 — Science Bldg','Treatment Room 1','Study Area B'].map((r,i) => {
+            const isOff = i % 3 === 2;
+            const isEmer = i === 0 || i === 7;
+            return `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:12px;">
+              <span style="color:var(--ink-2);">${r}</span>
+              <span style="font-weight:600;color:${isEmer?'var(--negative)':isOff?'#9ca3af':'var(--positive)'};">${isEmer?'🔴 Emergency':isOff?'⚫ Offline':'🟢 Online'}</span>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-header"><div class="panel-title">Active Emergencies</div></div>
+        <div class="panel-body">
+          ${INCIDENTS.filter(i=>i.status==='active').map(inc=>`
+            <div style="background:#fff5f5;border:1px solid #fca5a5;border-radius:6px;padding:10px 12px;margin-bottom:10px;">
+              <div style="font-size:12px;font-weight:700;color:var(--negative);margin-bottom:4px;">🚨 ${inc.type}</div>
+              <div style="font-size:11px;color:var(--ink-2);">📍 ${inc.room}, ${inc.building}</div>
+              <div style="font-size:11px;color:var(--ink-3);">${inc.time} · Reported by ${inc.reporter}</div>
+              <button class="btn btn-danger" style="margin-top:8px;height:28px;font-size:11px;" onclick="openDetail('${inc.id}')">View Details</button>
+            </div>`).join('')}
+        </div>
+      </div>
+    </div>`;
+}
+
+/* ─── INCIDENTS PAGE ─────────────────────────────────────────── */
+function buildIncidents() {
+  const incidents = myIncidents();
+  const roleTitle = {
+    admin:'All Incident Reports', clinic:'Medical Emergency Reports',
+    security:'Security Threat Reports', drrmo:'Fire & Disaster Reports'
+  }[currentRole];
+  const rows = incidents.map(inc => `
+    <tr>
+      <td><div class="inc-type">${inc.id}</div></td>
+      <td><span class="type-badge type-${inc.category}">${inc.type}</span></td>
+      <td>${inc.building}</td>
+      <td>${inc.floor} · ${inc.room}</td>
+      <td><span class="priority-badge priority-${inc.priority}">${inc.priority.toUpperCase()}</span></td>
+      <td>${inc.date}</td>
+      <td>${inc.time}</td>
+      <td><span class="status-pill ${inc.status}">${statusLabel(inc.status)}</span></td>
+      <td>
+        <button class="btn-row-action" onclick="openDetail('${inc.id}')" style="margin-right:4px;">View</button>
+        <button class="btn-row-action" onclick="acknowledgeAlert()" style="border-color:var(--ssu-navy);color:var(--ssu-navy);">Ack</button>
+      </td>
+    </tr>`).join('');
+
+  return `
+    <div class="page-header">
+      <div class="page-header-left">
+        <h1 class="page-title">${roleTitle}</h1>
+        <div class="page-sub">${incidents.length} reports · Samar State University</div>
+      </div>
+      <div class="page-header-right">
+        <select style="height:34px;border:1px solid var(--border-2);border-radius:6px;padding:0 10px;font-size:13px;background:#fff;" onchange="">
+          <option>All Status</option><option>Active</option><option>Pending</option><option>Resolved</option>
+        </select>
+        <button class="btn btn-secondary">📄 Export</button>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">Incident Log</div>
+        <div style="font-size:12px;color:var(--ink-3);">Updated: Oct 26, 2026, 12:14 PM</div>
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="incident-table">
+          <thead><tr><th>ID</th><th>Type</th><th>Building</th><th>Location</th><th>Priority</th><th>Date</th><th>Time</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+    </div>`;
+}
+
+/* ─── ANALYTICS PAGE ─────────────────────────────────────────── */
+function buildAnalytics() {
+  return `
+    <div class="page-header">
+      <div class="page-header-left">
+        <h1 class="page-title">Incident Analytics</h1>
+        <div class="page-sub">Campus-wide emergency trends · Samar State University</div>
+      </div>
+      <div class="page-header-right">
+        <select style="height:34px;border:1px solid var(--border-2);border-radius:6px;padding:0 10px;font-size:13px;background:#fff;">
+          <option>Last 30 Days</option><option>Last 7 Days</option><option>This Month</option>
+        </select>
+        <button class="btn btn-secondary">📄 Export Report</button>
+      </div>
+    </div>
+    <div class="stat-row">
+      <div class="stat-card"><div class="stat-label">Response Rate</div><div class="stat-value accent">94%</div><div class="stat-delta up">+3% vs last month</div></div>
+      <div class="stat-card"><div class="stat-label">Avg Response Time</div><div class="stat-value">4m 32s</div><div class="stat-delta up">–48s improvement</div></div>
+      <div class="stat-card"><div class="stat-label">Peak Hour</div><div class="stat-value">10–11 AM</div><div class="stat-delta">Highest incident rate</div></div>
+      <div class="stat-card"><div class="stat-label">Highest Risk Zone</div><div class="stat-value" style="font-size:16px;">Engineering</div><div class="stat-delta down">3 incidents this week</div></div>
+    </div>
+    <div class="two-col">
+      <div>
+        <div class="panel" style="margin-bottom:20px;">
+          <div class="panel-header"><div class="panel-title">Incidents by Category</div></div>
+          <div class="panel-body">
+            <div class="chart-bar-list" id="cat-chart">
+              ${[['Medical Emergency',4,'#166534'],['Security Threat',4,'#1e3a8a'],['Fire / Disaster',4,'#b45309'],['General Emergency',1,'#6b21a8']].map(([l,v,c])=>`
+                <div class="chart-bar-item">
+                  <div class="chart-bar-label">${l}</div>
+                  <div class="chart-bar-track"><div class="chart-bar-fill" style="width:${v/12*100}%;background:${c};" data-target="${v/12*100}"></div></div>
+                  <div class="chart-bar-val">${v}</div>
+                </div>`).join('')}
+            </div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-header"><div class="panel-title">Incidents by Building</div></div>
+          <div class="panel-body">
+            <div class="chart-bar-list">
+              ${[['Engineering Bldg',3],['Science Building',2],['Library',1],['Education Bldg',2],['Arts & Sciences',1],['Admin Building',1],['Security Office',1],['DRRMO Office',1]].map(([l,v])=>`
+                <div class="chart-bar-item">
+                  <div class="chart-bar-label">${l}</div>
+                  <div class="chart-bar-track"><div class="chart-bar-fill" style="width:${v/3*100}%;" data-target="${v/3*100}"></div></div>
+                  <div class="chart-bar-val">${v}</div>
+                </div>`).join('')}
+            </div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="panel" style="margin-bottom:20px;">
+          <div class="panel-header"><div class="panel-title">Office Performance</div></div>
+          <div class="panel-body">
+            ${[
+              {name:'School Clinic',color:'#166534',cases:4,resolved:3,rate:'75%'},
+              {name:'Campus Security',color:'#1e3a8a',cases:4,resolved:3,rate:'75%'},
+              {name:'DRRMO',color:'#b45309',cases:4,resolved:3,rate:'75%'},
+              {name:'Administrator',color:'#6b21a8',cases:1,resolved:1,rate:'100%'},
+            ].map(o=>`
+              <div class="office-perf-row">
+                <div class="opr-office">${o.name}</div>
+                <div class="opr-bar-wrap">
+                  <div class="opr-bar-track"><div class="opr-bar-fill" style="width:${o.rate};background:${o.color};"></div></div>
+                  <div class="opr-stats">
+                    <div class="opr-stat"><span>${o.cases}</span> cases</div>
+                    <div class="opr-stat"><span>${o.resolved}</span> resolved</div>
+                    <div class="opr-stat"><span>${o.rate}</span> rate</div>
+                  </div>
+                </div>
+              </div>`).join('')}
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-header"><div class="panel-title">Priority Breakdown</div></div>
+          <div class="panel-body">
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;text-align:center;">
+              <div><div style="font-size:32px;font-weight:700;color:var(--negative);">5</div><div style="font-size:12px;color:var(--ink-3);">High Priority</div></div>
+              <div><div style="font-size:32px;font-weight:700;color:var(--warn);">6</div><div style="font-size:12px;color:var(--ink-3);">Medium</div></div>
+              <div><div style="font-size:32px;font-weight:700;color:var(--ink-3);">1</div><div style="font-size:12px;color:var(--ink-3);">Low</div></div>
+            </div>
+            <div style="margin-top:20px;">
+              <div style="height:12px;border-radius:6px;overflow:hidden;display:flex;gap:2px;">
+                <div style="flex:5;background:var(--negative);border-radius:4px 0 0 4px;"></div>
+                <div style="flex:6;background:var(--warn);"></div>
+                <div style="flex:1;background:var(--ink-3);border-radius:0 4px 4px 0;"></div>
+              </div>
+              <div style="display:flex;justify-content:space-between;margin-top:6px;font-size:11px;color:var(--ink-3);">
+                <span>High 42%</span><span>Medium 50%</span><span>Low 8%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>`;
+}
+
+/* ─── SECURITY TIMELINE ──────────────────────────────────────── */
+function buildTimeline() {
+  const events = [
+    {time:'12:14 PM', event:'Medical Emergency — Room 101', detail:'Engineering Building — Dispatched responders'},
+    {time:'11:40 AM', event:'Theft Report', detail:'University Library Study Area B'},
+    {time:'10:55 AM', event:'Fire Incident', detail:'Science Building Lab 302 — Evacuation initiated'},
+    {time:'10:20 AM', event:'Fainting Incident', detail:'College of Education Room 205 — Resolved'},
+    {time:'09:45 AM', event:'Suspicious Activity', detail:'ICT Building Entrance — Under investigation'},
+    {time:'09:00 AM', event:'CCTV System Alert', detail:'Power fluctuation — Security office control room'},
+    {time:'08:30 AM', event:'Morning Patrol Completed', detail:'All zones checked — No incidents'},
+    {time:'07:00 AM', event:'Shift Change', detail:'Morning security shift began'},
+  ];
+  return `
+    <div class="page-header">
+      <div class="page-header-left">
+        <h1 class="page-title">Security Timeline</h1>
+        <div class="page-sub">Chronological event log · Oct 26, 2026</div>
+      </div>
+      <div class="page-header-right">
+        <button class="btn btn-secondary">📄 Export Log</button>
+      </div>
+    </div>
+    <div class="two-col">
+      <div class="panel">
+        <div class="panel-header"><div class="panel-title">Today's Security Log</div></div>
+        <div class="panel-body">
+          ${events.map(e=>`
+            <div class="tl-row">
+              <div class="tl-time-col">${e.time}</div>
+              <div class="tl-dot-col"><div class="tl-dot-big"></div></div>
+              <div class="tl-text-col">
+                <div class="tl-event">${e.event}</div>
+                <div class="tl-detail">${e.detail}</div>
+              </div>
+            </div>`).join('')}
+        </div>
+      </div>
+      ${buildAlertPanel(INCIDENTS.filter(i=>i.category==='security'))}
+    </div>`;
+}
+
+/* ─── PATROL STATUS ──────────────────────────────────────────── */
+function buildPatrol() {
+  const guards = [
+    {name:'Guard Villanueva', zone:'Gate 1 & ICT Zone', status:'on-duty', label:'On Duty'},
+    {name:'Guard De Leon', zone:'Admin & Engineering', status:'responding', label:'Responding'},
+    {name:'Guard Bautista', zone:'Library & Education', status:'on-duty', label:'On Duty'},
+    {name:'Guard Santos', zone:'Science & DRRMO', status:'responding', label:'Responding'},
+    {name:'Guard Cruz', zone:'Clinic & Quadrangle', status:'on-duty', label:'On Duty'},
+    {name:'Guard Reyes', zone:'Parking & Grounds', status:'on-duty', label:'On Duty'},
+  ];
+  return `
+    <div class="page-header">
+      <div class="page-header-left">
+        <h1 class="page-title">Patrol Status</h1>
+        <div class="page-sub">Active patrol units · Samar State University</div>
+      </div>
+    </div>
+    <div class="stat-row">
+      <div class="stat-card"><div class="stat-label">Total Guards</div><div class="stat-value">6</div></div>
+      <div class="stat-card"><div class="stat-label">On Duty</div><div class="stat-value positive">4</div></div>
+      <div class="stat-card"><div class="stat-label">Responding</div><div class="stat-value" style="color:var(--warn)">2</div></div>
+      <div class="stat-card"><div class="stat-label">Active Threats</div><div class="stat-value negative">2</div></div>
+    </div>
+    <div class="two-col">
+      <div class="panel">
+        <div class="panel-header"><div class="panel-title">Patrol Units</div></div>
+        <div class="panel-body">
+          <div class="patrol-grid">
+            ${guards.map(g=>`
+              <div class="patrol-card">
+                <div class="pc-name">👮 ${g.name}</div>
+                <div class="pc-zone">${g.zone}</div>
+                <div class="pc-status ${g.status}">${g.status==='on-duty'?'● On Duty':'◉ Responding'}</div>
+              </div>`).join('')}
+          </div>
+        </div>
+      </div>
+      ${buildAlertPanel(INCIDENTS.filter(i=>i.category==='security').slice(0,4))}
+    </div>`;
+}
+
+/* ─── HAZARD MONITOR ─────────────────────────────────────────── */
+function buildHazards() {
+  const hazards = [
+    {icon:'🔥', name:'Laboratory Fire', loc:'Science Bldg, Lab 302', level:'critical', levelClass:'critical'},
+    {icon:'⛽', name:'Gas Leak Suspected', loc:'Engineering Workshop, 2F', level:'high', levelClass:'high'},
+    {icon:'🌊', name:'Flood-Prone Area', loc:'Admin Bldg Basement', level:'moderate', levelClass:'moderate'},
+    {icon:'⚡', name:'Electrical Hazard', loc:'ICT Building, Server Room', level:'moderate', levelClass:'moderate'},
+    {icon:'🧪', name:'Chemical Storage', loc:'Science Bldg, Stockroom', level:'low', levelClass:'low'},
+    {icon:'🏚️', name:'Structural Concern', loc:'Old Engineering Annex', level:'low', levelClass:'low'},
+  ];
+  return `
+    <div class="page-header">
+      <div class="page-header-left">
+        <h1 class="page-title">Hazard Monitor</h1>
+        <div class="page-sub">Campus hazard assessment — DRRMO · Oct 26, 2026</div>
+      </div>
+      <div class="page-header-right">
+        <button class="btn btn-primary">+ Log Hazard</button>
+      </div>
+    </div>
+    <div class="stat-row">
+      <div class="stat-card"><div class="stat-label">Total Hazards</div><div class="stat-value">${hazards.length}</div></div>
+      <div class="stat-card"><div class="stat-label">Critical</div><div class="stat-value negative">1</div></div>
+      <div class="stat-card"><div class="stat-label">High</div><div class="stat-value" style="color:var(--warn)">1</div></div>
+      <div class="stat-card"><div class="stat-label">Under Control</div><div class="stat-value positive">4</div></div>
+    </div>
+    <div class="two-col">
+      <div class="panel">
+        <div class="panel-header"><div class="panel-title">Active Hazards</div></div>
+        <div class="panel-body">
+          ${hazards.map(h=>`
+            <div class="hazard-row">
+              <div class="hazard-icon">${h.icon}</div>
+              <div class="hazard-info">
+                <div class="hi-name">${h.name}</div>
+                <div class="hi-loc">📍 ${h.loc}</div>
+              </div>
+              <div class="hazard-level ${h.levelClass}">${h.level.toUpperCase()}</div>
+              <button class="btn-row-action" style="margin-left:8px;">Report</button>
+            </div>`).join('')}
+        </div>
+      </div>
+      ${buildAlertPanel(INCIDENTS.filter(i=>i.category==='fire').slice(0,4))}
+    </div>`;
+}
+
+/* ─── REPORTS PAGE ───────────────────────────────────────────── */
+function buildReports() {
+  return `
+    <div class="page-header">
+      <div class="page-header-left">
+        <h1 class="page-title">Reports</h1>
+        <div class="page-sub">Incident summary reports · Samar State University</div>
+      </div>
+      <div class="page-header-right">
+        <button class="btn btn-primary">📄 Generate Report</button>
+      </div>
+    </div>
+    <div class="three-col">
+      ${[
+        {title:'Daily Incident Report', date:'Oct 26, 2026', count:3, status:'Ready'},
+        {title:'Weekly Summary', date:'Oct 20–26, 2026', count:12, status:'Ready'},
+        {title:'Monthly Overview', date:'October 2026', count:34, status:'Ready'},
+        {title:'Medical Cases Report', date:'Oct 2026', count:8, status:'Ready'},
+        {title:'Security Threats Report', date:'Oct 2026', count:9, status:'Ready'},
+        {title:'DRRMO Disaster Report', date:'Oct 2026', count:7, status:'Draft'},
+      ].map(r=>`
+        <div class="panel">
+          <div class="panel-body">
+            <div style="font-size:22px;margin-bottom:10px;">📄</div>
+            <div style="font-size:14px;font-weight:600;color:var(--ink);margin-bottom:4px;">${r.title}</div>
+            <div style="font-size:12px;color:var(--ink-3);margin-bottom:8px;">${r.date}</div>
+            <div style="font-size:12px;color:var(--ink-2);margin-bottom:12px;">${r.count} incidents documented</div>
+            <div style="display:flex;gap:8px;">
+              <button class="btn btn-primary" style="font-size:12px;height:30px;flex:1;">Download</button>
+              <button class="btn btn-secondary" style="font-size:12px;height:30px;">Preview</button>
+            </div>
+          </div>
+        </div>`).join('')}
+    </div>`;
+}
+
+/* ─── SETTINGS PAGE ──────────────────────────────────────────── */
+function buildSettings() {
+  return `
+    <div class="page-header">
+      <div class="page-header-left">
+        <h1 class="page-title">Settings</h1>
+        <div class="page-sub">System configuration · Administrator access</div>
+      </div>
+    </div>
+    <div class="two-col">
+      <div>
+        <div class="panel" style="margin-bottom:20px;">
+          <div class="panel-header"><div class="panel-title">System Information</div></div>
+          <div class="panel-body">
+            ${[['System Name','CAMPUS-ER'],['Institution','Samar State University'],['Version','1.0.0 (Prototype)'],['Build','Oct 2026'],['Status','Operational'],['Uptime','99.8%']].map(([k,v])=>`
+              <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;">
+                <span style="color:var(--ink-3);">${k}</span><span style="font-weight:600;color:var(--ink);">${v}</span>
+              </div>`).join('')}
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-header"><div class="panel-title">Routing Configuration</div></div>
+          <div class="panel-body">
+            ${[['Medical Emergency','School Clinic','#166534'],['Security Threat','Campus Security','#1e3a8a'],['Fire / Disaster','DRRMO','#b45309'],['General Emergency','Administrator','#6b21a8']].map(([t,o,c])=>`
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;">
+                <span style="color:var(--ink-2);">${t}</span>
+                <span style="font-weight:600;color:${c};background:${c}20;padding:2px 8px;border-radius:4px;">${o}</span>
+              </div>`).join('')}
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="panel">
+          <div class="panel-header"><div class="panel-title">Alert Settings</div></div>
+          <div class="panel-body">
+            ${[['Audio Alerts','Enabled'],['Push Notifications','Enabled'],['SMS Alerts','Disabled'],['Email Notifications','Enabled'],['Auto Dispatch','Disabled'],['CCTV Integration','Enabled']].map(([k,v])=>`
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);font-size:13px;">
+                <span style="color:var(--ink-2);">${k}</span>
+                <span style="font-weight:600;color:${v==='Enabled'?'var(--positive)':'var(--ink-3)'};">${v}</span>
+              </div>`).join('')}
+          </div>
+        </div>
+      </div>
+    </div>`;
+}
+
+/* ─── INCIDENT DETAIL MODAL ──────────────────────────────────── */
+function openDetail(id) {
+  const inc = INCIDENTS.find(i => i.id === id);
+  if (!inc) return;
+  document.getElementById('detail-title').textContent = inc.type;
+  document.getElementById('detail-subtitle').textContent = inc.id + ' · ' + inc.office;
+  document.getElementById('detail-body').innerHTML = `
+    <div class="detail-section-title">Incident Classification</div>
+    <div class="detail-grid">
+      <div class="detail-field"><label>Emergency Type</label><div class="df-val"><span class="type-badge type-${inc.category}">${inc.type}</span></div></div>
+      <div class="detail-field"><label>Assigned Office</label><div class="df-val">${inc.office}</div></div>
+      <div class="detail-field"><label>Priority Level</label><div class="df-val"><span class="priority-badge priority-${inc.priority}">${inc.priority.toUpperCase()}</span></div></div>
+      <div class="detail-field"><label>Status</label><div class="df-val"><span class="status-pill ${inc.status}">${statusLabel(inc.status)}</span></div></div>
+    </div>
+    <div class="detail-section-title">Location</div>
+    <div class="detail-grid">
+      <div class="detail-field"><label>Building</label><div class="df-val">${inc.building}</div></div>
+      <div class="detail-field"><label>Floor</label><div class="df-val">${inc.floor}</div></div>
+      <div class="detail-field"><label>Room</label><div class="df-val">${inc.room}</div></div>
+      <div class="detail-field"><label>Location</label><div class="df-val">${inc.location}</div></div>
+    </div>
+    <div class="detail-section-title">Report Info</div>
+    <div class="detail-grid">
+      <div class="detail-field"><label>Date</label><div class="df-val">${inc.date}</div></div>
+      <div class="detail-field"><label>Time</label><div class="df-val">${inc.time}</div></div>
+      <div class="detail-field"><label>Reported By</label><div class="df-val">${inc.reporter}</div></div>
+      <div class="detail-field"><label>Report ID</label><div class="df-val">${inc.id}</div></div>
+    </div>
+    <div class="detail-section-title">Notes</div>
+    <div style="background:var(--ground);border-radius:6px;padding:12px;font-size:13px;color:var(--ink-2);">${inc.notes}</div>
+    <div class="detail-section-title">Activity Log</div>
+    <div class="detail-timeline">
+      <div class="timeline-item">
+        <div class="tl-dot"></div>
+        <div class="tl-content"><div class="tl-time">${inc.time}</div><div class="tl-text">Emergency report submitted by ${inc.reporter}</div></div>
+      </div>
+      <div class="timeline-item">
+        <div class="tl-dot"></div>
+        <div class="tl-content"><div class="tl-time">${inc.time} +2m</div><div class="tl-text">Alert routed to ${inc.office}</div></div>
+      </div>
+      ${inc.status !== 'active' ? `<div class="timeline-item"><div class="tl-dot"></div><div class="tl-content"><div class="tl-time">${inc.time} +5m</div><div class="tl-text">Report acknowledged by ${inc.office}</div></div></div>` : ''}
+      ${inc.status === 'resolved' ? `<div class="timeline-item"><div class="tl-dot" style="background:var(--positive)"></div><div class="tl-content"><div class="tl-time">${inc.time} +18m</div><div class="tl-text">Incident resolved and closed</div></div></div>` : ''}
+    </div>`;
+  document.getElementById('detail-modal').classList.add('open');
+}
+function closeDetailModal() { document.getElementById('detail-modal').classList.remove('open'); }
+
+/* ─── PANIC MODAL ─────────────────────────────────────────────── */
+function openPanicModal() { document.getElementById('panic-modal').classList.add('open'); }
+function closePanicModal() { document.getElementById('panic-modal').classList.remove('open'); }
+function acknowledgeAlert() {
+  closePanicModal();
+  showToast('Alert acknowledged — responders notified');
+}
+function dispatchResponders() {
+  closePanicModal();
+  showToast('Responders dispatched to Room 101, Engineering Building');
+}
+function resolveAlert() {
+  closePanicModal();
+  showToast('Incident marked as resolved');
+}
+function playAlert() {
+  // Use Web Speech API as fallback for audio
+  if ('speechSynthesis' in window) {
+    const u = new SpeechSynthesisUtterance('Medical Emergency activated in Room 101, Engineering Building');
+    u.rate = 0.9; u.pitch = 1;
+    speechSynthesis.speak(u);
+  }
+}
+
+/* ─── TOAST ──────────────────────────────────────────────────── */
+function showToast(msg) {
+  let t = document.getElementById('toast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = 'toast';
+    t.style.cssText = 'position:fixed;bottom:24px;right:24px;background:var(--ink);color:#fff;padding:10px 18px;border-radius:6px;font-size:13px;z-index:9999;transition:opacity 0.3s;';
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.style.opacity = '1';
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => { t.style.opacity = '0'; }, 3000);
+}
+
+/* ─── CHART ANIMATION ────────────────────────────────────────── */
+function animateCharts() {
+  setTimeout(() => {
+    document.querySelectorAll('.chart-bar-fill').forEach(el => {
+      const target = el.dataset.target;
+      if (target) { el.style.width = '0'; setTimeout(() => { el.style.width = target + '%'; }, 100); }
+    });
+  }, 100);
+}
+
+/* ─── MOBILE HAMBURGER ───────────────────────────────────────── */
+document.getElementById('hamburger-btn').addEventListener('click', () => {
+  document.getElementById('sidebar').classList.toggle('open');
+});
+
+/* ─── CLOSE MODALS ON OVERLAY CLICK ─────────────────────────── */
+document.getElementById('panic-modal').addEventListener('click', e => { if (e.target === e.currentTarget) closePanicModal(); });
+document.getElementById('detail-modal').addEventListener('click', e => { if (e.target === e.currentTarget) closeDetailModal(); });
+
+/* ─── PWA ────────────────────────────────────────────────────── */
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
+</script>
+</body>
+</html>

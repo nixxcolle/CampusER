@@ -1,0 +1,14 @@
+{
+  "name": "CAMPUS-ER — Samar State University",
+  "short_name": "CAMPUS-ER",
+  "description": "Embedded Campus-Wide Emergency Reporting and Alert System",
+  "start_url": "/index.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#1a3a6e",
+  "orientation": "portrait-primary",
+  "icons": [
+    { "src": "images/SSULOGO.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "images/SSULOGO.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
