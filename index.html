@@ -11,6 +11,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <style>
 /* ─── TOKENS ─────────────────────────────────────────────────── */
 :root {
@@ -840,6 +841,63 @@ body.role-clinic { --role-hue: #166534; --role-hue-2: #f0fdf4; --role-hue-3: #bb
 body.role-security { --role-hue: #1e3a8a; --role-hue-2: #eff6ff; --role-hue-3: #bfdbfe; }
 body.role-drrmo { --role-hue: #b45309; --role-hue-2: #fffbeb; --role-hue-3: #fde68a; }
 body.role-admin { --role-hue: #6b21a8; --role-hue-2: #faf5ff; --role-hue-3: #e9d5ff; }
+
+/* ─── CREATE REPORT MODAL ───────────────────────────────────── */
+.create-modal {
+  background: #fff;
+  border-radius: 10px;
+  width: 100%;
+  max-width: 560px;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+  animation: slide-up 0.25s ease;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+.create-modal-header {
+  background: var(--role-hue);
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.create-modal-header h2 { font-size: 16px; font-weight: 700; color: #fff; margin: 0; }
+.create-modal-header .cm-close { background: none; border: none; color: rgba(255,255,255,0.8); font-size: 18px; cursor: pointer; }
+.create-modal-body { padding: 20px; }
+.create-modal-footer { padding: 16px 20px; border-top: 1px solid var(--border); display: flex; gap: 8px; justify-content: flex-end; }
+
+/* ─── AUTH LOADING ───────────────────────────────────────────── */
+#auth-loading {
+  position: fixed; inset: 0; background: #fff;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  z-index: 9999; gap: 16px;
+}
+#auth-loading img { width: 64px; height: 64px; object-fit: contain; border-radius: 50%; background: var(--ssu-navy); padding: 6px; }
+#auth-loading p { font-size: 14px; color: var(--ink-3); }
+.spinner {
+  width: 28px; height: 28px; border: 3px solid var(--border);
+  border-top-color: var(--ssu-navy); border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ─── REGISTER SCREEN ────────────────────────────────────────── */
+.register-right { width: 480px; }
+.form-error {
+  background: #fee2e2; border: 1px solid #fca5a5; border-radius: 6px;
+  padding: 10px 14px; font-size: 13px; color: var(--negative);
+  margin-bottom: 16px; display: none;
+}
+.form-error.visible { display: block; }
+.form-success {
+  background: #dcfce7; border: 1px solid #86efac; border-radius: 6px;
+  padding: 10px 14px; font-size: 13px; color: #166534;
+  margin-bottom: 16px; display: none;
+}
+.form-success.visible { display: block; }
+.auth-switch { font-size: 13px; color: var(--ink-3); text-align: center; margin-top: 20px; }
+.auth-switch a { color: var(--ssu-navy); font-weight: 600; cursor: pointer; text-decoration: none; }
+.auth-switch a:hover { text-decoration: underline; }
 </style>
 </head>
 <body>
@@ -867,31 +925,91 @@ body.role-admin { --role-hue: #6b21a8; --role-hue-2: #faf5ff; --role-hue-3: #e9d
     <h1>Sign In</h1>
     <p class="login-sub">Access your CAMPUS-ER dashboard</p>
 
+    <div class="form-error" id="login-error"></div>
+
     <form id="login-form" onsubmit="doLogin(event)">
       <div class="form-group">
         <label for="email">Email Address</label>
-        <input type="email" id="email" placeholder="Enter your official email" value="admin@ssu.edu.ph" required>
+        <input type="email" id="email" placeholder="Enter your official SSU email" required autocomplete="email">
       </div>
       <div class="form-group">
         <label for="password">Password</label>
-        <input type="password" id="password" placeholder="Enter your password" value="••••••••" required>
-      </div>
-      <div class="form-group">
-        <label for="role-select">Role</label>
-        <select id="role-select">
-          <option value="admin">Administrator</option>
-          <option value="clinic">School Clinic</option>
-          <option value="security">Campus Security</option>
-          <option value="drrmo">DRRMO</option>
-        </select>
+        <input type="password" id="password" placeholder="Enter your password" required autocomplete="current-password" minlength="6">
       </div>
       <button type="submit" id="login-btn" class="btn-login">Sign In to CAMPUS-ER</button>
     </form>
 
-    <div class="login-demo-hint">
-      <strong>Demo Credentials:</strong> Any email &amp; password. Select a role above to preview each dashboard.
+    <p class="auth-switch">Don't have an account? <a onclick="showRegister()">Create account</a></p>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!--  REGISTER SCREEN                                           -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div id="screen-register" class="screen">
+  <div class="login-left">
+    <div class="login-brand">
+      <img class="seal" src="images/SSULOGO.png" alt="Samar State University Seal">
+      <div class="univ-name">Samar State University</div>
+      <div class="app-name">CAMPUS-ER</div>
+      <div class="app-subtitle">Embedded Campus-Wide Emergency Reporting and Alert System</div>
+      <div class="badge-row">
+        <div class="badge">🏥 Medical</div>
+        <div class="badge">🔒 Security</div>
+        <div class="badge">🔥 DRRMO</div>
+        <div class="badge">📋 Admin</div>
+      </div>
     </div>
   </div>
+
+  <div class="login-right register-right">
+    <h1>Create Account</h1>
+    <p class="login-sub">Register your CAMPUS-ER staff account</p>
+
+    <div class="form-error" id="register-error"></div>
+    <div class="form-success" id="register-success"></div>
+
+    <form id="register-form" onsubmit="doRegister(event)">
+      <div class="form-group">
+        <label for="reg-fullname">Full Name</label>
+        <input type="text" id="reg-fullname" placeholder="e.g. Maria Santos" required autocomplete="name">
+      </div>
+      <div class="form-group">
+        <label for="reg-empid">Employee ID</label>
+        <input type="text" id="reg-empid" placeholder="e.g. SSU-2024-0001" required>
+      </div>
+      <div class="form-group">
+        <label for="reg-email">Email Address</label>
+        <input type="email" id="reg-email" placeholder="Enter your official SSU email" required autocomplete="email">
+      </div>
+      <div class="form-group">
+        <label for="reg-password">Password</label>
+        <input type="password" id="reg-password" placeholder="Minimum 6 characters" required autocomplete="new-password" minlength="6">
+      </div>
+      <div class="form-group">
+        <label for="reg-office">Office Assignment</label>
+        <select id="reg-office" required>
+          <option value="" disabled selected>Select your assigned office</option>
+          <option value="School Clinic">School Clinic</option>
+          <option value="Campus Security">Campus Security</option>
+          <option value="DRRMO">DRRMO</option>
+          <option value="Administrator">Administrator</option>
+        </select>
+      </div>
+      <button type="submit" id="register-btn" class="btn-login">Create Account</button>
+    </form>
+
+    <p class="auth-switch">Already have an account? <a onclick="showLogin()">Sign in</a></p>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!--  AUTH LOADING OVERLAY                                      -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div id="auth-loading">
+  <img src="images/SSULOGO.png" alt="SSU">
+  <div class="spinner"></div>
+  <p>Loading CAMPUS-ER…</p>
 </div>
 
 <!-- ═══════════════════════════════════════════════════════════ -->
@@ -1015,28 +1133,111 @@ body.role-admin { --role-hue: #6b21a8; --role-hue-2: #faf5ff; --role-hue-3: #e9d
     <div class="detail-body" id="detail-body"></div>
     <div class="detail-footer">
       <button class="btn btn-secondary" onclick="closeDetailModal()">Close</button>
-      <button class="btn btn-primary" onclick="acknowledgeAlert();closeDetailModal()">Acknowledge</button>
-      <button class="btn btn-success" onclick="resolveAlert();closeDetailModal()">Resolve</button>
+      <button class="btn btn-primary" onclick="updateReportStatus(window._detailUUID,'acknowledged');closeDetailModal()">Acknowledge</button>
+      <button class="btn btn-success" onclick="updateReportStatus(window._detailUUID,'resolved');closeDetailModal()">Resolve</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!--  CREATE EMERGENCY REPORT MODAL                             -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="create-report-modal">
+  <div class="create-modal">
+    <div class="create-modal-header">
+      <h2>🚨 Create Emergency Report</h2>
+      <button class="cm-close" onclick="closeCreateReport()" aria-label="Close">✕</button>
+    </div>
+    <div class="create-modal-body">
+      <p style="font-size:12px;color:#6b7280;margin-bottom:16px;">Samar State University — CAMPUS-ER · The assigned office is determined automatically by emergency type.</p>
+      <div class="form-error" id="cr-error"></div>
+      <form id="cr-form" onsubmit="doCreateReport(event)">
+        <div class="form-group">
+          <label for="cr-station">Station (optional)</label>
+          <select id="cr-station">
+            <option value="">No station / Manual report</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="cr-type">Emergency Type</label>
+          <select id="cr-type" required>
+            <option value="" disabled selected>Select emergency type</option>
+            <option value="Medical Emergency">Medical Emergency → School Clinic</option>
+            <option value="Security Threat">Security Threat → Campus Security</option>
+            <option value="Fire/Disaster">Fire / Disaster → DRRMO</option>
+            <option value="General Emergency">General Emergency → Administrator</option>
+          </select>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div class="form-group">
+            <label for="cr-building">Building</label>
+            <select id="cr-building" required>
+              <option value="" disabled selected>Select building</option>
+              <option>Administration Building</option>
+              <option>Engineering Building</option>
+              <option>ICT Building</option>
+              <option>Security Office</option>
+              <option>College of Education</option>
+              <option>Arts &amp; Sciences Building</option>
+              <option>Science Building</option>
+              <option>University Library</option>
+              <option>University Clinic</option>
+              <option>DRRMO Office</option>
+              <option>College of Engineering</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="cr-floor">Floor</label>
+            <select id="cr-floor" required>
+              <option value="" disabled selected>Select floor</option>
+              <option>Ground Floor</option>
+              <option>2nd Floor</option>
+              <option>3rd Floor</option>
+              <option>4th Floor</option>
+              <option>Basement</option>
+              <option>Rooftop</option>
+            </select>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div class="form-group">
+            <label for="cr-room">Room / Area</label>
+            <input type="text" id="cr-room" placeholder="e.g. Room 101, Lab 302" required>
+          </div>
+          <div class="form-group">
+            <label for="cr-priority">Priority Level</label>
+            <select id="cr-priority" required>
+              <option value="" disabled selected>Select priority</option>
+              <option value="high">High — Immediate response</option>
+              <option value="medium">Medium — Urgent</option>
+              <option value="low">Low — Non-critical</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="cr-status">Initial Status</label>
+          <select id="cr-status" required>
+            <option value="active">Active</option>
+            <option value="pending">Pending</option>
+            <option value="acknowledged">Acknowledged</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="cr-transcript">Voice Transcript / Details</label>
+          <textarea id="cr-transcript" rows="3" placeholder="Describe the emergency situation or paste voice transcript here..." style="width:100%;border:1px solid var(--border-2);border-radius:6px;padding:8px 12px;font-size:13px;font-family:inherit;resize:vertical;"></textarea>
+        </div>
+      </form>
+    </div>
+    <div class="create-modal-footer">
+      <button class="btn btn-secondary" onclick="closeCreateReport()">Cancel</button>
+      <button class="btn btn-primary" id="cr-submit" onclick="doCreateReport(event)">Submit Report</button>
     </div>
   </div>
 </div>
 
 <script>
-/* ─── MOCK DATA ───────────────────────────────────────────────── */
-const INCIDENTS = [
-  { id:'INC-001', type:'Medical Emergency', category:'medical', building:'Engineering Building', floor:'Ground Floor', room:'Room 101', location:'College of Engineering', date:'Oct 26, 2026', time:'12:14 PM', status:'active', priority:'high', office:'School Clinic', reporter:'Prof. Santos', notes:'Student collapsed during class. Unresponsive.' },
-  { id:'INC-002', type:'Theft', category:'security', building:'University Library', floor:'2nd Floor', room:'Study Area B', location:'University Library', date:'Oct 26, 2026', time:'11:40 AM', status:'acknowledged', priority:'medium', office:'Campus Security', reporter:'Librarian Cruz', notes:'Missing laptop bag reported at study area.' },
-  { id:'INC-003', type:'Fire Incident', category:'fire', building:'Science Building', floor:'3rd Floor', room:'Laboratory 302', location:'Science Building', date:'Oct 26, 2026', time:'10:55 AM', status:'active', priority:'high', office:'DRRMO', reporter:'Lab Assistant Reyes', notes:'Small fire in chemistry laboratory. Evacuation in progress.' },
-  { id:'INC-004', type:'Fainting Incident', category:'medical', building:'College of Education', floor:'2nd Floor', room:'Room 205', location:'College of Education', date:'Oct 26, 2026', time:'10:20 AM', status:'resolved', priority:'medium', office:'School Clinic', reporter:'Faculty Mendoza', notes:'Student fainted in classroom. Revived on-site.' },
-  { id:'INC-005', type:'Suspicious Activity', category:'security', building:'ICT Building', floor:'Ground Floor', room:'Entrance Gate', location:'ICT Building', date:'Oct 26, 2026', time:'09:45 AM', status:'pending', priority:'medium', office:'Campus Security', reporter:'Guard Villanueva', notes:'Unidentified individual loitering near server room.' },
-  { id:'INC-006', type:'Flood Incident', category:'fire', building:'Administration Building', floor:'Basement', room:'Storage Room', location:'Admin Building', date:'Oct 25, 2026', time:'03:30 PM', status:'resolved', priority:'high', office:'DRRMO', reporter:'Janitor Lim', notes:'Flooding due to heavy rain. Drainage system cleared.' },
-  { id:'INC-007', type:'Cardiac Emergency', category:'medical', building:'University Clinic', floor:'Ground Floor', room:'Treatment Room 1', location:'University Clinic', date:'Oct 25, 2026', time:'02:10 PM', status:'resolved', priority:'high', office:'School Clinic', reporter:'Nurse Aquino', notes:'Faculty member experienced chest pains. Ambulance called.' },
-  { id:'INC-008', type:'Unauthorized Entry', category:'security', building:'DRRMO Office', floor:'Ground Floor', room:'Equipment Room', location:'DRRMO Office', date:'Oct 25, 2026', time:'01:00 PM', status:'resolved', priority:'medium', office:'Campus Security', reporter:'Officer De Leon', notes:'Unauthorized person found in restricted area.' },
-  { id:'INC-009', type:'Earthquake Alert', category:'fire', building:'All Buildings', floor:'All Floors', room:'Campus-Wide', location:'Samar State University', date:'Oct 25, 2026', time:'11:20 AM', status:'resolved', priority:'high', office:'DRRMO', reporter:'Seismic Sensor System', notes:'Magnitude 4.2 tremor detected. Minor cracks in older structures.' },
-  { id:'INC-010', type:'Campus Disturbance', category:'security', building:'College of Arts and Sciences', floor:'Ground Floor', room:'Lobby', location:'Arts & Sciences', date:'Oct 24, 2026', time:'04:50 PM', status:'resolved', priority:'low', office:'Campus Security', reporter:'Student Council Rep', notes:'Altercation between student groups. Dispersed peacefully.' },
-  { id:'INC-011', type:'Hazard Report', category:'fire', building:'College of Engineering', floor:'2nd Floor', room:'Workshop', location:'Engineering Workshop', date:'Oct 24, 2026', time:'02:30 PM', status:'pending', priority:'medium', office:'DRRMO', reporter:'Technician Bautista', notes:'Gas leak smell reported. Awaiting DRRMO inspection.' },
-  { id:'INC-012', type:'General Emergency', category:'general', building:'Security Office', floor:'Ground Floor', room:'Control Room', location:'Security Office', date:'Oct 24, 2026', time:'09:00 AM', status:'resolved', priority:'low', office:'Administrator', reporter:'System Alert', notes:'Power outage affecting CCTV systems.' },
-];
+/* ─── INCIDENTS DATA (LOADED LIVE FROM SUPABASE) ────────────── */
+const INCIDENTS = []; // liveIncidents is the single source of truth
 
 const ROLES = {
   admin:    { label:'Administrator',   avatar:'AD', theme:'admin',    menu:['overview','incidents','map','analytics','reports','settings'], bgColor:'#6b21a8' },
@@ -1059,37 +1260,406 @@ const MENU_CONFIG = {
 
 let currentRole = 'admin';
 let currentPage = 'overview';
+let currentUser = null; // Supabase user object
 
-/* ─── AUTH ───────────────────────────────────────────────────── */
-function doLogin(e) {
-  e.preventDefault();
-  currentRole = document.getElementById('role-select').value;
-  showApp();
-}
-function doLogout() {
-  document.getElementById('screen-app').classList.remove('active');
+/* ─── SUPABASE INIT ──────────────────────────────────────────── */
+const SUPABASE_URL  = 'https://tqdalphmeycgrfaxxbqk.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRxZGFscGhtZXljZ3JmYXh4YnFrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI5OTk2NTMsImV4cCI6MjEwODU3NTY1M30.jwXzvLlMrbCyt2gqnyVFg2c5jO0BS8Guv_hDnorsQBY';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+/* Maps profiles.office → internal role key */
+const OFFICE_TO_ROLE = {
+  'School Clinic':   'clinic',
+  'Campus Security': 'security',
+  'DRRMO':           'drrmo',
+  'Administrator':   'admin',
+};
+
+/* ─── SCREEN HELPERS ─────────────────────────────────────────── */
+function showLogin() {
+  ['screen-app','screen-register'].forEach(id => document.getElementById(id).classList.remove('active'));
   document.getElementById('screen-login').classList.add('active');
   document.body.className = '';
 }
-function showApp() {
-  document.getElementById('screen-login').classList.remove('active');
+function showRegister() {
+  ['screen-app','screen-login'].forEach(id => document.getElementById(id).classList.remove('active'));
+  document.getElementById('screen-register').classList.add('active');
+}
+function hideLoading() { document.getElementById('auth-loading').style.display = 'none'; }
+function showLoading() { document.getElementById('auth-loading').style.display = 'flex'; }
+
+/* ─── AUTH ───────────────────────────────────────────────────── */
+async function doLogin(e) {
+  e.preventDefault();
+  const errEl = document.getElementById('login-error');
+  errEl.classList.remove('visible');
+  const btn = document.getElementById('login-btn');
+  btn.textContent = 'Signing in…'; btn.disabled = true;
+
+  const email    = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value;
+
+  const { data, error } = await sb.auth.signInWithPassword({ email, password });
+
+  btn.textContent = 'Sign In to CAMPUS-ER'; btn.disabled = false;
+  if (error) {
+    errEl.textContent = error.message;
+    errEl.classList.add('visible');
+    return;
+  }
+  await loadProfileAndShow(data.user);
+}
+
+async function doRegister(e) {
+  e.preventDefault();
+  const errEl  = document.getElementById('register-error');
+  const okEl   = document.getElementById('register-success');
+  errEl.classList.remove('visible');
+  okEl.classList.remove('visible');
+
+  const btn      = document.getElementById('register-btn');
+  btn.textContent = 'Creating account…'; btn.disabled = true;
+
+  const fullname    = document.getElementById('reg-fullname').value.trim();
+  const employee_id = document.getElementById('reg-empid').value.trim();
+  const email       = document.getElementById('reg-email').value.trim();
+  const password    = document.getElementById('reg-password').value;
+  const office      = document.getElementById('reg-office').value;
+
+  // 1. Create auth user (email confirmation may be required in Supabase settings)
+  const { data, error } = await sb.auth.signUp({ email, password });
+  if (error) {
+    errEl.textContent = error.message;
+    errEl.classList.add('visible');
+    btn.textContent = 'Create Account'; btn.disabled = false;
+    return;
+  }
+
+  // 2. Insert profile row (uses auth UID)
+  const uid = data.user?.id;
+  if (uid) {
+    const { error: pErr } = await sb
+      .from('profiles')
+      .insert({ id: uid, fullname, employee_id, email, office });
+    if (pErr) {
+      errEl.textContent = 'Account created but profile save failed: ' + pErr.message;
+      errEl.classList.add('visible');
+      btn.textContent = 'Create Account'; btn.disabled = false;
+      return;
+    }
+  }
+
+  btn.textContent = 'Create Account'; btn.disabled = false;
+  okEl.textContent = 'Account created! You can now sign in.';
+  okEl.classList.add('visible');
+  document.getElementById('register-form').reset();
+  // Wait 2s then switch to login
+  setTimeout(() => showLogin(), 2000);
+}
+
+async function doLogout() {
+  await sb.auth.signOut();
+  currentUser = null;
+  showLogin();
+}
+
+async function loadProfileAndShow(user) {
+  currentUser = user;
+  // Fetch profile to get office assignment
+  const { data: profile, error } = await sb
+    .from('profiles')
+    .select('fullname, office, employee_id')
+    .eq('id', user.id)
+    .single();
+
+  if (error || !profile) {
+    // Profile missing — show error on login screen
+    document.getElementById('login-error').textContent =
+      'Profile not found. Please contact your administrator.';
+    document.getElementById('login-error').classList.add('visible');
+    await sb.auth.signOut();
+    return;
+  }
+
+  currentRole = OFFICE_TO_ROLE[profile.office] || 'clinic';
+  showApp(profile);
+}
+
+function showApp(profile) {
+  ['screen-login','screen-register'].forEach(id => document.getElementById(id).classList.remove('active'));
   document.getElementById('screen-app').classList.add('active');
   const r = ROLES[currentRole];
   document.body.className = 'role-' + r.theme;
   document.getElementById('user-avatar').textContent = r.avatar;
   document.getElementById('user-avatar').style.background = r.bgColor;
-  document.getElementById('user-name').textContent = 'SSU ' + r.label;
-  document.getElementById('user-role').textContent = r.label;
-  document.getElementById('sidebar-role-name').textContent = r.label;
+  const displayName = profile?.fullname || ('SSU ' + r.label);
+  document.getElementById('user-name').textContent = displayName;
+  document.getElementById('user-role').textContent = profile?.office || r.label;
+  document.getElementById('sidebar-role-name').textContent = profile?.office || r.label;
   buildSidebar();
-  navigate('overview');
+  // load live data and stations in parallel, then navigate
+  Promise.all([fetchReports(), loadStations()]).then(() => navigate('overview'));
+  setupRealtime();
+}
+
+/* ─── SESSION RESTORE ON LOAD ────────────────────────────────── */
+(async () => {
+  const { data: { session } } = await sb.auth.getSession();
+  if (session?.user) {
+    await loadProfileAndShow(session.user);
+  }
+  hideLoading();
+})();
+
+/* ─── SUPABASE DATA LAYER ────────────────────────────────────── */
+let liveIncidents = [];
+let stationList = [];
+let realtimeChannel = null;
+
+const TYPE_TO_OFFICE = {
+  'Medical Emergency': 'School Clinic',
+  'Security Threat':   'Campus Security',
+  'Fire/Disaster':     'DRRMO',
+  'General Emergency': 'Administrator',
+};
+const TYPE_TO_CAT = {
+  'Medical Emergency': 'medical',
+  'Security Threat':   'security',
+  'Fire/Disaster':     'fire',
+  'General Emergency': 'general',
+};
+
+function getCategory(type) {
+  if (!type) return 'general';
+  const t = type.toLowerCase();
+  if (t.includes('medic') || t.includes('faint') || t.includes('cardiac') || t.includes('clinic')) return 'medical';
+  if (t.includes('secur') || t.includes('theft') || t.includes('suspicious') || t.includes('entry') || t.includes('disturb')) return 'security';
+  if (t.includes('fire') || t.includes('flood') || t.includes('disaster') || t.includes('quake') || t.includes('hazard')) return 'fire';
+  return TYPE_TO_CAT[type] || 'general';
+}
+
+function rowToInc(r) {
+  const d = r.created_at ? new Date(r.created_at) : new Date();
+  const cat = getCategory(r.emergency_type);
+  const office = r.assigned_office || TYPE_TO_OFFICE[r.emergency_type] || 'Administrator';
+  return {
+    id:       r.id ? r.id.slice(0,8).toUpperCase() : 'INC-' + Math.floor(Math.random()*1000),
+    _uuid:    r.id,
+    type:     r.emergency_type || 'General Emergency',
+    category: cat,
+    building: r.building || 'Campus',
+    floor:    r.floor || 'Ground Floor',
+    room:     r.room || 'General Area',
+    location: r.building ? (r.room ? `${r.room}, ${r.building}` : r.building) : 'Samar State University',
+    date:     d.toLocaleDateString('en-PH',{month:'short',day:'numeric',year:'numeric'}),
+    time:     d.toLocaleTimeString('en-PH',{hour:'2-digit',minute:'2-digit'}),
+    status:   r.status || 'active',
+    priority: r.priority_level || 'medium',
+    office:   office,
+    reporter: 'Campus Alert System',
+    notes:    r.voice_transcript || 'No transcript.',
+  };
+}
+
+/* ─── ROLE-BASED FETCHING ─────────────────────────────────────── */
+async function fetchReports() {
+  let q = sb.from('emergency_reports').select('*').order('created_at', { ascending: false });
+  // Role-based filtering:
+  // School Clinic   → Medical Emergency reports only
+  // Campus Security → Security Threat reports only
+  // DRRMO           → Fire/Disaster reports only
+  // Administrator   → All reports
+  if (currentRole === 'clinic') {
+    q = q.eq('emergency_type', 'Medical Emergency');
+  } else if (currentRole === 'security') {
+    q = q.eq('emergency_type', 'Security Threat');
+  } else if (currentRole === 'drrmo') {
+    q = q.eq('emergency_type', 'Fire/Disaster');
+  }
+  const { data, error } = await q;
+  if (error) {
+    console.error('fetchReports error:', error.message);
+    return;
+  }
+  liveIncidents = (data || []).map(rowToInc);
+  buildSidebar();
+}
+
+/* ─── REALTIME UPDATES ───────────────────────────────────────── */
+function setupRealtime() {
+  if (realtimeChannel) {
+    sb.removeChannel(realtimeChannel);
+    realtimeChannel = null;
+  }
+  realtimeChannel = sb
+    .channel('campus_er_live_sync')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'emergency_reports' },
+      async (payload) => {
+        console.log('Realtime emergency_reports event received:', payload);
+        await fetchReports();
+        renderPage(currentPage);
+        const action = payload.eventType === 'INSERT' ? 'New emergency reported' :
+                       payload.eventType === 'UPDATE' ? 'Emergency status updated' :
+                       payload.eventType === 'DELETE' ? 'Emergency report deleted' : 'Reports refreshed';
+        showToast('🚨 Live Refresh: ' + action);
+      })
+    .subscribe();
+}
+
+async function updateReportStatus(uuid, newStatus) {
+  if (!uuid) { showToast('Cannot update: report ID missing'); return; }
+  const { error } = await sb
+    .from('emergency_reports')
+    .update({ status: newStatus })
+    .eq('id', uuid);
+  if (error) { showToast('Update failed: ' + error.message); return; }
+  await fetchReports();
+  renderPage(currentPage);
+  showToast('Status updated → ' + newStatus);
+}
+
+function openCreateReport() {
+  document.getElementById('create-report-modal').classList.add('open');
+}
+function closeCreateReport() {
+  document.getElementById('create-report-modal').classList.remove('open');
+  document.getElementById('cr-form').reset();
+  document.getElementById('cr-error').classList.remove('visible');
+  _editUUID = null;
+  document.querySelector('.create-modal-header h2').textContent = '🚨 Create Emergency Report';
+  document.getElementById('cr-submit').textContent = 'Submit Report';
+  document.getElementById('cr-submit').onclick = (e) => doCreateReport(e);
+}
+
+async function doCreateReport(e) {
+  e.preventDefault();
+  const errEl = document.getElementById('cr-error');
+  errEl.classList.remove('visible');
+  const btn = document.getElementById('cr-submit');
+  btn.textContent = 'Submitting…'; btn.disabled = true;
+
+  const emergency_type   = document.getElementById('cr-type').value;
+  const building         = document.getElementById('cr-building').value;
+  const floor            = document.getElementById('cr-floor').value;
+  const room             = document.getElementById('cr-room').value.trim();
+  const priority_level   = document.getElementById('cr-priority').value;
+  const status           = document.getElementById('cr-status').value;
+  let voice_transcript   = document.getElementById('cr-transcript').value.trim();
+  const station_id       = document.getElementById('cr-station').value;
+  if (station_id) {
+    const st = stationList.find(s => s.id === station_id);
+    const stLabel = st ? [st.building, st.floor].filter(Boolean).join(' ') : ('Station ' + station_id.slice(0,6));
+    voice_transcript = voice_transcript ? `[Station: ${stLabel}] ${voice_transcript}` : `[Station: ${stLabel}]`;
+  }
+  const assigned_office  = TYPE_TO_OFFICE[emergency_type] || 'Administrator';
+
+  const { error } = await sb.from('emergency_reports').insert({
+    emergency_type, building, floor, room,
+    assigned_office, priority_level, status, voice_transcript,
+  });
+
+  btn.textContent = 'Submit Report'; btn.disabled = false;
+  if (error) {
+    errEl.textContent = error.message;
+    errEl.classList.add('visible');
+    return;
+  }
+  closeCreateReport();
+  showToast('Report submitted → ' + assigned_office);
+  await fetchReports();
+  renderPage(currentPage);
+}
+
+/* ─── EDIT REPORT ────────────────────────────────────────────── */
+let _editUUID = null;
+
+async function openEditReport(uuid) {
+  const { data, error } = await sb
+    .from('emergency_reports')
+    .select('*')
+    .eq('id', uuid)
+    .single();
+  if (error || !data) { showToast('Could not load report: ' + (error?.message || 'not found')); return; }
+
+  _editUUID = uuid;
+  document.querySelector('.create-modal-header h2').textContent = '✏ Edit Emergency Report';
+  document.getElementById('cr-submit').textContent = 'Save Changes';
+  document.getElementById('cr-submit').onclick = (e) => doEditReport(e);
+
+  document.getElementById('cr-type').value     = data.emergency_type;
+  document.getElementById('cr-building').value = data.building;
+  document.getElementById('cr-floor').value    = data.floor;
+  document.getElementById('cr-room').value     = data.room;
+  document.getElementById('cr-priority').value = data.priority_level;
+  document.getElementById('cr-status').value   = data.status;
+  document.getElementById('cr-transcript').value = data.voice_transcript || '';
+
+  document.getElementById('create-report-modal').classList.add('open');
+}
+
+async function doEditReport(e) {
+  e.preventDefault();
+  const errEl = document.getElementById('cr-error');
+  errEl.classList.remove('visible');
+  const btn = document.getElementById('cr-submit');
+  btn.textContent = 'Saving…'; btn.disabled = true;
+
+  const emergency_type   = document.getElementById('cr-type').value;
+  const building         = document.getElementById('cr-building').value;
+  const floor            = document.getElementById('cr-floor').value;
+  const room             = document.getElementById('cr-room').value.trim();
+  const priority_level   = document.getElementById('cr-priority').value;
+  const status           = document.getElementById('cr-status').value;
+  const voice_transcript = document.getElementById('cr-transcript').value.trim();
+  const assigned_office  = TYPE_TO_OFFICE[emergency_type] || 'Administrator';
+
+  const { error } = await sb
+    .from('emergency_reports')
+    .update({ emergency_type, building, floor, room, assigned_office, priority_level, status, voice_transcript })
+    .eq('id', _editUUID);
+
+  btn.textContent = 'Save Changes'; btn.disabled = false;
+  if (error) { errEl.textContent = error.message; errEl.classList.add('visible'); return; }
+
+  closeCreateReport();
+  showToast('Report updated successfully');
+  await fetchReports();
+  renderPage(currentPage);
+}
+
+/* ─── DELETE REPORT ──────────────────────────────────────────── */
+async function deleteReport(uuid, displayId) {
+  if (!confirm(`Delete report ${displayId}? This cannot be undone.`)) return;
+  const { error } = await sb.from('emergency_reports').delete().eq('id', uuid);
+  if (error) { showToast('Delete failed: ' + error.message); return; }
+  showToast('Report ' + displayId + ' deleted');
+  await fetchReports();
+  renderPage(currentPage);
+}
+
+/* ─── STATIONS TABLE LOADER ──────────────────────────────────── */
+async function loadStations() {
+  const { data, error } = await sb.from('stations').select('*').order('created_at', { ascending: false });
+  if (error) { console.warn('loadStations error:', error.message); return; }
+  stationList = data || [];
+  const sel = document.getElementById('cr-station');
+  if (!sel) return;
+  if (stationList.length === 0) {
+    sel.innerHTML = '<option value="">No station / Manual report</option>';
+  } else {
+    sel.innerHTML = '<option value="">No station / Manual report</option>'
+      + stationList.map(s => {
+        const loc = [s.building, s.floor].filter(Boolean).join(' — ') || ('Station ' + s.id.slice(0,6).toUpperCase());
+        return `<option value="${s.id}">${loc} (${s.status || 'online'})</option>`;
+      }).join('');
+  }
 }
 
 /* ─── SIDEBAR ────────────────────────────────────────────────── */
 function buildSidebar() {
   const nav = document.getElementById('sidebar-nav');
   const items = ROLES[currentRole].menu;
-  const activeCount = INCIDENTS.filter(i => i.status === 'active').length;
+  const activeCount = liveIncidents.filter(i => i.status === 'active').length;
   nav.innerHTML = items.map(key => {
     const m = MENU_CONFIG[key];
     const badge = key === 'incidents' && activeCount > 0 ? `<span class="nav-badge">${activeCount}</span>` : '';
@@ -1137,9 +1707,8 @@ function renderPage(page) {
 
 /* ─── FILTER INCIDENTS BY ROLE ────────────────────────────────── */
 function myIncidents() {
-  if (currentRole === 'admin') return INCIDENTS;
-  const map = { clinic:'medical', security:'security', drrmo:'fire' };
-  return INCIDENTS.filter(i => i.category === map[currentRole]);
+  // liveIncidents is already filtered by fetchReports() for non-admin roles
+  return liveIncidents;
 }
 
 /* ─── OVERVIEW PAGE ───────────────────────────────────────────── */
@@ -1148,10 +1717,10 @@ function buildOverview() {
   const active = all.filter(i => i.status === 'active').length;
   const pending = all.filter(i => i.status === 'pending').length;
   const resolved = all.filter(i => i.status === 'resolved').length;
-  const medical = INCIDENTS.filter(i => i.category === 'medical').length;
-  const security = INCIDENTS.filter(i => i.category === 'security').length;
-  const fire = INCIDENTS.filter(i => i.category === 'fire').length;
-  const general = INCIDENTS.filter(i => i.category === 'general').length;
+  const medical  = liveIncidents.filter(i => i.category === 'medical').length;
+  const security = liveIncidents.filter(i => i.category === 'security').length;
+  const fire     = liveIncidents.filter(i => i.category === 'fire').length;
+  const general  = liveIncidents.filter(i => i.category === 'general').length;
 
   const roleTitle = {
     admin:'Executive Monitoring Center', clinic:'Medical Monitoring Center',
@@ -1160,7 +1729,7 @@ function buildOverview() {
 
   const statsHTML = currentRole === 'admin' ? `
     <div class="stat-row cols-8">
-      <div class="stat-card"><div class="stat-label">Total Incidents</div><div class="stat-value">${INCIDENTS.length}</div><div class="stat-delta">All time</div></div>
+      <div class="stat-card"><div class="stat-label">Total Incidents</div><div class="stat-value">${liveIncidents.length}</div><div class="stat-delta">All time</div></div>
       <div class="stat-card"><div class="stat-label">Active Now</div><div class="stat-value negative">${active}</div><div class="stat-delta down">Needs attention</div></div>
       <div class="stat-card"><div class="stat-label">Medical Cases</div><div class="stat-value positive">${medical}</div><div class="stat-delta">→ School Clinic</div></div>
       <div class="stat-card"><div class="stat-label">Security Threats</div><div class="stat-value accent">${security}</div><div class="stat-delta">→ Campus Security</div></div>
@@ -1194,7 +1763,8 @@ function buildOverview() {
       </div>
       <div class="page-header-right">
         <button class="btn btn-secondary" onclick="openPanicModal()">🔔 Active Alert</button>
-        <button class="btn btn-primary" onclick="navigate('incidents')">View All Reports</button>
+        <button class="btn btn-primary" onclick="openCreateReport()">+ New Report</button>
+        <button class="btn btn-secondary" onclick="navigate('incidents')">View All Reports</button>
       </div>
     </div>
     ${statsHTML}
@@ -1217,7 +1787,7 @@ function buildOverview() {
           </div>
           <table class="incident-table">
             <thead><tr><th>ID</th><th>Type</th><th>Location</th><th>Time</th><th>Status</th><th></th></tr></thead>
-            <tbody>${recentRows}</tbody>
+            <tbody>${recentRows || '<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--ink-3);">No emergency reports found. Use "+ New Report" to submit.</td></tr>'}</tbody>
           </table>
         </div>
       </div>
@@ -1242,9 +1812,9 @@ function buildAlertPanel(incidents) {
       <div class="al-location">📍 ${inc.room}, ${inc.building}</div>
       <div style="margin-bottom:6px;"><span class="status-pill ${inc.status}">${statusLabel(inc.status)}</span></div>
       <div class="al-actions">
-        <button class="al-btn ack" onclick="acknowledgeAlert()">Acknowledge</button>
+        <button class="al-btn ack" onclick="updateReportStatus('${inc._uuid}','acknowledged')">Acknowledge</button>
         <button class="al-btn dispatch" onclick="dispatchResponders()">Dispatch</button>
-        <button class="al-btn resolve" onclick="resolveAlert()">Resolve</button>
+        <button class="al-btn resolve" onclick="updateReportStatus('${inc._uuid}','resolved')">Resolve</button>
       </div>
     </div>`).join('');
 
@@ -1258,9 +1828,21 @@ function buildAlertPanel(incidents) {
     </div>`;
 }
 
-/* ─── CAMPUS MAP SVG ─────────────────────────────────────────── */
+/* ─── CAMPUS MAP SVG (DYNAMIC) ────────────────────────────────── */
 function buildCampusMap(mini=false) {
   const h = mini ? 320 : 500;
+  const activeEmergencies = liveIncidents.filter(i => i.status === 'active');
+  const hasEngEmer = activeEmergencies.some(i => i.building && i.building.includes('Engineering'));
+  const hasSciEmer = activeEmergencies.some(i => i.building && i.building.includes('Science'));
+  const hasIctEmer = activeEmergencies.some(i => i.building && i.building.includes('ICT'));
+  const hasSecEmer = activeEmergencies.some(i => i.building && (i.building.includes('Security') || i.building.includes('Patrol')));
+  const hasEduEmer = activeEmergencies.some(i => i.building && i.building.includes('Education'));
+  const hasArtsEmer = activeEmergencies.some(i => i.building && i.building.includes('Arts'));
+  const hasLibEmer = activeEmergencies.some(i => i.building && i.building.includes('Library'));
+  const hasClinicEmer = activeEmergencies.some(i => i.building && i.building.includes('Clinic'));
+  const hasDrrmoEmer = activeEmergencies.some(i => i.building && i.building.includes('DRRMO'));
+  const hasAdminEmer = activeEmergencies.some(i => i.building && i.building.includes('Admin'));
+
   return `
     <div class="campus-map-wrap" style="height:${h}px;" id="campus-map-wrap">
       <svg class="campus-map-svg" viewBox="0 0 700 500" xmlns="http://www.w3.org/2000/svg" id="campus-svg">
@@ -1277,76 +1859,76 @@ function buildCampusMap(mini=false) {
         <circle cx="350" cy="460" r="14" fill="#5a9e5a" opacity="0.3"/>
 
         <!-- Administration Building -->
-        <g class="map-building" onclick="showBuildingTip('Administration Building','Admin')">
-          <rect x="50" y="50" width="130" height="70" rx="4" fill="#4a7ab5"/>
+        <g class="map-building ${hasAdminEmer ? 'emergency' : ''}" onclick="showBuildingTip('Administration Building','${hasAdminEmer ? 'Active Emergency' : 'Online'}')">
+          <rect x="50" y="50" width="130" height="70" rx="4" fill="${hasAdminEmer ? '#dc2626' : '#4a7ab5'}"/>
           <text x="115" y="82" text-anchor="middle" fill="white" font-size="9" font-weight="600" font-family="Inter,sans-serif">Administration</text>
           <text x="115" y="94" text-anchor="middle" fill="white" font-size="8" font-family="Inter,sans-serif">Building</text>
-          <circle cx="160" cy="60" r="5" fill="#22c55e"/>
+          <circle cx="160" cy="60" r="5" fill="${hasAdminEmer ? '#fff' : '#22c55e'}"/>
         </g>
-        <!-- College of Engineering (with emergency) -->
-        <g class="map-building emergency" id="bld-engineering" onclick="showBuildingTip('College of Engineering','Emergency in Room 101')">
-          <rect x="220" y="50" width="140" height="80" rx="4" fill="#dc2626"/>
+        <!-- College of Engineering -->
+        <g class="map-building ${hasEngEmer ? 'emergency' : ''}" id="bld-engineering" onclick="showBuildingTip('College of Engineering','${hasEngEmer ? 'Active Emergency' : 'Online'}')">
+          <rect x="220" y="50" width="140" height="80" rx="4" fill="${hasEngEmer ? '#dc2626' : '#4a7ab5'}"/>
           <text x="290" y="85" text-anchor="middle" fill="white" font-size="9" font-weight="700" font-family="Inter,sans-serif">College of</text>
           <text x="290" y="97" text-anchor="middle" fill="white" font-size="9" font-weight="700" font-family="Inter,sans-serif">Engineering</text>
-          <circle cx="350" cy="60" r="6" fill="#fff"/>
+          <circle cx="350" cy="60" r="6" fill="${hasEngEmer ? '#fff' : '#22c55e'}"/>
         </g>
         <!-- ICT Building -->
-        <g class="map-building" onclick="showBuildingTip('ICT Building','Online')">
-          <rect x="410" y="50" width="100" height="65" rx="4" fill="#4a7ab5"/>
+        <g class="map-building ${hasIctEmer ? 'emergency' : ''}" onclick="showBuildingTip('ICT Building','${hasIctEmer ? 'Active Emergency' : 'Online'}')">
+          <rect x="410" y="50" width="100" height="65" rx="4" fill="${hasIctEmer ? '#dc2626' : '#4a7ab5'}"/>
           <text x="460" y="79" text-anchor="middle" fill="white" font-size="9" font-weight="600" font-family="Inter,sans-serif">ICT</text>
           <text x="460" y="91" text-anchor="middle" fill="white" font-size="8" font-family="Inter,sans-serif">Building</text>
-          <circle cx="500" cy="60" r="5" fill="#22c55e"/>
+          <circle cx="500" cy="60" r="5" fill="${hasIctEmer ? '#fff' : '#22c55e'}"/>
         </g>
         <!-- Security Office -->
-        <g class="map-building" onclick="showBuildingTip('Security Office','Online')">
-          <rect x="560" y="50" width="110" height="55" rx="4" fill="#1e3a8a"/>
+        <g class="map-building ${hasSecEmer ? 'emergency' : ''}" onclick="showBuildingTip('Security Office','${hasSecEmer ? 'Active Emergency' : 'Online'}')">
+          <rect x="560" y="50" width="110" height="55" rx="4" fill="${hasSecEmer ? '#dc2626' : '#1e3a8a'}"/>
           <text x="615" y="74" text-anchor="middle" fill="white" font-size="9" font-weight="600" font-family="Inter,sans-serif">Security</text>
           <text x="615" y="86" text-anchor="middle" fill="white" font-size="8" font-family="Inter,sans-serif">Office</text>
-          <circle cx="660" cy="60" r="5" fill="#22c55e"/>
+          <circle cx="660" cy="60" r="5" fill="${hasSecEmer ? '#fff' : '#22c55e'}"/>
         </g>
 
         <!-- College of Education -->
-        <g class="map-building" onclick="showBuildingTip('College of Education','Online')">
-          <rect x="50" y="155" width="130" height="65" rx="4" fill="#4a7ab5"/>
+        <g class="map-building ${hasEduEmer ? 'emergency' : ''}" onclick="showBuildingTip('College of Education','${hasEduEmer ? 'Active Emergency' : 'Online'}')">
+          <rect x="50" y="155" width="130" height="65" rx="4" fill="${hasEduEmer ? '#dc2626' : '#4a7ab5'}"/>
           <text x="115" y="180" text-anchor="middle" fill="white" font-size="9" font-weight="600" font-family="Inter,sans-serif">College of</text>
           <text x="115" y="192" text-anchor="middle" fill="white" font-size="9" font-weight="600" font-family="Inter,sans-serif">Education</text>
-          <circle cx="170" cy="165" r="5" fill="#22c55e"/>
+          <circle cx="170" cy="165" r="5" fill="${hasEduEmer ? '#fff' : '#22c55e'}"/>
         </g>
         <!-- College of Arts and Sciences -->
-        <g class="map-building" onclick="showBuildingTip('College of Arts and Sciences','Online')">
-          <rect x="220" y="155" width="165" height="65" rx="4" fill="#4a7ab5"/>
+        <g class="map-building ${hasArtsEmer ? 'emergency' : ''}" onclick="showBuildingTip('College of Arts and Sciences','${hasArtsEmer ? 'Active Emergency' : 'Online'}')">
+          <rect x="220" y="155" width="165" height="65" rx="4" fill="${hasArtsEmer ? '#dc2626' : '#4a7ab5'}"/>
           <text x="302" y="180" text-anchor="middle" fill="white" font-size="9" font-weight="600" font-family="Inter,sans-serif">College of Arts</text>
           <text x="302" y="192" text-anchor="middle" fill="white" font-size="9" font-weight="600" font-family="Inter,sans-serif">and Sciences</text>
-          <circle cx="375" cy="165" r="5" fill="#22c55e"/>
+          <circle cx="375" cy="165" r="5" fill="${hasArtsEmer ? '#fff' : '#22c55e'}"/>
         </g>
-        <!-- Science Building (fire) -->
-        <g class="map-building emergency" id="bld-science" onclick="showBuildingTip('Science Building','Fire in Lab 302')">
-          <rect x="430" y="155" width="120" height="65" rx="4" fill="#dc2626"/>
+        <!-- Science Building -->
+        <g class="map-building ${hasSciEmer ? 'emergency' : ''}" id="bld-science" onclick="showBuildingTip('Science Building','${hasSciEmer ? 'Active Emergency' : 'Online'}')">
+          <rect x="430" y="155" width="120" height="65" rx="4" fill="${hasSciEmer ? '#dc2626' : '#4a7ab5'}"/>
           <text x="490" y="180" text-anchor="middle" fill="white" font-size="9" font-weight="700" font-family="Inter,sans-serif">Science</text>
-          <text x="490" y="192" text-anchor="middle" fill="white" font-size="9" font-weight="700" font-family="Inter,sans-serif">Building 🔥</text>
-          <circle cx="540" cy="165" r="6" fill="#fff"/>
+          <text x="490" y="192" text-anchor="middle" fill="white" font-size="9" font-weight="700" font-family="Inter,sans-serif">Building ${hasSciEmer ? '🔥' : ''}</text>
+          <circle cx="540" cy="165" r="6" fill="${hasSciEmer ? '#fff' : '#22c55e'}"/>
         </g>
         <!-- DRRMO Office -->
-        <g class="map-building" onclick="showBuildingTip('DRRMO Office','Online')">
-          <rect x="590" y="155" width="90" height="65" rx="4" fill="#b45309"/>
+        <g class="map-building ${hasDrrmoEmer ? 'emergency' : ''}" onclick="showBuildingTip('DRRMO Office','${hasDrrmoEmer ? 'Active Emergency' : 'Online'}')">
+          <rect x="590" y="155" width="90" height="65" rx="4" fill="${hasDrrmoEmer ? '#dc2626' : '#b45309'}"/>
           <text x="635" y="180" text-anchor="middle" fill="white" font-size="9" font-weight="600" font-family="Inter,sans-serif">DRRMO</text>
           <text x="635" y="192" text-anchor="middle" fill="white" font-size="8" font-family="Inter,sans-serif">Office</text>
-          <circle cx="670" cy="165" r="5" fill="#22c55e"/>
+          <circle cx="670" cy="165" r="5" fill="${hasDrrmoEmer ? '#fff' : '#22c55e'}"/>
         </g>
 
         <!-- University Library -->
-        <g class="map-building" onclick="showBuildingTip('University Library','Online')">
-          <rect x="50" y="260" width="140" height="65" rx="4" fill="#4a7ab5"/>
+        <g class="map-building ${hasLibEmer ? 'emergency' : ''}" onclick="showBuildingTip('University Library','${hasLibEmer ? 'Active Emergency' : 'Online'}')">
+          <rect x="50" y="260" width="140" height="65" rx="4" fill="${hasLibEmer ? '#dc2626' : '#4a7ab5'}"/>
           <text x="120" y="285" text-anchor="middle" fill="white" font-size="9" font-weight="600" font-family="Inter,sans-serif">University</text>
           <text x="120" y="297" text-anchor="middle" fill="white" font-size="9" font-weight="600" font-family="Inter,sans-serif">Library</text>
-          <circle cx="180" cy="270" r="5" fill="#22c55e"/>
+          <circle cx="180" cy="270" r="5" fill="${hasLibEmer ? '#fff' : '#22c55e'}"/>
         </g>
         <!-- University Clinic -->
-        <g class="map-building" onclick="showBuildingTip('University Clinic','Online')">
-          <rect x="230" y="260" width="130" height="65" rx="4" fill="#166534"/>
+        <g class="map-building ${hasClinicEmer ? 'emergency' : ''}" onclick="showBuildingTip('University Clinic','${hasClinicEmer ? 'Active Emergency' : 'Online'}')">
+          <rect x="230" y="260" width="130" height="65" rx="4" fill="${hasClinicEmer ? '#dc2626' : '#166534'}"/>
           <text x="295" y="285" text-anchor="middle" fill="white" font-size="9" font-weight="600" font-family="Inter,sans-serif">University</text>
           <text x="295" y="297" text-anchor="middle" fill="white" font-size="9" font-weight="600" font-family="Inter,sans-serif">Clinic ✚</text>
-          <circle cx="350" cy="270" r="5" fill="#22c55e"/>
+          <circle cx="350" cy="270" r="5" fill="${hasClinicEmer ? '#fff' : '#22c55e'}"/>
         </g>
         <!-- Rooms grid -->
         <g>
@@ -1370,15 +1952,16 @@ function buildCampusMap(mini=false) {
         <rect x="380" y="395" width="300" height="80" rx="4" fill="#b8c8db"/>
         <text x="530" y="440" text-anchor="middle" fill="#1a3a6e" font-size="11" font-weight="600" font-family="Inter,sans-serif">Parking / Grounds</text>
 
-        <!-- Emergency marker -->
-        <g id="emergency-marker" transform="translate(270,60)">
+        ${activeEmergencies.length > 0 ? `
+        <!-- Dynamic Emergency marker -->
+        <g id="emergency-marker" transform="translate(${hasEngEmer ? '290,60' : hasSciEmer ? '490,165' : '350,250'})">
           <circle r="12" fill="#dc2626" opacity="0.9">
             <animate attributeName="r" values="12;18;12" dur="1.2s" repeatCount="indefinite"/>
             <animate attributeName="opacity" values="0.9;0.3;0.9" dur="1.2s" repeatCount="indefinite"/>
           </circle>
           <circle r="6" fill="#fff"/>
           <text x="0" y="4" text-anchor="middle" fill="#dc2626" font-size="8" font-weight="700" font-family="Inter,sans-serif">!</text>
-        </g>
+        </g>` : ''}
 
         <!-- Compass -->
         <g transform="translate(660,460)">
@@ -1399,7 +1982,6 @@ function buildCampusMap(mini=false) {
 }
 
 function showBuildingTip(name, status) {
-  // Just show in console; actual tooltip positioning would need mouse coords
   const tip = document.getElementById('map-tooltip');
   if (!tip) return;
   tip.textContent = name + ' — ' + status;
@@ -1410,12 +1992,17 @@ function showBuildingTip(name, status) {
   setTimeout(() => { tip.style.opacity = '0'; }, 2500);
 }
 
-function initMapIfNeeded() {
-  // SVG map is fully static/animated via CSS
-}
+function initMapIfNeeded() {}
 
 /* ─── MAP PAGE ────────────────────────────────────────────────── */
 function buildMapPage() {
+  const activeEmergencies = liveIncidents.filter(i => i.status === 'active');
+  const blds = [
+    'Administration Building','College of Engineering','ICT Building','Security Office',
+    'College of Education','College of Arts and Sciences','Science Building',
+    'University Library','University Clinic','DRRMO Office'
+  ];
+
   return `
     <div class="page-header">
       <div class="page-header-left">
@@ -1423,14 +2010,14 @@ function buildMapPage() {
         <div class="page-sub">Samar State University — Live Building Status</div>
       </div>
       <div class="page-header-right">
-        <button class="btn btn-secondary">🔍 Filter</button>
-        <button class="btn btn-primary" onclick="openPanicModal()">🚨 Active Alert</button>
+        <button class="btn btn-secondary" onclick="loadStations();fetchReports();renderPage('map')">🔄 Refresh Map</button>
+        <button class="btn btn-primary" onclick="openCreateReport()">+ New Report</button>
       </div>
     </div>
     <div class="panel" style="margin-bottom:20px;">
       <div class="panel-header">
         <div class="panel-title">Interactive Campus Map — Samar State University</div>
-        <div style="font-size:12px;color:var(--ink-3);">2 active emergencies · 8 buildings online · Oct 26, 2026, 12:14 PM</div>
+        <div style="font-size:12px;color:var(--ink-3);">${activeEmergencies.length} active emergencies · ${stationList.length} stations loaded</div>
       </div>
       <div class="panel-body" style="padding:0;">
         ${buildCampusMap(false)}
@@ -1440,42 +2027,55 @@ function buildMapPage() {
       <div class="panel">
         <div class="panel-header"><div class="panel-title">Building Status</div></div>
         <div class="panel-body">
-          ${['Administration Building','College of Engineering','ICT Building','Security Office','College of Education','College of Arts and Sciences','Science Building','University Library','University Clinic','DRRMO Office'].map((b,i) => {
-            const isEmergency = b === 'College of Engineering' || b === 'Science Building';
+          ${blds.map(b => {
+            const isEmer = activeEmergencies.some(inc => inc.building && (inc.building.includes(b) || b.includes(inc.building)));
             return `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:12px;">
               <span style="color:var(--ink-2);">${b}</span>
-              <span style="font-weight:600;color:${isEmergency?'var(--negative)':'var(--positive)'};">${isEmergency?'⚠️ Emergency':'● Online'}</span>
+              <span style="font-weight:600;color:${isEmer ? 'var(--negative)' : 'var(--positive)'};">${isEmer ? '⚠️ Emergency' : '● Online'}</span>
             </div>`;
           }).join('')}
         </div>
       </div>
       <div class="panel">
-        <div class="panel-header"><div class="panel-title">Room Status</div></div>
+        <div class="panel-header"><div class="panel-title">Station & Room Status</div></div>
         <div class="panel-body">
-          ${['Room 101 — Engineering Bldg','Room 102 — Engineering Bldg','Room 103 — Science Bldg','Room 104 — Education Bldg','Room 105 — Arts & Sciences','Room 205 — Education Bldg','Room 302 — Science Bldg','Lab 302 — Science Bldg','Treatment Room 1','Study Area B'].map((r,i) => {
-            const isOff = i % 3 === 2;
-            const isEmer = i === 0 || i === 7;
+          ${stationList.length > 0 ? stationList.map(s => {
+            const isEmer = activeEmergencies.some(i => i.building && i.building === s.building);
             return `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:12px;">
-              <span style="color:var(--ink-2);">${r}</span>
-              <span style="font-weight:600;color:${isEmer?'var(--negative)':isOff?'#9ca3af':'var(--positive)'};">${isEmer?'🔴 Emergency':isOff?'⚫ Offline':'🟢 Online'}</span>
+              <span style="color:var(--ink-2);">${s.building || 'Station'} — ${s.floor || 'Area'}</span>
+              <span style="font-weight:600;color:${isEmer ? 'var(--negative)' : 'var(--positive)'};">${isEmer ? '🔴 Emergency' : '🟢 ' + (s.status || 'Online')}</span>
             </div>`;
-          }).join('')}
+          }).join('') : `
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:12px;">
+              <span style="color:var(--ink-2);">Room 101 — Engineering Bldg</span>
+              <span style="font-weight:600;color:${activeEmergencies.some(i => i.building && i.building.includes('Engineering')) ? 'var(--negative)' : 'var(--positive)'};">${activeEmergencies.some(i => i.building && i.building.includes('Engineering')) ? '🔴 Emergency' : '🟢 Online'}</span>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:12px;">
+              <span style="color:var(--ink-2);">Lab 302 — Science Bldg</span>
+              <span style="font-weight:600;color:${activeEmergencies.some(i => i.building && i.building.includes('Science')) ? 'var(--negative)' : 'var(--positive)'};">${activeEmergencies.some(i => i.building && i.building.includes('Science')) ? '🔴 Emergency' : '🟢 Online'}</span>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:12px;">
+              <span style="color:var(--ink-2);">Study Area B — Library</span>
+              <span style="font-weight:600;color:var(--positive);">🟢 Online</span>
+            </div>
+          `}
         </div>
       </div>
       <div class="panel">
         <div class="panel-header"><div class="panel-title">Active Emergencies</div></div>
         <div class="panel-body">
-          ${INCIDENTS.filter(i=>i.status==='active').map(inc=>`
+          ${activeEmergencies.length ? activeEmergencies.map(inc => `
             <div style="background:#fff5f5;border:1px solid #fca5a5;border-radius:6px;padding:10px 12px;margin-bottom:10px;">
               <div style="font-size:12px;font-weight:700;color:var(--negative);margin-bottom:4px;">🚨 ${inc.type}</div>
               <div style="font-size:11px;color:var(--ink-2);">📍 ${inc.room}, ${inc.building}</div>
-              <div style="font-size:11px;color:var(--ink-3);">${inc.time} · Reported by ${inc.reporter}</div>
+              <div style="font-size:11px;color:var(--ink-3);">${inc.time} · Assigned: ${inc.office}</div>
               <button class="btn btn-danger" style="margin-top:8px;height:28px;font-size:11px;" onclick="openDetail('${inc.id}')">View Details</button>
-            </div>`).join('')}
+            </div>`).join('') : '<div class="empty-state"><div class="es-icon">✅</div><div class="es-text">No active emergencies</div></div>'}
         </div>
       </div>
     </div>`;
 }
+
 
 /* ─── INCIDENTS PAGE ─────────────────────────────────────────── */
 function buildIncidents() {
@@ -1494,9 +2094,11 @@ function buildIncidents() {
       <td>${inc.date}</td>
       <td>${inc.time}</td>
       <td><span class="status-pill ${inc.status}">${statusLabel(inc.status)}</span></td>
-      <td>
+      <td style="white-space:nowrap;">
         <button class="btn-row-action" onclick="openDetail('${inc.id}')" style="margin-right:4px;">View</button>
-        <button class="btn-row-action" onclick="acknowledgeAlert()" style="border-color:var(--ssu-navy);color:var(--ssu-navy);">Ack</button>
+        <button class="btn-row-action" onclick="updateReportStatus('${inc._uuid}','acknowledged')" style="border-color:var(--ssu-navy);color:var(--ssu-navy);margin-right:4px;">Ack</button>
+        ${inc._uuid ? `<button class="btn-row-action" onclick="openEditReport('${inc._uuid}')" style="border-color:#b45309;color:#b45309;margin-right:4px;">✏ Edit</button>
+        <button class="btn-row-action" onclick="deleteReport('${inc._uuid}','${inc.id}')" style="border-color:var(--negative);color:var(--negative);">&#x1f5d1; Del</button>` : ''}
       </td>
     </tr>`).join('');
 
@@ -1511,24 +2113,68 @@ function buildIncidents() {
           <option>All Status</option><option>Active</option><option>Pending</option><option>Resolved</option>
         </select>
         <button class="btn btn-secondary">📄 Export</button>
+        <button class="btn btn-primary" onclick="openCreateReport()">+ New Report</button>
       </div>
     </div>
     <div class="panel">
       <div class="panel-header">
         <div class="panel-title">Incident Log</div>
-        <div style="font-size:12px;color:var(--ink-3);">Updated: Oct 26, 2026, 12:14 PM</div>
+        <div style="font-size:12px;color:var(--ink-3);">Updated: ${new Date().toLocaleString('en-PH',{month:'short',day:'numeric',year:'numeric',hour:'2-digit',minute:'2-digit'})}</div>
       </div>
       <div style="overflow-x:auto;">
         <table class="incident-table">
           <thead><tr><th>ID</th><th>Type</th><th>Building</th><th>Location</th><th>Priority</th><th>Date</th><th>Time</th><th>Status</th><th>Actions</th></tr></thead>
-          <tbody>${rows}</tbody>
+          <tbody>${rows || '<tr><td colspan="9" style="text-align:center;padding:32px;color:var(--ink-3);">No incident reports found for this office. Click "+ New Report" to create one.</td></tr>'}</tbody>
         </table>
       </div>
     </div>`;
 }
 
-/* ─── ANALYTICS PAGE ─────────────────────────────────────────── */
+/* ─── ANALYTICS PAGE (DYNAMIC) ─────────────────────────────────── */
 function buildAnalytics() {
+  const total = liveIncidents.length;
+  const active = liveIncidents.filter(i => i.status === 'active').length;
+  const resolved = liveIncidents.filter(i => i.status === 'resolved').length;
+  const respRate = total > 0 ? Math.round((resolved / total) * 100) : 100;
+
+  const medCases  = liveIncidents.filter(i => i.category === 'medical').length;
+  const secCases  = liveIncidents.filter(i => i.category === 'security').length;
+  const fireCases = liveIncidents.filter(i => i.category === 'fire').length;
+  const genCases  = liveIncidents.filter(i => i.category === 'general').length;
+  const maxCat    = Math.max(medCases, secCases, fireCases, genCases, 1);
+
+  const highPri  = liveIncidents.filter(i => i.priority === 'high').length;
+  const medPri   = liveIncidents.filter(i => i.priority === 'medium').length;
+  const lowPri   = liveIncidents.filter(i => i.priority === 'low').length;
+  const totalPri = highPri + medPri + lowPri || 1;
+  const highPct  = Math.round((highPri / totalPri) * 100);
+  const medPct   = Math.round((medPri / totalPri) * 100);
+  const lowPct   = Math.round((lowPri / totalPri) * 100);
+
+  const blds = [
+    ['Engineering Bldg', liveIncidents.filter(i => i.building && i.building.includes('Engineering')).length],
+    ['Science Building', liveIncidents.filter(i => i.building && i.building.includes('Science')).length],
+    ['Library',          liveIncidents.filter(i => i.building && i.building.includes('Library')).length],
+    ['Education Bldg',   liveIncidents.filter(i => i.building && i.building.includes('Education')).length],
+    ['Arts & Sciences',  liveIncidents.filter(i => i.building && i.building.includes('Arts')).length],
+    ['Admin Building',   liveIncidents.filter(i => i.building && i.building.includes('Admin')).length],
+    ['Security Office',  liveIncidents.filter(i => i.building && i.building.includes('Security')).length],
+    ['DRRMO Office',     liveIncidents.filter(i => i.building && i.building.includes('DRRMO')).length],
+  ];
+  const maxBld = Math.max(...blds.map(b => b[1]), 1);
+
+  const offices = [
+    { name: 'School Clinic', color: '#166534', cat: 'medical' },
+    { name: 'Campus Security', color: '#1e3a8a', cat: 'security' },
+    { name: 'DRRMO', color: '#b45309', cat: 'fire' },
+    { name: 'Administrator', color: '#6b21a8', cat: 'general' },
+  ].map(o => {
+    const cases = liveIncidents.filter(i => i.office === o.name || i.category === o.cat).length;
+    const resCount = liveIncidents.filter(i => (i.office === o.name || i.category === o.cat) && i.status === 'resolved').length;
+    const rateStr = cases > 0 ? Math.round((resCount / cases) * 100) + '%' : '100%';
+    return { ...o, cases, resolved: resCount, rate: rateStr };
+  });
+
   return `
     <div class="page-header">
       <div class="page-header-left">
@@ -1536,17 +2182,14 @@ function buildAnalytics() {
         <div class="page-sub">Campus-wide emergency trends · Samar State University</div>
       </div>
       <div class="page-header-right">
-        <select style="height:34px;border:1px solid var(--border-2);border-radius:6px;padding:0 10px;font-size:13px;background:#fff;">
-          <option>Last 30 Days</option><option>Last 7 Days</option><option>This Month</option>
-        </select>
-        <button class="btn btn-secondary">📄 Export Report</button>
+        <button class="btn btn-secondary" onclick="fetchReports();renderPage('analytics')">🔄 Refresh Stats</button>
       </div>
     </div>
     <div class="stat-row">
-      <div class="stat-card"><div class="stat-label">Response Rate</div><div class="stat-value accent">94%</div><div class="stat-delta up">+3% vs last month</div></div>
-      <div class="stat-card"><div class="stat-label">Avg Response Time</div><div class="stat-value">4m 32s</div><div class="stat-delta up">–48s improvement</div></div>
-      <div class="stat-card"><div class="stat-label">Peak Hour</div><div class="stat-value">10–11 AM</div><div class="stat-delta">Highest incident rate</div></div>
-      <div class="stat-card"><div class="stat-label">Highest Risk Zone</div><div class="stat-value" style="font-size:16px;">Engineering</div><div class="stat-delta down">3 incidents this week</div></div>
+      <div class="stat-card"><div class="stat-label">Resolution Rate</div><div class="stat-value accent">${respRate}%</div><div class="stat-delta up">${resolved} of ${total} closed</div></div>
+      <div class="stat-card"><div class="stat-label">Active Emergencies</div><div class="stat-value negative">${active}</div><div class="stat-delta down">Ongoing cases</div></div>
+      <div class="stat-card"><div class="stat-label">Total Documented</div><div class="stat-value">${total}</div><div class="stat-delta">Database records</div></div>
+      <div class="stat-card"><div class="stat-label">Registered Stations</div><div class="stat-value" style="font-size:16px;">${stationList.length}</div><div class="stat-delta">Stations table</div></div>
     </div>
     <div class="two-col">
       <div>
@@ -1554,10 +2197,15 @@ function buildAnalytics() {
           <div class="panel-header"><div class="panel-title">Incidents by Category</div></div>
           <div class="panel-body">
             <div class="chart-bar-list" id="cat-chart">
-              ${[['Medical Emergency',4,'#166534'],['Security Threat',4,'#1e3a8a'],['Fire / Disaster',4,'#b45309'],['General Emergency',1,'#6b21a8']].map(([l,v,c])=>`
+              ${[
+                ['Medical Emergency', medCases, '#166534'],
+                ['Security Threat', secCases, '#1e3a8a'],
+                ['Fire / Disaster', fireCases, '#b45309'],
+                ['General Emergency', genCases, '#6b21a8']
+              ].map(([l,v,c])=>`
                 <div class="chart-bar-item">
                   <div class="chart-bar-label">${l}</div>
-                  <div class="chart-bar-track"><div class="chart-bar-fill" style="width:${v/12*100}%;background:${c};" data-target="${v/12*100}"></div></div>
+                  <div class="chart-bar-track"><div class="chart-bar-fill" style="width:${(v/maxCat)*100}%;background:${c};" data-target="${(v/maxCat)*100}"></div></div>
                   <div class="chart-bar-val">${v}</div>
                 </div>`).join('')}
             </div>
@@ -1567,10 +2215,10 @@ function buildAnalytics() {
           <div class="panel-header"><div class="panel-title">Incidents by Building</div></div>
           <div class="panel-body">
             <div class="chart-bar-list">
-              ${[['Engineering Bldg',3],['Science Building',2],['Library',1],['Education Bldg',2],['Arts & Sciences',1],['Admin Building',1],['Security Office',1],['DRRMO Office',1]].map(([l,v])=>`
+              ${blds.map(([l,v])=>`
                 <div class="chart-bar-item">
                   <div class="chart-bar-label">${l}</div>
-                  <div class="chart-bar-track"><div class="chart-bar-fill" style="width:${v/3*100}%;" data-target="${v/3*100}"></div></div>
+                  <div class="chart-bar-track"><div class="chart-bar-fill" style="width:${(v/maxBld)*100}%;" data-target="${(v/maxBld)*100}"></div></div>
                   <div class="chart-bar-val">${v}</div>
                 </div>`).join('')}
             </div>
@@ -1581,12 +2229,7 @@ function buildAnalytics() {
         <div class="panel" style="margin-bottom:20px;">
           <div class="panel-header"><div class="panel-title">Office Performance</div></div>
           <div class="panel-body">
-            ${[
-              {name:'School Clinic',color:'#166534',cases:4,resolved:3,rate:'75%'},
-              {name:'Campus Security',color:'#1e3a8a',cases:4,resolved:3,rate:'75%'},
-              {name:'DRRMO',color:'#b45309',cases:4,resolved:3,rate:'75%'},
-              {name:'Administrator',color:'#6b21a8',cases:1,resolved:1,rate:'100%'},
-            ].map(o=>`
+            ${offices.map(o=>`
               <div class="office-perf-row">
                 <div class="opr-office">${o.name}</div>
                 <div class="opr-bar-wrap">
@@ -1604,18 +2247,18 @@ function buildAnalytics() {
           <div class="panel-header"><div class="panel-title">Priority Breakdown</div></div>
           <div class="panel-body">
             <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;text-align:center;">
-              <div><div style="font-size:32px;font-weight:700;color:var(--negative);">5</div><div style="font-size:12px;color:var(--ink-3);">High Priority</div></div>
-              <div><div style="font-size:32px;font-weight:700;color:var(--warn);">6</div><div style="font-size:12px;color:var(--ink-3);">Medium</div></div>
-              <div><div style="font-size:32px;font-weight:700;color:var(--ink-3);">1</div><div style="font-size:12px;color:var(--ink-3);">Low</div></div>
+              <div><div style="font-size:32px;font-weight:700;color:var(--negative);">${highPri}</div><div style="font-size:12px;color:var(--ink-3);">High Priority</div></div>
+              <div><div style="font-size:32px;font-weight:700;color:var(--warn);">${medPri}</div><div style="font-size:12px;color:var(--ink-3);">Medium</div></div>
+              <div><div style="font-size:32px;font-weight:700;color:var(--ink-3);">${lowPri}</div><div style="font-size:12px;color:var(--ink-3);">Low</div></div>
             </div>
             <div style="margin-top:20px;">
               <div style="height:12px;border-radius:6px;overflow:hidden;display:flex;gap:2px;">
-                <div style="flex:5;background:var(--negative);border-radius:4px 0 0 4px;"></div>
-                <div style="flex:6;background:var(--warn);"></div>
-                <div style="flex:1;background:var(--ink-3);border-radius:0 4px 4px 0;"></div>
+                <div style="flex:${highPri || 1};background:var(--negative);border-radius:4px 0 0 4px;"></div>
+                <div style="flex:${medPri || 1};background:var(--warn);"></div>
+                <div style="flex:${lowPri || 1};background:var(--ink-3);border-radius:0 4px 4px 0;"></div>
               </div>
               <div style="display:flex;justify-content:space-between;margin-top:6px;font-size:11px;color:var(--ink-3);">
-                <span>High 42%</span><span>Medium 50%</span><span>Low 8%</span>
+                <span>High ${highPct}%</span><span>Medium ${medPct}%</span><span>Low ${lowPct}%</span>
               </div>
             </div>
           </div>
@@ -1626,24 +2269,21 @@ function buildAnalytics() {
 
 /* ─── SECURITY TIMELINE ──────────────────────────────────────── */
 function buildTimeline() {
-  const events = [
-    {time:'12:14 PM', event:'Medical Emergency — Room 101', detail:'Engineering Building — Dispatched responders'},
-    {time:'11:40 AM', event:'Theft Report', detail:'University Library Study Area B'},
-    {time:'10:55 AM', event:'Fire Incident', detail:'Science Building Lab 302 — Evacuation initiated'},
-    {time:'10:20 AM', event:'Fainting Incident', detail:'College of Education Room 205 — Resolved'},
-    {time:'09:45 AM', event:'Suspicious Activity', detail:'ICT Building Entrance — Under investigation'},
-    {time:'09:00 AM', event:'CCTV System Alert', detail:'Power fluctuation — Security office control room'},
-    {time:'08:30 AM', event:'Morning Patrol Completed', detail:'All zones checked — No incidents'},
-    {time:'07:00 AM', event:'Shift Change', detail:'Morning security shift began'},
+  const events = liveIncidents.length ? liveIncidents.map(inc => ({
+    time: inc.time,
+    event: `${inc.type} — ${inc.room}`,
+    detail: `${inc.building} · Priority: ${inc.priority.toUpperCase()} · Status: ${statusLabel(inc.status)}`
+  })) : [
+    {time:'Live', event:'System Online', detail:'Monitoring campus sensors and stations via Supabase realtime'}
   ];
   return `
     <div class="page-header">
       <div class="page-header-left">
         <h1 class="page-title">Security Timeline</h1>
-        <div class="page-sub">Chronological event log · Oct 26, 2026</div>
+        <div class="page-sub">Chronological event log · Samar State University</div>
       </div>
       <div class="page-header-right">
-        <button class="btn btn-secondary">📄 Export Log</button>
+        <button class="btn btn-secondary" onclick="fetchReports();renderPage('timeline')">🔄 Refresh Log</button>
       </div>
     </div>
     <div class="two-col">
@@ -1661,7 +2301,7 @@ function buildTimeline() {
             </div>`).join('')}
         </div>
       </div>
-      ${buildAlertPanel(INCIDENTS.filter(i=>i.category==='security'))}
+      ${buildAlertPanel(liveIncidents.filter(i=>i.category==='security'))}
     </div>`;
 }
 
@@ -1675,6 +2315,7 @@ function buildPatrol() {
     {name:'Guard Cruz', zone:'Clinic & Quadrangle', status:'on-duty', label:'On Duty'},
     {name:'Guard Reyes', zone:'Parking & Grounds', status:'on-duty', label:'On Duty'},
   ];
+  const activeThreats = liveIncidents.filter(i => i.status === 'active').length;
   return `
     <div class="page-header">
       <div class="page-header-left">
@@ -1686,7 +2327,7 @@ function buildPatrol() {
       <div class="stat-card"><div class="stat-label">Total Guards</div><div class="stat-value">6</div></div>
       <div class="stat-card"><div class="stat-label">On Duty</div><div class="stat-value positive">4</div></div>
       <div class="stat-card"><div class="stat-label">Responding</div><div class="stat-value" style="color:var(--warn)">2</div></div>
-      <div class="stat-card"><div class="stat-label">Active Threats</div><div class="stat-value negative">2</div></div>
+      <div class="stat-card"><div class="stat-label">Active Threats</div><div class="stat-value negative">${activeThreats}</div></div>
     </div>
     <div class="two-col">
       <div class="panel">
@@ -1702,7 +2343,7 @@ function buildPatrol() {
           </div>
         </div>
       </div>
-      ${buildAlertPanel(INCIDENTS.filter(i=>i.category==='security').slice(0,4))}
+      ${buildAlertPanel(liveIncidents.filter(i=>i.category==='security').slice(0,4))}
     </div>`;
 }
 
@@ -1716,21 +2357,24 @@ function buildHazards() {
     {icon:'🧪', name:'Chemical Storage', loc:'Science Bldg, Stockroom', level:'low', levelClass:'low'},
     {icon:'🏚️', name:'Structural Concern', loc:'Old Engineering Annex', level:'low', levelClass:'low'},
   ];
+  const highCount = liveIncidents.filter(i=>i.priority==='high').length;
+  const medCount  = liveIncidents.filter(i=>i.priority==='medium').length;
+  const resCount  = liveIncidents.filter(i=>i.status==='resolved').length;
   return `
     <div class="page-header">
       <div class="page-header-left">
         <h1 class="page-title">Hazard Monitor</h1>
-        <div class="page-sub">Campus hazard assessment — DRRMO · Oct 26, 2026</div>
+        <div class="page-sub">Campus hazard assessment — DRRMO · Samar State University</div>
       </div>
       <div class="page-header-right">
-        <button class="btn btn-primary">+ Log Hazard</button>
+        <button class="btn btn-primary" onclick="openCreateReport()">+ Log Hazard</button>
       </div>
     </div>
     <div class="stat-row">
       <div class="stat-card"><div class="stat-label">Total Hazards</div><div class="stat-value">${hazards.length}</div></div>
-      <div class="stat-card"><div class="stat-label">Critical</div><div class="stat-value negative">1</div></div>
-      <div class="stat-card"><div class="stat-label">High</div><div class="stat-value" style="color:var(--warn)">1</div></div>
-      <div class="stat-card"><div class="stat-label">Under Control</div><div class="stat-value positive">4</div></div>
+      <div class="stat-card"><div class="stat-label">Critical</div><div class="stat-value negative">${highCount}</div></div>
+      <div class="stat-card"><div class="stat-label">High Priority</div><div class="stat-value" style="color:var(--warn)">${medCount}</div></div>
+      <div class="stat-card"><div class="stat-label">Resolved</div><div class="stat-value positive">${resCount}</div></div>
     </div>
     <div class="two-col">
       <div class="panel">
@@ -1744,16 +2388,21 @@ function buildHazards() {
                 <div class="hi-loc">📍 ${h.loc}</div>
               </div>
               <div class="hazard-level ${h.levelClass}">${h.level.toUpperCase()}</div>
-              <button class="btn-row-action" style="margin-left:8px;">Report</button>
+              <button class="btn-row-action" style="margin-left:8px;" onclick="openCreateReport()">Report</button>
             </div>`).join('')}
         </div>
       </div>
-      ${buildAlertPanel(INCIDENTS.filter(i=>i.category==='fire').slice(0,4))}
+      ${buildAlertPanel(liveIncidents.filter(i=>i.category==='fire').slice(0,4))}
     </div>`;
 }
 
 /* ─── REPORTS PAGE ───────────────────────────────────────────── */
 function buildReports() {
+  const total = liveIncidents.length;
+  const medCases = liveIncidents.filter(i=>i.category==='medical').length;
+  const secCases = liveIncidents.filter(i=>i.category==='security').length;
+  const drrmoCases = liveIncidents.filter(i=>i.category==='fire').length;
+
   return `
     <div class="page-header">
       <div class="page-header-left">
@@ -1761,27 +2410,27 @@ function buildReports() {
         <div class="page-sub">Incident summary reports · Samar State University</div>
       </div>
       <div class="page-header-right">
-        <button class="btn btn-primary">📄 Generate Report</button>
+        <button class="btn btn-primary" onclick="fetchReports();renderPage('reports')">🔄 Refresh Reports</button>
       </div>
     </div>
     <div class="three-col">
       ${[
-        {title:'Daily Incident Report', date:'Oct 26, 2026', count:3, status:'Ready'},
-        {title:'Weekly Summary', date:'Oct 20–26, 2026', count:12, status:'Ready'},
-        {title:'Monthly Overview', date:'October 2026', count:34, status:'Ready'},
-        {title:'Medical Cases Report', date:'Oct 2026', count:8, status:'Ready'},
-        {title:'Security Threats Report', date:'Oct 2026', count:9, status:'Ready'},
-        {title:'DRRMO Disaster Report', date:'Oct 2026', count:7, status:'Draft'},
+        {title:'Daily Incident Summary', date:new Date().toLocaleDateString('en-PH',{month:'short',day:'numeric',year:'numeric'}), count:total, status:'Ready'},
+        {title:'Medical Cases Log', date:'SSU Clinic Records', count:medCases, status:'Ready'},
+        {title:'Security Threats Log', date:'SSU Security Command', count:secCases, status:'Ready'},
+        {title:'DRRMO Disaster Log', date:'Disaster Risk Records', count:drrmoCases, status:'Ready'},
+        {title:'Campus Station Audits', date:'IoT Stations Monitor', count:stationList.length, status:'Ready'},
+        {title:'All Emergency Logs', date:'Supabase Table Archive', count:total, status:'Ready'},
       ].map(r=>`
         <div class="panel">
           <div class="panel-body">
             <div style="font-size:22px;margin-bottom:10px;">📄</div>
             <div style="font-size:14px;font-weight:600;color:var(--ink);margin-bottom:4px;">${r.title}</div>
             <div style="font-size:12px;color:var(--ink-3);margin-bottom:8px;">${r.date}</div>
-            <div style="font-size:12px;color:var(--ink-2);margin-bottom:12px;">${r.count} incidents documented</div>
+            <div style="font-size:12px;color:var(--ink-2);margin-bottom:12px;">${r.count} records loaded</div>
             <div style="display:flex;gap:8px;">
-              <button class="btn btn-primary" style="font-size:12px;height:30px;flex:1;">Download</button>
-              <button class="btn btn-secondary" style="font-size:12px;height:30px;">Preview</button>
+              <button class="btn btn-primary" style="font-size:12px;height:30px;flex:1;" onclick="navigate('incidents')">View Incidents</button>
+              <button class="btn btn-secondary" style="font-size:12px;height:30px;" onclick="window.print()">Print</button>
             </div>
           </div>
         </div>`).join('')}
@@ -1802,7 +2451,7 @@ function buildSettings() {
         <div class="panel" style="margin-bottom:20px;">
           <div class="panel-header"><div class="panel-title">System Information</div></div>
           <div class="panel-body">
-            ${[['System Name','CAMPUS-ER'],['Institution','Samar State University'],['Version','1.0.0 (Prototype)'],['Build','Oct 2026'],['Status','Operational'],['Uptime','99.8%']].map(([k,v])=>`
+            ${[['System Name','CAMPUS-ER'],['Institution','Samar State University'],['Version','1.0.0 (Connected)'],['Database','Supabase PostgreSQL'],['Realtime Sync','Enabled (postgres_changes)'],['Stations Loaded',stationList.length.toString()],['Reports Loaded',liveIncidents.length.toString()]].map(([k,v])=>`
               <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;">
                 <span style="color:var(--ink-3);">${k}</span><span style="font-weight:600;color:var(--ink);">${v}</span>
               </div>`).join('')}
@@ -1823,10 +2472,10 @@ function buildSettings() {
         <div class="panel">
           <div class="panel-header"><div class="panel-title">Alert Settings</div></div>
           <div class="panel-body">
-            ${[['Audio Alerts','Enabled'],['Push Notifications','Enabled'],['SMS Alerts','Disabled'],['Email Notifications','Enabled'],['Auto Dispatch','Disabled'],['CCTV Integration','Enabled']].map(([k,v])=>`
+            ${[['Audio Alerts','Enabled'],['Push Notifications','Enabled'],['Realtime Refresh','Active'],['Supabase Channel','campus_er_live_sync'],['Role Filtering','Active'],['CCTV Integration','Enabled']].map(([k,v])=>`
               <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);font-size:13px;">
                 <span style="color:var(--ink-2);">${k}</span>
-                <span style="font-weight:600;color:${v==='Enabled'?'var(--positive)':'var(--ink-3)'};">${v}</span>
+                <span style="font-weight:600;color:${v==='Enabled'||v==='Active'?'var(--positive)':'var(--ink-3)'};">${v}</span>
               </div>`).join('')}
           </div>
         </div>
@@ -1836,8 +2485,9 @@ function buildSettings() {
 
 /* ─── INCIDENT DETAIL MODAL ──────────────────────────────────── */
 function openDetail(id) {
-  const inc = INCIDENTS.find(i => i.id === id);
+  const inc = liveIncidents.find(i => i.id === id || i._uuid === id);
   if (!inc) return;
+  window._detailUUID = inc._uuid || null; // stored for modal footer buttons
   document.getElementById('detail-title').textContent = inc.type;
   document.getElementById('detail-subtitle').textContent = inc.id + ' · ' + inc.office;
   document.getElementById('detail-body').innerHTML = `
@@ -1938,6 +2588,7 @@ document.getElementById('hamburger-btn').addEventListener('click', () => {
 /* ─── CLOSE MODALS ON OVERLAY CLICK ─────────────────────────── */
 document.getElementById('panic-modal').addEventListener('click', e => { if (e.target === e.currentTarget) closePanicModal(); });
 document.getElementById('detail-modal').addEventListener('click', e => { if (e.target === e.currentTarget) closeDetailModal(); });
+document.getElementById('create-report-modal').addEventListener('click', e => { if (e.target === e.currentTarget) closeCreateReport(); });
 
 /* ─── PWA ────────────────────────────────────────────────────── */
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
