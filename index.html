@@ -1817,22 +1817,19 @@ body.role-admin {
 const INCIDENTS = []; // liveIncidents is the single source of truth
 
 const ROLES = {
-  admin:    { label:'Administrator',   avatar:'AD', theme:'admin',    menu:['overview','incidents','map','analytics','reports','settings'], bgColor:'#6b21a8', title:'Executive Monitoring Command' },
+  admin:    { label:'Administrator',   avatar:'AD', theme:'admin',    menu:['overview','incidents','map','reports','settings'], bgColor:'#6b21a8', title:'Executive Monitoring Command' },
   clinic:   { label:'School Clinic',   avatar:'SC', theme:'clinic',   menu:['overview','incidents','map','reports'], bgColor:'#15803d', title:'Medical Healthcare Command Center' },
-  security: { label:'Campus Security', avatar:'CS', theme:'security', menu:['overview','incidents','timeline','patrol','map','reports'], bgColor:'#1e3a8a', title:'Security Command & Tactical Center' },
-  drrmo:    { label:'DRRMO',           avatar:'DR', theme:'drrmo',    menu:['overview','incidents','hazards','map','reports'], bgColor:'#c2410c', title:'Disaster Operations & Incident Command' },
+  security: { label:'Campus Security', avatar:'CS', theme:'security', menu:['overview','incidents','attendance','map','reports'], bgColor:'#1e3a8a', title:'Security Command & Tactical Center' },
+  drrmo:    { label:'DRRMO',           avatar:'DR', theme:'drrmo',    menu:['overview','incidents','map','reports'], bgColor:'#c2410c', title:'Disaster Operations & Incident Command' },
 };
 
 const MENU_CONFIG = {
-  overview:  { icon:'🏠', label:'Overview' },
-  incidents: { icon:'📋', label:'Incident Reports' },
-  map:       { icon:'🗺️', label:'Campus Map' },
-  analytics: { icon:'📊', label:'Analytics' },
-  reports:   { icon:'📄', label:'Reports' },
-  settings:  { icon:'⚙️', label:'Settings' },
-  timeline:  { icon:'🕐', label:'Security Timeline' },
-  patrol:    { icon:'👮', label:'Patrol Status' },
-  hazards:   { icon:'⚠️', label:'Hazard Monitor' },
+  overview:   { icon:'🏠', label:'Overview' },
+  incidents:  { icon:'📋', label:'Incident Reports' },
+  map:        { icon:'🗺️', label:'Campus Map' },
+  reports:    { icon:'📄', label:'Reports' },
+  settings:   { icon:'⚙️', label:'Settings' },
+  attendance: { icon:'👮', label:'Personnel Attendance' },
 };
 
 let currentRole = 'clinic';
@@ -2117,6 +2114,44 @@ async function fetchReports() {
   buildSidebar();
 }
 
+/* ─── AUDIO ALERT SYSTEM ─────────────────────────────────────── */
+let audioMuted = false;
+let audioVolume = 0.85;
+let alertBeepCtx = null;
+
+function playEmergencyBeep() {
+  if (audioMuted) return;
+  try {
+    if (!alertBeepCtx) alertBeepCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const ctx = alertBeepCtx;
+    [0, 0.35, 0.7].forEach(offset => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.frequency.value = 880;
+      osc.type = 'square';
+      gain.gain.setValueAtTime(audioVolume * 0.4, ctx.currentTime + offset);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + offset + 0.28);
+      osc.start(ctx.currentTime + offset);
+      osc.stop(ctx.currentTime + offset + 0.3);
+    });
+  } catch(e) { /* audio ctx blocked */ }
+}
+
+function speakEmergencyAlert(inc) {
+  if (audioMuted || !('speechSynthesis' in window)) return;
+  window.speechSynthesis.cancel();
+  const text = `Emergency Alert: ${inc.type || 'Emergency'} detected in ${inc.building || 'campus'}, ${inc.room || 'area'}. Respond immediately.`;
+  const utter = new SpeechSynthesisUtterance(text);
+  utter.rate = 0.92; utter.pitch = 1; utter.volume = audioVolume;
+  window.speechSynthesis.speak(utter);
+}
+
+function triggerAutoAlert(inc) {
+  playEmergencyBeep();
+  setTimeout(() => speakEmergencyAlert(inc), 1100);
+}
+
 /* ─── REALTIME UPDATES ───────────────────────────────────────── */
 function setupRealtime() {
   if (realtimeChannel) {
@@ -2133,7 +2168,12 @@ function setupRealtime() {
         const action = payload.eventType === 'INSERT' ? 'New emergency reported' :
                        payload.eventType === 'UPDATE' ? 'Emergency status updated' :
                        payload.eventType === 'DELETE' ? 'Emergency report deleted' : 'Reports refreshed';
-        showToast('🚨 Live Refresh: ' + action);
+        showToast('🚨 Live: ' + action);
+        // Auto audio alert on new emergency
+        if (payload.eventType === 'INSERT' && payload.new) {
+          const newInc = rowToInc(payload.new);
+          triggerAutoAlert(newInc);
+        }
       })
     .subscribe();
 }
@@ -2321,15 +2361,12 @@ function renderPage(page) {
   div.className = 'page active';
   div.id = 'page-' + page;
   switch(page) {
-    case 'overview':  div.innerHTML = buildOverview(); break;
-    case 'incidents': div.innerHTML = buildIncidents(); break;
-    case 'map':       div.innerHTML = buildMapPage(); break;
-    case 'analytics': div.innerHTML = buildAnalytics(); break;
-    case 'reports':   div.innerHTML = buildReports(); break;
-    case 'settings':  div.innerHTML = buildSettings(); break;
-    case 'timeline':  div.innerHTML = buildTimeline(); break;
-    case 'patrol':    div.innerHTML = buildPatrol(); break;
-    case 'hazards':   div.innerHTML = buildHazards(); break;
+    case 'overview':    div.innerHTML = buildOverview(); break;
+    case 'incidents':   div.innerHTML = buildIncidents(); break;
+    case 'map':         div.innerHTML = buildMapPage(); break;
+    case 'reports':     div.innerHTML = buildReports(); break;
+    case 'settings':    div.innerHTML = buildSettings(); break;
+    case 'attendance':  div.innerHTML = buildAttendance(); break;
     default: div.innerHTML = `<div class="empty-state"><div class="es-icon">🚧</div><div class="es-text">Page not found</div></div>`;
   }
   canvas.appendChild(div);
@@ -2459,9 +2496,12 @@ function generateAIAnalysis(inc) {
     return {
       severityScore: 94,
       severityLevel: 'LEVEL 1 — CRITICAL',
+      priorityLabel: 'CRITICAL',
+      priorityColor: '#dc2626',
       badgeClass: 'ai-badge-critical',
       headline: 'Acute Medical Crisis — Rapid Clinical Intervention Protocol',
       assessment: `Acoustic and station telemetry indicates sudden severe physiological collapse in ${room}, ${building}. Voice stress and ambient acoustic profiling detected sudden fall impact, labored respiratory pattern, and unresponsiveness. Immediate clinical triage required within 3-minute survival window.`,
+      keywords: ['Collapse', 'Unresponsive', 'Medical Emergency', 'Laboratory', 'Stretcher'],
       factors: [
         'Sudden Unresponsiveness',
         'Lab Environment Risk',
@@ -2469,19 +2509,23 @@ function generateAIAnalysis(inc) {
         'Clinical Response Target < 3 Mins'
       ],
       protocol: [
-        `1. Dispatch On-Duty Medical Response Team to ${building}, ${room} with Automated External Defibrillator (AED) and portable oxygen.`,
-        `2. Alert Campus Security to open North Emergency Gate for rapid ambulance transit.`,
-        `3. Put Catbalogan Provincial Hospital emergency desk on standby if vitals remain unstable.`
+        `Dispatch Medical Response Team to ${building}, ${room} with AED and portable oxygen.`,
+        `Alert Campus Security to open North Emergency Gate for ambulance transit.`,
+        `Put Catbalogan Provincial Hospital emergency desk on standby.`
       ],
+      receivingOffice: 'School Clinic',
       modelInfo: 'CAMPUS-ER Neural Clinical Classifier v2.4 · 98.2% Confidence'
     };
   } else if (type.includes('Secur')) {
     return {
       severityScore: 91,
       severityLevel: 'LEVEL 1 — HIGH PRIORITY',
+      priorityLabel: 'HIGH',
+      priorityColor: '#c2410c',
       badgeClass: 'ai-badge-critical',
       headline: 'Active Physical Security Breach & Confrontation Alert',
       assessment: `Acoustic and sensor signal confirms unauthorized perimeter intrusion at ${room}, ${building}. Voice stress index indicates active agitation and refusal to comply with security personnel. Potential risk to adjoining university server infrastructure.`,
+      keywords: ['Unauthorized Entry', 'Security Breach', 'Confrontation', 'Restricted Zone'],
       factors: [
         'Unauthorized Perimeter Breach',
         'Elevated Voice Stress Signature',
@@ -2489,19 +2533,23 @@ function generateAIAnalysis(inc) {
         'Restricted Access Point'
       ],
       protocol: [
-        `1. Mobilize nearest Security Patrol Unit (Alpha Unit) for immediate tactical containment at ${building}.`,
-        `2. Remotely activate magnetic access locks on adjoining corridor doors.`,
-        `3. Keep Catbalogan PNP precinct on hot-line stand-by if physical resistance continues.`
+        `Mobilize nearest Security Patrol Unit for immediate tactical containment at ${building}.`,
+        `Remotely activate magnetic access locks on adjoining corridor doors.`,
+        `Keep Catbalogan PNP precinct on hot-line stand-by if physical resistance continues.`
       ],
+      receivingOffice: 'Campus Security',
       modelInfo: 'CAMPUS-ER Acoustic Security Classifier v2.4 · 96.8% Confidence'
     };
   } else if (type.includes('Fire') || type.includes('Disaster')) {
     return {
       severityScore: 97,
       severityLevel: 'LEVEL 1 — LIFE SAFETY THREAT',
+      priorityLabel: 'CRITICAL',
+      priorityColor: '#dc2626',
       badgeClass: 'ai-badge-danger',
       headline: 'Active Combustion / Environmental Hazard Propagation',
       assessment: `Thermal / audio report confirms rapid smoke and heat buildup at ${room}, ${building}. High danger of vertical smoke propagation through ventilation risers across multiple floors. Rapid evacuation must be prioritized over property containment.`,
+      keywords: ['Fire', 'Smoke', 'Disaster', 'Evacuation', 'Electrical Hazard'],
       factors: [
         'Active Smoke Propagation',
         'Electrical Distribution Vicinity',
@@ -2509,29 +2557,34 @@ function generateAIAnalysis(inc) {
         'High Occupancy Risk'
       ],
       protocol: [
-        `1. Trigger building evacuation klaxon for ${building} and coordinate DRRMO floor wardens.`,
-        `2. Deploy DRRMO Rapid Suppression Crew with Class C ABC chemical suppressants and SCBA gear.`,
-        `3. Shut down master circuit breaker for ${building} and immediately notify Catbalogan Bureau of Fire Protection (BFP).`
+        `Trigger building evacuation klaxon for ${building} and coordinate DRRMO floor wardens.`,
+        `Deploy DRRMO Rapid Suppression Crew with Class C ABC chemical suppressants and SCBA gear.`,
+        `Shut down master circuit breaker for ${building} and notify Catbalogan Bureau of Fire Protection (BFP).`
       ],
+      receivingOffice: 'DRRMO',
       modelInfo: 'CAMPUS-ER Environmental Threat Neural Net v2.4 · 99.1% Confidence'
     };
   } else {
     return {
       severityScore: 82,
-      severityLevel: 'LEVEL 2 — HIGH PRIORITY',
+      severityLevel: 'LEVEL 2 — MEDIUM PRIORITY',
+      priorityLabel: 'MEDIUM',
+      priorityColor: '#d97706',
       badgeClass: 'ai-badge-warning',
       headline: 'Campus Facility Disruption & Environmental Emergency',
       assessment: `Elevated operational hazard logged at ${room}, ${building}. Coordinated response required across campus administration and technical operations to prevent escalation.`,
+      keywords: ['Campus Emergency', 'Facility Disruption', 'Infrastructure'],
       factors: [
         'Campus Infrastructure Impact',
         'Access Way Obstruction',
         'Inter-Department Coordination'
       ],
       protocol: [
-        `1. Dispatch facilities inspection team to assess structural and electrical integrity at ${building}.`,
-        `2. Issue campus advisory bulletin to students and faculty regarding temporary area restrictions.`,
-        `3. Record all incident response timestamps in central university disaster log.`
+        `Dispatch facilities inspection team to assess structural and electrical integrity at ${building}.`,
+        `Issue campus advisory bulletin to students and faculty regarding area restrictions.`,
+        `Record all incident response timestamps in central university disaster log.`
       ],
+      receivingOffice: 'Administrator',
       modelInfo: 'CAMPUS-ER Incident Classifier v2.4 · 94.5% Confidence'
     };
   }
@@ -2623,9 +2676,12 @@ function buildOverview() {
           <div class="page-sub">Samar State University CAMPUS-ER · Real-Time Incident Stream & Emergency Visibility</div>
         </div>
         <div class="page-header-right">
-          <button class="btn btn-secondary" onclick="fetchReports().then(()=>renderPage('overview'))">🔄 Sync Feed</button>
-          <button class="btn btn-primary" onclick="openCreateReport()">+ New Report</button>
-          <button class="btn btn-danger" onclick="openPanicModal()">🚨 Trigger Emergency</button>
+          <div id="audio-control-bar" style="display:flex;align-items:center;gap:8px;background:var(--ground);border:1px solid var(--border);border-radius:6px;padding:5px 10px;font-size:12px;">
+            <span style="font-weight:600;color:var(--ink);white-space:nowrap;">🔊 Alerts</span>
+            <button id="audio-mute-btn" onclick="toggleMute()" style="height:26px;padding:0 8px;border-radius:4px;border:1px solid var(--border-2);background:#fff;font-size:11px;cursor:pointer;font-weight:500;color:var(--ink-2);">${audioMuted ? '🔇 Unmute' : '🔊 Mute'}</button>
+            <input type="range" id="audio-vol" min="0" max="1" step="0.05" value="${audioVolume}" oninput="setAudioVolume(this.value)" style="width:72px;accent-color:var(--role-hue);" aria-label="Alert volume">
+            <button onclick="testAlert()" style="height:26px;padding:0 8px;border-radius:4px;border:1px solid var(--border-2);background:#fff;font-size:11px;cursor:pointer;color:var(--ink-2);">Test</button>
+          </div>
         </div>
       </div>
 
@@ -2765,12 +2821,19 @@ function buildOverview() {
             "${inc.notes}"
           </div>
 
+          <!-- multilingual metadata row -->
+          <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
+            ${[['🌐 Detected Language','Filipino / Tagalog'],['📊 Confidence Score','97.8%'],['⏱️ Original Report Time',inc.time],['🎙️ Source',inc.reporter]].map(([l,v])=>`
+              <div style="background:var(--ground);border:1px solid var(--border);border-radius:5px;padding:6px 10px;">
+                <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;color:var(--ink-3);margin-bottom:2px;">${l}</div>
+                <div style="font-size:12px;font-weight:600;color:var(--ink);">${v}</div>
+              </div>`).join('')}
+          </div>
+
           <div class="vt-telemetry-row">
-            <div class="vt-tel-item">Source Node: <span>${inc.reporter}</span></div>
             <div class="vt-tel-item">Signal Strength: <span>–58 dBm (Strong)</span></div>
-            <div class="vt-tel-item">STT Confidence: <span>98.4% Verbatim Match</span></div>
             <div class="vt-tel-item">Sample Rate: <span>48 kHz Opus</span></div>
-            <div class="vt-tel-item" style="margin-left:auto;">Logged: <span>${inc.time}</span></div>
+            <div class="vt-tel-item">Languages Supported: <span>English · Filipino · Waray-Waray</span></div>
           </div>
         </div>
       </div>
@@ -2779,42 +2842,58 @@ function buildOverview() {
       <div class="ai-analysis-card">
         <div class="ai-header">
           <div class="ai-title">
-            <span>🧠 AI Analysis & Priority Assessment</span>
-            <span style="font-size:11px;font-weight:600;color:var(--ink-3);">Edge Neural Incident Classifier</span>
+            <span>🧠 AI Priority Analysis</span>
+            <span style="font-size:11px;font-weight:600;color:var(--ink-3);">CAMPUS-ER Neural Incident Classifier</span>
           </div>
-          <span class="ai-priority-badge ${ai.badgeClass}">${ai.severityLevel}</span>
+          <span class="ai-priority-badge ${ai.badgeClass}">${ai.priorityLabel}</span>
         </div>
         <div class="ai-body">
-          <div class="ai-score-strip">
-            <div class="ai-score-number">${ai.severityScore}<span style="font-size:14px;font-weight:500;color:var(--ink-3);">/100</span></div>
-            <div>
-              <div class="ai-score-label">Incident Severity Score</div>
-              <div class="ai-score-summary">${ai.headline}</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+            <div style="background:var(--ground);border:1px solid var(--border);border-radius:8px;padding:14px 16px;">
+              <div class="ai-score-label" style="margin-bottom:4px;">Priority Level</div>
+              <div style="font-size:22px;font-weight:800;color:${ai.priorityColor};line-height:1;">${ai.priorityLabel}</div>
+              <div style="font-size:11px;color:var(--ink-3);margin-top:4px;">${ai.severityLevel}</div>
+            </div>
+            <div style="background:var(--ground);border:1px solid var(--border);border-radius:8px;padding:14px 16px;">
+              <div class="ai-score-label" style="margin-bottom:4px;">AI Confidence Score</div>
+              <div style="font-size:22px;font-weight:800;color:var(--role-hue);line-height:1;">${ai.severityScore}<span style="font-size:13px;font-weight:500;color:var(--ink-3);">/100</span></div>
+              <div style="font-size:11px;color:var(--ink-3);margin-top:4px;">${ai.headline}</div>
             </div>
           </div>
-
           <div>
             <div class="ai-section-title">Automated Situation Assessment</div>
             <div class="ai-narrative">${ai.assessment}</div>
           </div>
-
+          <div>
+            <div class="ai-section-title">Detected Keywords</div>
+            <div class="ai-factors-row">
+              ${ai.keywords.map(k => `<span class="ai-factor-chip" style="background:#fee2e2;border-color:#fca5a5;color:var(--negative);">🔑 ${k}</span>`).join('')}
+            </div>
+          </div>
           <div>
             <div class="ai-section-title">Detected Risk Indicators</div>
             <div class="ai-factors-row">
               ${ai.factors.map(f => `<span class="ai-factor-chip">⚡ ${f}</span>`).join('')}
             </div>
           </div>
-
-          <div>
-            <div class="ai-section-title">Recommended Action Protocol (${onDutyOffice})</div>
-            <div class="ai-protocol-list">
-              ${ai.protocol.map(p => `<div class="ai-protocol-step">${p}</div>`).join('')}
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+            <div>
+              <div class="ai-section-title">Suggested Action</div>
+              <div class="ai-protocol-list">
+                ${ai.protocol.map(p => `<div class="ai-protocol-step">${p}</div>`).join('')}
+              </div>
+            </div>
+            <div>
+              <div class="ai-section-title">Recommended Receiving Office</div>
+              <div style="background:var(--role-hue-2);border:1px solid var(--role-hue-3);border-radius:6px;padding:12px 14px;">
+                <div style="font-size:16px;font-weight:700;color:var(--role-hue);">${ai.receivingOffice}</div>
+                <div style="font-size:11px;color:var(--ink-3);margin-top:4px;">Auto-routed by emergency type classification</div>
+              </div>
             </div>
           </div>
-
           <div class="ai-footer-note">
             <span>${ai.modelInfo}</span>
-            <span>Automated Protocol Guidance for On-Duty Personnel</span>
+            <span>On-Duty Personnel: ${onDutyOffice}</span>
           </div>
         </div>
       </div>
@@ -3016,7 +3095,6 @@ function buildMapPage() {
       </div>
       <div class="page-header-right">
         <button class="btn btn-secondary" onclick="loadStations();fetchReports();renderPage('map')">🔄 Refresh Map</button>
-        <button class="btn btn-primary" onclick="openCreateReport()">+ New Report</button>
       </div>
     </div>
     <div class="panel" style="margin-bottom:20px;">
@@ -3111,14 +3189,13 @@ function buildIncidents() {
     <div class="page-header">
       <div class="page-header-left">
         <h1 class="page-title">${roleTitle}</h1>
-        <div class="page-sub">${incidents.length} reports · Samar State University</div>
+        <div class="page-sub">${incidents.length} reports · Samar State University · ESP32 Emergency Stations Only</div>
       </div>
       <div class="page-header-right">
         <select style="height:34px;border:1px solid var(--border-2);border-radius:6px;padding:0 10px;font-size:13px;background:#fff;" onchange="">
           <option>All Status</option><option>Active</option><option>Pending</option><option>Resolved</option>
         </select>
-        <button class="btn btn-secondary">📄 Export</button>
-        <button class="btn btn-primary" onclick="openCreateReport()">+ New Report</button>
+        <button class="btn btn-secondary" onclick="fetchReports().then(()=>renderPage('incidents'))">🔄 Refresh</button>
       </div>
     </div>
     <div class="panel">
@@ -3129,7 +3206,7 @@ function buildIncidents() {
       <div style="overflow-x:auto;">
         <table class="incident-table">
           <thead><tr><th>ID</th><th>Type</th><th>Building</th><th>Location</th><th>Priority</th><th>Date</th><th>Time</th><th>Status</th><th>Actions</th></tr></thead>
-          <tbody>${rows || '<tr><td colspan="9" style="text-align:center;padding:32px;color:var(--ink-3);">No incident reports found for this office. Click "+ New Report" to create one.</td></tr>'}</tbody>
+          <tbody>${rows || '<tr><td colspan="9" style="text-align:center;padding:32px;color:var(--ink-3);">No incident reports found. Emergency reports originate automatically from ESP32 stations.</td></tr>'}</tbody>
         </table>
       </div>
     </div>`;
@@ -3272,173 +3349,361 @@ function buildAnalytics() {
     </div>`;
 }
 
-/* ─── SECURITY TIMELINE ──────────────────────────────────────── */
-function buildTimeline() {
-  const events = liveIncidents.length ? liveIncidents.map(inc => ({
-    time: inc.time,
-    event: `${inc.type} — ${inc.room}`,
-    detail: `${inc.building} · Priority: ${inc.priority.toUpperCase()} · Status: ${statusLabel(inc.status)}`
-  })) : [
-    {time:'Live', event:'System Online', detail:'Monitoring campus sensors and stations via Supabase realtime'}
-  ];
-  return `
-    <div class="page-header">
-      <div class="page-header-left">
-        <h1 class="page-title">Security Timeline</h1>
-        <div class="page-sub">Chronological event log · Samar State University</div>
-      </div>
-      <div class="page-header-right">
-        <button class="btn btn-secondary" onclick="fetchReports();renderPage('timeline')">🔄 Refresh Log</button>
-      </div>
-    </div>
-    <div class="two-col">
-      <div class="panel">
-        <div class="panel-header"><div class="panel-title">Today's Security Log</div></div>
-        <div class="panel-body">
-          ${events.map(e=>`
-            <div class="tl-row">
-              <div class="tl-time-col">${e.time}</div>
-              <div class="tl-dot-col"><div class="tl-dot-big"></div></div>
-              <div class="tl-text-col">
-                <div class="tl-event">${e.event}</div>
-                <div class="tl-detail">${e.detail}</div>
-              </div>
-            </div>`).join('')}
-        </div>
-      </div>
-      ${buildAlertPanel(liveIncidents.filter(i=>i.category==='security'))}
-    </div>`;
-}
-
-/* ─── PATROL STATUS ──────────────────────────────────────────── */
-function buildPatrol() {
+/* ─── SECURITY PERSONNEL ATTENDANCE PANEL ───────────────────── */
+function buildAttendance() {
   const guards = [
-    {name:'Guard Villanueva', zone:'Gate 1 & ICT Zone', status:'on-duty', label:'On Duty'},
-    {name:'Guard De Leon', zone:'Admin & Engineering', status:'responding', label:'Responding'},
-    {name:'Guard Bautista', zone:'Library & Education', status:'on-duty', label:'On Duty'},
-    {name:'Guard Santos', zone:'Science & DRRMO', status:'responding', label:'Responding'},
-    {name:'Guard Cruz', zone:'Clinic & Quadrangle', status:'on-duty', label:'On Duty'},
-    {name:'Guard Reyes', zone:'Parking & Grounds', status:'on-duty', label:'On Duty'},
+    {name:'Guard Villanueva', id:'CSG-001', status:'on-duty',   statusLabel:'On Duty',   statusColor:'var(--positive)'},
+    {name:'Guard De Leon',    id:'CSG-002', status:'responding', statusLabel:'Responding', statusColor:'var(--warn)'},
+    {name:'Guard Bautista',   id:'CSG-003', status:'on-duty',   statusLabel:'On Duty',   statusColor:'var(--positive)'},
+    {name:'Guard Santos',     id:'CSG-004', status:'responding', statusLabel:'Responding', statusColor:'var(--warn)'},
+    {name:'Guard Cruz',       id:'CSG-005', status:'on-duty',   statusLabel:'On Duty',   statusColor:'var(--positive)'},
+    {name:'Guard Reyes',      id:'CSG-006', status:'off-duty',  statusLabel:'Off Duty',  statusColor:'var(--ink-3)'},
+    {name:'Guard Macaraeg',   id:'CSG-007', status:'available', statusLabel:'Available', statusColor:'#2563eb'},
+    {name:'Guard Dela Cruz',  id:'CSG-008', status:'on-duty',   statusLabel:'On Duty',   statusColor:'var(--positive)'},
   ];
-  const activeThreats = liveIncidents.filter(i => i.status === 'active').length;
+  const onDutyCount = guards.filter(g=>g.status==='on-duty').length;
+  const respondingCount = guards.filter(g=>g.status==='responding').length;
+  const availableCount = guards.filter(g=>g.status==='available').length;
+  const offDutyCount = guards.filter(g=>g.status==='off-duty').length;
+  const activeThreats = liveIncidents.filter(i=>i.status==='active').length;
+
   return `
     <div class="page-header">
       <div class="page-header-left">
-        <h1 class="page-title">Patrol Status</h1>
-        <div class="page-sub">Active patrol units · Samar State University</div>
+        <h1 class="page-title">Security Personnel Attendance</h1>
+        <div class="page-sub">Active security personnel — Campus Security Command · Samar State University</div>
       </div>
     </div>
     <div class="stat-row">
-      <div class="stat-card"><div class="stat-label">Total Guards</div><div class="stat-value">6</div></div>
-      <div class="stat-card"><div class="stat-label">On Duty</div><div class="stat-value positive">4</div></div>
-      <div class="stat-card"><div class="stat-label">Responding</div><div class="stat-value" style="color:var(--warn)">2</div></div>
-      <div class="stat-card"><div class="stat-label">Active Threats</div><div class="stat-value negative">${activeThreats}</div></div>
+      <div class="stat-card"><div class="stat-label">On Duty</div><div class="stat-value positive">${onDutyCount}</div></div>
+      <div class="stat-card"><div class="stat-label">Off Duty</div><div class="stat-value" style="color:var(--ink-3)">${offDutyCount}</div></div>
+      <div class="stat-card"><div class="stat-label">Responding</div><div class="stat-value" style="color:var(--warn)">${respondingCount}</div></div>
+      <div class="stat-card"><div class="stat-label">Total Guards</div><div class="stat-value">${guards.length}</div></div>
     </div>
     <div class="two-col">
       <div class="panel">
-        <div class="panel-header"><div class="panel-title">Patrol Units</div></div>
-        <div class="panel-body">
-          <div class="patrol-grid">
-            ${guards.map(g=>`
-              <div class="patrol-card">
-                <div class="pc-name">👮 ${g.name}</div>
-                <div class="pc-zone">${g.zone}</div>
-                <div class="pc-status ${g.status}">${g.status==='on-duty'?'● On Duty':'◉ Responding'}</div>
+        <div class="panel-header">
+          <div class="panel-title">👮 Security Personnel Roster</div>
+          <div style="font-size:12px;color:var(--ink-3);">${guards.length} registered personnel</div>
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="incident-table" style="min-width:400px;">
+            <thead>
+              <tr><th>Guard Name</th><th>ID</th><th>Status</th></tr>
+            </thead>
+            <tbody>
+              ${guards.map(g=>`
+                <tr>
+                  <td>
+                    <div style="display:flex;align-items:center;gap:8px;">
+                      <div style="width:32px;height:32px;border-radius:50%;background:var(--role-hue-2);border:1px solid var(--role-hue-3);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--role-hue);">${g.name.split(' ').pop()[0]}</div>
+                      <span style="font-weight:600;color:var(--ink);">${g.name}</span>
+                    </div>
+                  </td>
+                  <td style="font-size:12px;color:var(--ink-3);">${g.id}</td>
+                  <td><span style="font-weight:700;color:${g.statusColor};font-size:12px;">● ${g.statusLabel}</span></td>
+                </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div>
+        <div class="panel" style="margin-bottom:20px;">
+          <div class="panel-header"><div class="panel-title">Active Security Threats</div></div>
+          <div class="panel-body">
+            ${liveIncidents.filter(i=>i.status==='active').length ? liveIncidents.filter(i=>i.status==='active').map(inc=>`
+              <div style="background:#fff5f5;border:1px solid #fca5a5;border-radius:6px;padding:10px 12px;margin-bottom:10px;">
+                <div style="font-size:12px;font-weight:700;color:var(--negative);margin-bottom:4px;">🚨 ${inc.type}</div>
+                <div style="font-size:11px;color:var(--ink-2);">📍 ${inc.room}, ${inc.building}</div>
+                <div style="font-size:11px;color:var(--ink-3);">${inc.time}</div>
+              </div>`).join('') : '<div class="empty-state"><div class="es-icon">✅</div><div class="es-text">No active threats</div></div>'}
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-header"><div class="panel-title">Status Legend</div></div>
+          <div class="panel-body">
+            ${[
+              ['On Duty','var(--positive)','Personnel actively deployed at post'],
+              ['Responding','var(--warn)','Personnel responding to an active incident'],
+              ['Available','#2563eb','Personnel available for deployment'],
+              ['Off Duty','var(--ink-3)','Personnel not on current shift']
+            ].map(([s,c,d])=>`
+              <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);">
+                <span style="font-weight:700;color:${c};white-space:nowrap;">● ${s}</span>
+                <span style="font-size:12px;color:var(--ink-3);">${d}</span>
               </div>`).join('')}
           </div>
         </div>
       </div>
-      ${buildAlertPanel(liveIncidents.filter(i=>i.category==='security').slice(0,4))}
-    </div>`;
-}
-
-/* ─── HAZARD MONITOR ─────────────────────────────────────────── */
-function buildHazards() {
-  const hazards = [
-    {icon:'🔥', name:'Laboratory Fire', loc:'Science Bldg, Lab 302', level:'critical', levelClass:'critical'},
-    {icon:'⛽', name:'Gas Leak Suspected', loc:'Engineering Workshop, 2F', level:'high', levelClass:'high'},
-    {icon:'🌊', name:'Flood-Prone Area', loc:'Admin Bldg Basement', level:'moderate', levelClass:'moderate'},
-    {icon:'⚡', name:'Electrical Hazard', loc:'ICT Building, Server Room', level:'moderate', levelClass:'moderate'},
-    {icon:'🧪', name:'Chemical Storage', loc:'Science Bldg, Stockroom', level:'low', levelClass:'low'},
-    {icon:'🏚️', name:'Structural Concern', loc:'Old Engineering Annex', level:'low', levelClass:'low'},
-  ];
-  const highCount = liveIncidents.filter(i=>i.priority==='high').length;
-  const medCount  = liveIncidents.filter(i=>i.priority==='medium').length;
-  const resCount  = liveIncidents.filter(i=>i.status==='resolved').length;
-  return `
-    <div class="page-header">
-      <div class="page-header-left">
-        <h1 class="page-title">Hazard Monitor</h1>
-        <div class="page-sub">Campus hazard assessment — DRRMO · Samar State University</div>
-      </div>
-      <div class="page-header-right">
-        <button class="btn btn-primary" onclick="openCreateReport()">+ Log Hazard</button>
-      </div>
-    </div>
-    <div class="stat-row">
-      <div class="stat-card"><div class="stat-label">Total Hazards</div><div class="stat-value">${hazards.length}</div></div>
-      <div class="stat-card"><div class="stat-label">Critical</div><div class="stat-value negative">${highCount}</div></div>
-      <div class="stat-card"><div class="stat-label">High Priority</div><div class="stat-value" style="color:var(--warn)">${medCount}</div></div>
-      <div class="stat-card"><div class="stat-label">Resolved</div><div class="stat-value positive">${resCount}</div></div>
-    </div>
-    <div class="two-col">
-      <div class="panel">
-        <div class="panel-header"><div class="panel-title">Active Hazards</div></div>
-        <div class="panel-body">
-          ${hazards.map(h=>`
-            <div class="hazard-row">
-              <div class="hazard-icon">${h.icon}</div>
-              <div class="hazard-info">
-                <div class="hi-name">${h.name}</div>
-                <div class="hi-loc">📍 ${h.loc}</div>
-              </div>
-              <div class="hazard-level ${h.levelClass}">${h.level.toUpperCase()}</div>
-              <button class="btn-row-action" style="margin-left:8px;" onclick="openCreateReport()">Report</button>
-            </div>`).join('')}
-        </div>
-      </div>
-      ${buildAlertPanel(liveIncidents.filter(i=>i.category==='fire').slice(0,4))}
     </div>`;
 }
 
 /* ─── REPORTS PAGE ───────────────────────────────────────────── */
 function buildReports() {
-  const total = liveIncidents.length;
-  const medCases = liveIncidents.filter(i=>i.category==='medical').length;
-  const secCases = liveIncidents.filter(i=>i.category==='security').length;
-  const drrmoCases = liveIncidents.filter(i=>i.category==='fire').length;
+  if (currentRole === 'clinic')    return buildReportsClinic();
+  if (currentRole === 'security')  return buildReportsSecurity();
+  if (currentRole === 'drrmo')     return buildReportsDrrmo();
+  return buildReportsAdmin();
+}
 
+/* ─── REPORTS: ADMINISTRATOR ─────────────────────────────────── */
+function buildReportsAdmin() {
+  const total      = liveIncidents.length;
+  const medCases   = liveIncidents.filter(i=>i.category==='medical').length;
+  const secCases   = liveIncidents.filter(i=>i.category==='security').length;
+  const drrmoCases = liveIncidents.filter(i=>i.category==='fire').length;
   return `
     <div class="page-header">
       <div class="page-header-left">
-        <h1 class="page-title">Reports</h1>
-        <div class="page-sub">Incident summary reports · Samar State University</div>
+        <h1 class="page-title">Reports — Administrator</h1>
+        <div class="page-sub">All campus emergency records · Samar State University</div>
       </div>
       <div class="page-header-right">
-        <button class="btn btn-primary" onclick="fetchReports();renderPage('reports')">🔄 Refresh Reports</button>
+        <button class="btn btn-primary" onclick="fetchReports();renderPage('reports')">🔄 Refresh</button>
       </div>
     </div>
     <div class="three-col">
       ${[
-        {title:'Daily Incident Summary', date:new Date().toLocaleDateString('en-PH',{month:'short',day:'numeric',year:'numeric'}), count:total, status:'Ready'},
-        {title:'Medical Cases Log', date:'SSU Clinic Records', count:medCases, status:'Ready'},
-        {title:'Security Threats Log', date:'SSU Security Command', count:secCases, status:'Ready'},
-        {title:'DRRMO Disaster Log', date:'Disaster Risk Records', count:drrmoCases, status:'Ready'},
-        {title:'Campus Station Audits', date:'IoT Stations Monitor', count:stationList.length, status:'Ready'},
-        {title:'All Emergency Logs', date:'Supabase Table Archive', count:total, status:'Ready'},
+        {title:'Daily Incident Summary',  date:new Date().toLocaleDateString('en-PH',{month:'short',day:'numeric',year:'numeric'}), count:total},
+        {title:'Medical Cases Log',       date:'SSU Clinic Records',        count:medCases},
+        {title:'Security Threats Log',    date:'SSU Security Command',      count:secCases},
+        {title:'DRRMO Disaster Log',      date:'Disaster Risk Records',     count:drrmoCases},
+        {title:'Campus Station Audits',   date:'IoT Stations Monitor',      count:stationList.length},
+        {title:'All Emergency Logs',      date:'Supabase Table Archive',    count:total},
       ].map(r=>`
-        <div class="panel">
-          <div class="panel-body">
-            <div style="font-size:22px;margin-bottom:10px;">📄</div>
-            <div style="font-size:14px;font-weight:600;color:var(--ink);margin-bottom:4px;">${r.title}</div>
-            <div style="font-size:12px;color:var(--ink-3);margin-bottom:8px;">${r.date}</div>
-            <div style="font-size:12px;color:var(--ink-2);margin-bottom:12px;">${r.count} records loaded</div>
-            <div style="display:flex;gap:8px;">
-              <button class="btn btn-primary" style="font-size:12px;height:30px;flex:1;" onclick="navigate('incidents')">View Incidents</button>
-              <button class="btn btn-secondary" style="font-size:12px;height:30px;" onclick="window.print()">Print</button>
-            </div>
+        <div class="panel"><div class="panel-body">
+          <div style="font-size:22px;margin-bottom:10px;">📄</div>
+          <div style="font-size:14px;font-weight:600;color:var(--ink);margin-bottom:4px;">${r.title}</div>
+          <div style="font-size:12px;color:var(--ink-3);margin-bottom:8px;">${r.date}</div>
+          <div style="font-size:12px;color:var(--ink-2);margin-bottom:12px;">${r.count} records loaded</div>
+          <div style="display:flex;gap:8px;">
+            <button class="btn btn-primary" style="font-size:12px;height:30px;flex:1;" onclick="navigate('incidents')">View Incidents</button>
+            <button class="btn btn-secondary" style="font-size:12px;height:30px;" onclick="window.print()">Print</button>
           </div>
+        </div></div>`).join('')}
+    </div>`;
+}
+
+/* ─── SHARED: INCIDENT LOG TABLE ─────────────────────────────── */
+function buildIncidentLogTable(incs, cols) {
+  // cols: array of {label, fn} where fn(inc) => cell html
+  if (!incs.length) return `<div class="empty-state"><div class="es-icon">✅</div><div class="es-text">No incidents found.</div></div>`;
+  return `<div style="overflow-x:auto;">
+    <table class="incident-table">
+      <thead><tr>${cols.map(c=>`<th>${c.label}</th>`).join('')}</tr></thead>
+      <tbody>
+        ${incs.map(inc=>`<tr>${cols.map(c=>`<td>${c.fn(inc)}</td>`).join('')}</tr>`).join('')}
+      </tbody>
+    </table>
+  </div>`;
+}
+
+/* ─── REPORTS: SCHOOL CLINIC ─────────────────────────────────── */
+function buildReportsClinic() {
+  const incs    = liveIncidents.filter(i=>i.category==='medical' || (i.type && i.type.toLowerCase().includes('medic')));
+  const total   = incs.length;
+  const pending = incs.filter(i=>i.status==='active'||i.status==='pending').length;
+  const acked   = incs.filter(i=>i.status==='acknowledged').length;
+  const resolved= incs.filter(i=>i.status==='resolved').length;
+
+  const statCards = [
+    {label:'Total Medical Emergencies Today', value:total,    color:'var(--ink)'},
+    {label:'Pending Cases',                   value:pending,  color:'var(--negative)'},
+    {label:'Acknowledged Cases',              value:acked,    color:'var(--warn)'},
+    {label:'Resolved Cases',                  value:resolved, color:'var(--positive)'},
+  ];
+
+  const cols = [
+    {label:'Time Reported',        fn:i=>`<span style="font-size:12px;">${i.time}</span>`},
+    {label:'Building',             fn:i=>i.building},
+    {label:'Floor',                fn:i=>i.floor},
+    {label:'Room',                 fn:i=>`<strong>${i.room}</strong>`},
+    {label:'Priority',             fn:i=>`<span class="priority-badge priority-${i.priority}">${i.priority.toUpperCase()}</span>`},
+    {label:'Transcript Available', fn:i=>i.notes&&i.notes.length>10?'<span style="color:var(--positive);font-weight:600;">✔ Available</span>':'<span style="color:var(--ink-3);">—</span>'},
+    {label:'Current Status',       fn:i=>`<span class="status-pill ${i.status}">${statusLabel(i.status)}</span>`},
+  ];
+
+  return `
+    <div class="page-header">
+      <div class="page-header-left">
+        <h1 class="page-title">Reports — School Clinic</h1>
+        <div class="page-sub">Medical Emergency Reports · Samar State University</div>
+      </div>
+      <div class="page-header-right">
+        <button class="btn btn-primary" onclick="fetchReports();renderPage('reports')">🔄 Refresh</button>
+      </div>
+    </div>
+
+    <div class="stat-row">
+      ${statCards.map(s=>`
+        <div class="stat-card">
+          <div class="stat-label">${s.label}</div>
+          <div class="stat-value" style="color:${s.color};">${s.value}</div>
         </div>`).join('')}
+    </div>
+
+    <div class="panel" style="margin-bottom:20px;">
+      <div class="panel-header">
+        <div class="panel-title">📋 Daily Incident Summary</div>
+        <div style="font-size:12px;color:var(--ink-3);">${new Date().toLocaleDateString('en-PH',{weekday:'long',month:'long',day:'numeric',year:'numeric'})}</div>
+      </div>
+      <div class="panel-body">
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;text-align:center;">
+          ${statCards.map(s=>`
+            <div style="background:var(--ground);border-radius:8px;padding:14px 10px;">
+              <div style="font-size:28px;font-weight:800;color:${s.color};">${s.value}</div>
+              <div style="font-size:11px;color:var(--ink-3);margin-top:4px;">${s.label}</div>
+            </div>`).join('')}
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">🏥 Medical Cases Log</div>
+        <div style="font-size:12px;color:var(--ink-3);">${total} records · Medical Emergency Only</div>
+      </div>
+      <div class="panel-body" style="padding:0;">
+        ${buildIncidentLogTable(incs, cols)}
+      </div>
+    </div>`;
+}
+
+/* ─── REPORTS: CAMPUS SECURITY ───────────────────────────────── */
+function buildReportsSecurity() {
+  const incs     = liveIncidents.filter(i=>i.category==='security' || (i.type && i.type.toLowerCase().includes('secur')));
+  const total    = incs.length;
+  const active   = incs.filter(i=>i.status==='active').length;
+  const resolved = incs.filter(i=>i.status==='resolved').length;
+
+  const statCards = [
+    {label:'Total Security Reports Today', value:total,    color:'var(--ink)'},
+    {label:'Active Threats',               value:active,   color:'var(--negative)'},
+    {label:'Resolved Threats',             value:resolved, color:'var(--positive)'},
+  ];
+
+  const cols = [
+    {label:'Time Reported',      fn:i=>`<span style="font-size:12px;">${i.time}</span>`},
+    {label:'Building',           fn:i=>i.building},
+    {label:'Floor',              fn:i=>i.floor},
+    {label:'Room',               fn:i=>`<strong>${i.room}</strong>`},
+    {label:'Priority',           fn:i=>`<span class="priority-badge priority-${i.priority}">${i.priority.toUpperCase()}</span>`},
+    {label:'Threat Description', fn:i=>`<span style="font-size:11px;color:var(--ink-2);">${i.notes.slice(0,60)}${i.notes.length>60?'…':''}</span>`},
+    {label:'Status',             fn:i=>`<span class="status-pill ${i.status}">${statusLabel(i.status)}</span>`},
+  ];
+
+  return `
+    <div class="page-header">
+      <div class="page-header-left">
+        <h1 class="page-title">Reports — Campus Security</h1>
+        <div class="page-sub">Security Threat Reports · Samar State University</div>
+      </div>
+      <div class="page-header-right">
+        <button class="btn btn-primary" onclick="fetchReports();renderPage('reports')">🔄 Refresh</button>
+      </div>
+    </div>
+
+    <div class="stat-row">
+      ${statCards.map(s=>`
+        <div class="stat-card">
+          <div class="stat-label">${s.label}</div>
+          <div class="stat-value" style="color:${s.color};">${s.value}</div>
+        </div>`).join('')}
+    </div>
+
+    <div class="panel" style="margin-bottom:20px;">
+      <div class="panel-header">
+        <div class="panel-title">📋 Daily Incident Summary</div>
+        <div style="font-size:12px;color:var(--ink-3);">${new Date().toLocaleDateString('en-PH',{weekday:'long',month:'long',day:'numeric',year:'numeric'})}</div>
+      </div>
+      <div class="panel-body">
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;text-align:center;">
+          ${statCards.map(s=>`
+            <div style="background:var(--ground);border-radius:8px;padding:14px 10px;">
+              <div style="font-size:28px;font-weight:800;color:${s.color};">${s.value}</div>
+              <div style="font-size:11px;color:var(--ink-3);margin-top:4px;">${s.label}</div>
+            </div>`).join('')}
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">🚨 Security Threats Log</div>
+        <div style="font-size:12px;color:var(--ink-3);">${total} records · Security Threat Only</div>
+      </div>
+      <div class="panel-body" style="padding:0;">
+        ${buildIncidentLogTable(incs, cols)}
+      </div>
+    </div>`;
+}
+
+/* ─── REPORTS: DRRMO ─────────────────────────────────────────── */
+function buildReportsDrrmo() {
+  const incs     = liveIncidents.filter(i=>i.category==='fire' || (i.type && (i.type.toLowerCase().includes('fire')||i.type.toLowerCase().includes('disaster'))));
+  const total    = incs.length;
+  const active   = incs.filter(i=>i.status==='active').length;
+  const resolved = incs.filter(i=>i.status==='resolved').length;
+
+  const statCards = [
+    {label:'Total Fire/Disaster Reports Today', value:total,    color:'var(--ink)'},
+    {label:'Active Incidents',                  value:active,   color:'var(--negative)'},
+    {label:'Resolved Incidents',                value:resolved, color:'var(--positive)'},
+  ];
+
+  const cols = [
+    {label:'Time Reported',  fn:i=>`<span style="font-size:12px;">${i.time}</span>`},
+    {label:'Building',       fn:i=>i.building},
+    {label:'Floor',          fn:i=>i.floor},
+    {label:'Room',           fn:i=>`<strong>${i.room}</strong>`},
+    {label:'Priority',       fn:i=>`<span class="priority-badge priority-${i.priority}">${i.priority.toUpperCase()}</span>`},
+    {label:'Incident Type',  fn:i=>`<span class="type-badge type-${i.category}">${i.type}</span>`},
+    {label:'Current Status', fn:i=>`<span class="status-pill ${i.status}">${statusLabel(i.status)}</span>`},
+  ];
+
+  return `
+    <div class="page-header">
+      <div class="page-header-left">
+        <h1 class="page-title">Reports — DRRMO</h1>
+        <div class="page-sub">Fire &amp; Disaster Reports · Samar State University</div>
+      </div>
+      <div class="page-header-right">
+        <button class="btn btn-primary" onclick="fetchReports();renderPage('reports')">🔄 Refresh</button>
+      </div>
+    </div>
+
+    <div class="stat-row">
+      ${statCards.map(s=>`
+        <div class="stat-card">
+          <div class="stat-label">${s.label}</div>
+          <div class="stat-value" style="color:${s.color};">${s.value}</div>
+        </div>`).join('')}
+    </div>
+
+    <div class="panel" style="margin-bottom:20px;">
+      <div class="panel-header">
+        <div class="panel-title">📋 Daily Incident Summary</div>
+        <div style="font-size:12px;color:var(--ink-3);">${new Date().toLocaleDateString('en-PH',{weekday:'long',month:'long',day:'numeric',year:'numeric'})}</div>
+      </div>
+      <div class="panel-body">
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;text-align:center;">
+          ${statCards.map(s=>`
+            <div style="background:var(--ground);border-radius:8px;padding:14px 10px;">
+              <div style="font-size:28px;font-weight:800;color:${s.color};">${s.value}</div>
+              <div style="font-size:11px;color:var(--ink-3);margin-top:4px;">${s.label}</div>
+            </div>`).join('')}
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">🔥 DRRMO Disaster Log</div>
+        <div style="font-size:12px;color:var(--ink-3);">${total} records · Fire/Disaster Only</div>
+      </div>
+      <div class="panel-body" style="padding:0;">
+        ${buildIncidentLogTable(incs, cols)}
+      </div>
     </div>`;
 }
 
@@ -3558,6 +3823,24 @@ function playAlert() {
     u.rate = 0.9; u.pitch = 1;
     speechSynthesis.speak(u);
   }
+}
+
+/* ─── AUDIO ALERT CONTROLS ───────────────────────────────────── */
+function toggleMute() {
+  audioMuted = !audioMuted;
+  const btn = document.getElementById('audio-mute-btn');
+  if (btn) btn.textContent = audioMuted ? '🔇 Unmute' : '🔊 Mute';
+  showToast(audioMuted ? '🔇 Alert audio muted' : '🔊 Alert audio enabled');
+}
+
+function setAudioVolume(val) {
+  audioVolume = parseFloat(val);
+}
+
+function testAlert() {
+  const fakeInc = { type: 'Test Alert', building: 'Campus', room: 'Test Room' };
+  triggerAutoAlert(fakeInc);
+  showToast('🔊 Testing alert audio...');
 }
 
 /* ─── TOAST ──────────────────────────────────────────────────── */
