@@ -1453,6 +1453,8 @@ body.role-admin {
 .auth-switch a { color: var(--ssu-navy); font-weight: 600; cursor: pointer; text-decoration: none; }
 .auth-switch a:hover { text-decoration: underline; }
 </style>
+<link rel="stylesheet" href="eoc.css">
+<script type="importmap">{"imports":{"react":"https://esm.sh/react@18.3.1"}}</script>
 </head>
 <body>
 
@@ -1601,10 +1603,6 @@ body.role-admin {
       </div>
     </div>
     <div class="topbar-right">
-      <button class="topbar-alert-btn" id="panic-trigger-btn" title="Active Alerts" onclick="openPanicModal()">
-        🔔
-        <span class="badge-dot"></span>
-      </button>
       <div class="topbar-user">
         <div class="user-avatar" id="user-avatar">AD</div>
         <div class="user-info">
@@ -3881,5 +3879,7 @@ document.getElementById('create-report-modal').addEventListener('click', e => { 
 /* ─── PWA ────────────────────────────────────────────────────── */
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
 </script>
+<script src="eoc.js"></script>
+<script type="module" src="eoc-icons.mjs"></script>
 </body>
 </html>
