@@ -1,0 +1,3888 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CAMPUS-ER | Samar State University Emergency Reporting System</title>
+<meta name="description" content="CAMPUS-ER — Embedded Campus-Wide Emergency Reporting and Alert System for Samar State University">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1a3a6e">
+<link rel="apple-touch-icon" href="images/SSULOGO.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<style>
+/* ─── TOKENS ─────────────────────────────────────────────────── */
+:root {
+  --ssu-navy:    #1a3a6e;
+  --ssu-gold:    #c9973a;
+  --ssu-green:   #2d6a2d;
+  --ink:         #111827;
+  --ink-2:       #374151;
+  --ink-3:       #6b7280;
+  --ground:      #f8f9fb;
+  --surface:     #ffffff;
+  --border:      #e5e7eb;
+  --border-2:    #d1d5db;
+  --positive:    #16a34a;
+  --negative:    #dc2626;
+  --warn:        #d97706;
+
+  /* role themes */
+  --role-hue:    #1a3a6e;
+  --role-hue-2:  #e8edf5;
+  --role-hue-3:  #c7d4ea;
+
+  --sidebar-w:   236px;
+  --topbar-h:    56px;
+  --radius:      8px;
+  --gap:         20px;
+}
+
+/* ─── RESET ──────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 16px; -webkit-font-smoothing: antialiased; }
+body { font-family: 'Inter', system-ui, sans-serif; background: var(--ground); color: var(--ink); line-height: 1.5; min-height: 100vh; }
+img { max-width: 100%; display: block; }
+button { font-family: inherit; cursor: pointer; border: none; outline: none; }
+button:focus-visible { outline: 2px solid var(--role-hue); outline-offset: 2px; }
+input, select { font-family: inherit; }
+
+/* ─── SCREEN MANAGEMENT ──────────────────────────────────────── */
+.screen { display: none; width: 100%; min-height: 100vh; }
+.screen.active { display: flex; }
+
+/* ─── LOGIN PAGE ─────────────────────────────────────────────── */
+#screen-login {
+  flex-direction: row;
+  min-height: 100vh;
+}
+.login-left {
+  flex: 1;
+  background: var(--ssu-navy);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 48px;
+  position: relative;
+  overflow: hidden;
+}
+.login-left::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: url('images/SSU.png') center/cover no-repeat;
+  opacity: 0.18;
+}
+.login-brand {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  color: #fff;
+}
+.login-brand img.seal {
+  width: 96px;
+  height: 96px;
+  object-fit: contain;
+  margin: 0 auto 20px;
+  border-radius: 50%;
+  background: #fff;
+  padding: 6px;
+}
+.login-brand .univ-name {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.9;
+  margin-bottom: 20px;
+}
+.login-brand .app-name {
+  font-size: 48px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  margin-bottom: 10px;
+}
+.login-brand .app-subtitle {
+  font-size: 13px;
+  font-weight: 400;
+  opacity: 0.75;
+  max-width: 280px;
+  line-height: 1.6;
+}
+.login-brand .badge-row {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin-top: 32px;
+  flex-wrap: wrap;
+}
+.login-brand .badge {
+  background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.2);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 4px 10px;
+  border-radius: 4px;
+}
+.login-right {
+  width: 440px;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 60px 48px;
+  border-left: 1px solid var(--border);
+}
+.login-right h1 {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 6px;
+}
+.login-right .login-sub {
+  font-size: 14px;
+  color: var(--ink-3);
+  margin-bottom: 36px;
+}
+.form-group { margin-bottom: 18px; }
+.form-group label {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-2);
+  margin-bottom: 6px;
+}
+.form-group input, .form-group select {
+  width: 100%;
+  height: 40px;
+  border: 1px solid var(--border-2);
+  border-radius: 6px;
+  padding: 0 12px;
+  font-size: 14px;
+  color: var(--ink);
+  background: #fff;
+  transition: border-color 0.15s;
+}
+.form-group input:focus, .form-group select:focus {
+  border-color: var(--ssu-navy);
+  outline: none;
+}
+.btn-login {
+  width: 100%;
+  height: 44px;
+  background: var(--ssu-navy);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 6px;
+  transition: background 0.15s;
+  margin-top: 8px;
+}
+.btn-login:hover { background: #142d55; }
+.login-note {
+  font-size: 12px;
+  color: var(--ink-3);
+  text-align: center;
+  margin-top: 20px;
+}
+.login-demo-hint {
+  margin-top: 28px;
+  background: var(--ground);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 12px 14px;
+  font-size: 12px;
+  color: var(--ink-3);
+}
+.login-demo-hint strong { color: var(--ink-2); }
+
+/* ─── APP SHELL ──────────────────────────────────────────────── */
+#screen-app {
+  flex-direction: column;
+}
+.app-topbar {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: var(--topbar-h);
+  background: #fff;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 20px 0 0;
+  z-index: 200;
+  gap: 0;
+}
+.topbar-brand {
+  width: var(--sidebar-w);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 20px;
+  border-right: 1px solid var(--border);
+  height: 100%;
+  flex-shrink: 0;
+}
+.topbar-brand img { width: 32px; height: 32px; object-fit: contain; border-radius: 50%; background: var(--ssu-navy); padding: 3px; }
+.topbar-brand-text { }
+.topbar-brand-text .tb-univ { font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-3); line-height: 1; }
+.topbar-brand-text .tb-app  { font-size: 13px; font-weight: 700; color: var(--role-hue); line-height: 1.2; }
+.topbar-center { flex: 1; display: flex; align-items: center; padding-left: 24px; }
+.topbar-page-name { font-size: 14px; font-weight: 600; color: var(--ink); }
+.topbar-right { display: flex; align-items: center; gap: 12px; }
+.topbar-alert-btn {
+  position: relative;
+  width: 36px; height: 36px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px;
+  color: var(--ink-2);
+  transition: background 0.12s;
+}
+.topbar-alert-btn:hover { background: var(--ground); }
+.topbar-alert-btn .badge-dot {
+  position: absolute;
+  top: 6px; right: 6px;
+  width: 8px; height: 8px;
+  background: var(--negative);
+  border-radius: 50%;
+  border: 2px solid #fff;
+}
+.topbar-user {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 10px 4px 4px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+  background: #fff;
+  transition: background 0.12s;
+}
+.topbar-user:hover { background: var(--ground); }
+.user-avatar {
+  width: 28px; height: 28px;
+  border-radius: 4px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700; color: #fff;
+  background: var(--role-hue);
+  flex-shrink: 0;
+}
+.user-info { }
+.user-info .ui-name { font-size: 12px; font-weight: 600; color: var(--ink); line-height: 1; }
+.user-info .ui-role { font-size: 11px; color: var(--ink-3); line-height: 1.3; }
+.btn-logout {
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: #fff;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink-2);
+  transition: background 0.12s;
+}
+.btn-logout:hover { background: var(--ground); }
+
+/* ─── SIDEBAR ────────────────────────────────────────────────── */
+.app-body { display: flex; min-height: 100vh; padding-top: var(--topbar-h); }
+.sidebar {
+  width: var(--sidebar-w);
+  background: #fff;
+  border-right: 1px solid var(--border);
+  position: fixed;
+  top: var(--topbar-h);
+  left: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  z-index: 100;
+}
+.sidebar-section { padding: 16px 12px 8px; }
+.sidebar-section-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink-3);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0 8px;
+  margin-bottom: 4px;
+}
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-2);
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+  width: 100%;
+  background: none;
+  border: none;
+  text-align: left;
+  position: relative;
+}
+.nav-item:hover { background: var(--ground); color: var(--ink); }
+.nav-item.active { background: var(--role-hue-2); color: var(--role-hue); font-weight: 600; }
+.nav-item .nav-icon { font-size: 15px; flex-shrink: 0; width: 18px; text-align: center; }
+.nav-item .nav-badge {
+  margin-left: auto;
+  background: var(--negative);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 10px;
+  min-width: 18px;
+  text-align: center;
+}
+.sidebar-bottom { margin-top: auto; padding: 12px; border-top: 1px solid var(--border); }
+.sidebar-role-card {
+  background: var(--role-hue-2);
+  border: 1px solid var(--role-hue-3);
+  border-radius: 6px;
+  padding: 10px 12px;
+}
+.sidebar-role-card .src-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--role-hue); opacity: 0.7; }
+.sidebar-role-card .src-name { font-size: 13px; font-weight: 700; color: var(--role-hue); }
+
+/* ─── MAIN CANVAS ────────────────────────────────────────────── */
+.main-canvas {
+  margin-left: var(--sidebar-w);
+  flex: 1;
+  padding: 28px var(--gap);
+  min-height: 100%;
+}
+.page { display: none; }
+.page.active { display: block; }
+
+/* ─── PAGE HEADER ────────────────────────────────────────────── */
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  gap: 16px;
+}
+.page-header-left .page-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--ink);
+  line-height: 1.2;
+}
+.page-header-left .page-sub {
+  font-size: 13px;
+  color: var(--ink-3);
+  margin-top: 2px;
+}
+.page-header-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.btn { display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 14px; border-radius: 6px; font-size: 13px; font-weight: 500; cursor: pointer; transition: background 0.12s, opacity 0.12s; border: none; }
+.btn-primary { background: var(--role-hue); color: #fff; }
+.btn-primary:hover { opacity: 0.88; }
+.btn-secondary { background: #fff; color: var(--ink-2); border: 1px solid var(--border-2); }
+.btn-secondary:hover { background: var(--ground); }
+.btn-danger { background: var(--negative); color: #fff; }
+.btn-danger:hover { opacity: 0.88; }
+.btn-success { background: var(--positive); color: #fff; }
+.btn-success:hover { opacity: 0.88; }
+
+/* ─── STAT CARDS ─────────────────────────────────────────────── */
+.stat-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--gap);
+  margin-bottom: 24px;
+}
+.stat-row.cols-8 { grid-template-columns: repeat(4, 1fr); }
+.stat-card {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+}
+.stat-label { font-size: 12px; font-weight: 600; color: var(--ink-3); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.03em; }
+.stat-value { font-size: 28px; font-weight: 700; color: var(--ink); line-height: 1; font-variant-numeric: tabular-nums; }
+.stat-value.accent { color: var(--role-hue); }
+.stat-value.negative { color: var(--negative); }
+.stat-value.positive { color: var(--positive); }
+.stat-delta { font-size: 12px; color: var(--ink-3); margin-top: 4px; }
+.stat-delta.up { color: var(--positive); }
+.stat-delta.down { color: var(--negative); }
+
+/* ─── GRID LAYOUTS ───────────────────────────────────────────── */
+.two-col { display: grid; grid-template-columns: 1fr 360px; gap: var(--gap); align-items: start; }
+.three-col { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--gap); }
+.full-row { display: grid; grid-template-columns: 1fr; gap: var(--gap); }
+
+/* ─── PANELS ─────────────────────────────────────────────────── */
+.panel {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+}
+.panel-title { font-size: 14px; font-weight: 600; color: var(--ink); }
+.panel-action { font-size: 12px; font-weight: 500; color: var(--role-hue); cursor: pointer; background: none; border: none; }
+.panel-action:hover { text-decoration: underline; }
+.panel-body { padding: 16px 18px; }
+
+/* ─── CAMPUS MAP ─────────────────────────────────────────────── */
+.campus-map-wrap {
+  position: relative;
+  background: #e8f0e4;
+  border-radius: 6px;
+  overflow: hidden;
+  height: 480px;
+}
+.campus-map-svg { width: 100%; height: 100%; }
+.map-building {
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.map-building:hover { opacity: 0.85; }
+.map-building.emergency rect { animation: pulse-red 1.2s ease-in-out infinite; }
+.map-building.emergency .bld-label { fill: #fff; }
+@keyframes pulse-red {
+  0%, 100% { fill: #dc2626; opacity: 1; }
+  50% { fill: #ef4444; opacity: 0.7; }
+}
+.map-legend {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  background: rgba(255,255,255,0.95);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.map-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--ink-2);
+}
+.legend-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.map-tooltip {
+  position: absolute;
+  background: var(--ink);
+  color: #fff;
+  font-size: 11px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s;
+  z-index: 10;
+  white-space: nowrap;
+}
+
+/* ─── ALERT PANEL ────────────────────────────────────────────── */
+.alert-panel { }
+.alert-item {
+  border-bottom: 1px solid var(--border);
+  padding: 14px 18px;
+  transition: background 0.12s;
+}
+.alert-item:last-child { border-bottom: none; }
+.alert-item:hover { background: var(--ground); }
+.alert-item.active-alert { background: #fff5f5; border-left: 3px solid var(--negative); }
+.alert-item .al-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+.alert-item .al-type { font-size: 12px; font-weight: 700; color: var(--ink); }
+.alert-item .al-time { font-size: 11px; color: var(--ink-3); }
+.alert-item .al-location { font-size: 12px; color: var(--ink-2); margin-bottom: 6px; }
+.alert-item .al-actions { display: flex; gap: 6px; }
+.al-btn {
+  font-size: 11px;
+  font-weight: 500;
+  padding: 3px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  border: none;
+  transition: opacity 0.12s;
+}
+.al-btn:hover { opacity: 0.85; }
+.al-btn.ack { background: var(--ssu-navy); color: #fff; }
+.al-btn.dispatch { background: var(--warn); color: #fff; }
+.al-btn.resolve { background: var(--positive); color: #fff; }
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 10px;
+}
+.status-pill.active { background: #fee2e2; color: var(--negative); }
+.status-pill.pending { background: #fef3c7; color: #92400e; }
+.status-pill.resolved { background: #dcfce7; color: #166534; }
+.status-pill.acknowledged { background: #dbeafe; color: #1e40af; }
+
+/* ─── PANIC ALERT MODAL ──────────────────────────────────────── */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+  z-index: 500;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.modal-overlay.open { display: flex; }
+.panic-modal {
+  background: #fff;
+  border-radius: 10px;
+  width: 100%;
+  max-width: 520px;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+  animation: slide-up 0.25s ease;
+}
+@keyframes slide-up { from { transform: translateY(24px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+.panic-header {
+  background: var(--negative);
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.panic-icon { font-size: 28px; animation: pulse-icon 0.8s ease-in-out infinite; }
+@keyframes pulse-icon { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.15); } }
+.panic-header-text .ph-title { font-size: 16px; font-weight: 700; color: #fff; }
+.panic-header-text .ph-sub { font-size: 12px; color: rgba(255,255,255,0.8); }
+.panic-body { padding: 20px; }
+.panic-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+.panic-field label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-3); display: block; margin-bottom: 2px; }
+.panic-field .pf-val { font-size: 14px; font-weight: 600; color: var(--ink); }
+.panic-signal {
+  background: var(--ground);
+  border-radius: 6px;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+.signal-bars { display: flex; gap: 3px; align-items: flex-end; }
+.signal-bar {
+  width: 6px;
+  background: var(--positive);
+  border-radius: 2px;
+}
+.panic-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.panic-actions .btn { justify-content: center; height: 40px; font-size: 13px; }
+.audio-bar {
+  background: var(--ground);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.audio-bar .audio-icon { font-size: 18px; }
+.audio-bar .audio-text { font-size: 12px; color: var(--ink-2); font-style: italic; flex: 1; }
+.audio-play-btn {
+  width: 30px; height: 30px;
+  border-radius: 50%;
+  background: var(--role-hue);
+  color: #fff;
+  border: none;
+  font-size: 12px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+
+/* ─── INCIDENT TABLE ─────────────────────────────────────────── */
+.incident-table { width: 100%; border-collapse: collapse; }
+.incident-table th {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ink-3);
+  padding: 10px 16px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+  background: var(--ground);
+}
+.incident-table td {
+  font-size: 13px;
+  color: var(--ink-2);
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+.incident-table tr:last-child td { border-bottom: none; }
+.incident-table tr:hover td { background: var(--ground); }
+.incident-table td .inc-type { font-weight: 600; color: var(--ink); }
+.type-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 4px;
+}
+.type-medical  { background: #dcfce7; color: #166534; }
+.type-security { background: #dbeafe; color: #1e40af; }
+.type-fire     { background: #fef3c7; color: #92400e; }
+.type-general  { background: #f3e8ff; color: #6b21a8; }
+.priority-badge {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+.priority-high     { background: #fee2e2; color: var(--negative); }
+.priority-medium   { background: #fef3c7; color: #92400e; }
+.priority-low      { background: #f3f4f6; color: var(--ink-3); }
+.btn-row-action {
+  font-size: 11px;
+  font-weight: 500;
+  padding: 3px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  border: 1px solid var(--border-2);
+  background: #fff;
+  color: var(--ink-2);
+  transition: background 0.12s;
+}
+.btn-row-action:hover { background: var(--ground); }
+
+/* ─── INCIDENT DETAIL MODAL ──────────────────────────────────── */
+.detail-modal {
+  background: #fff;
+  border-radius: 10px;
+  width: 100%;
+  max-width: 640px;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+  animation: slide-up 0.25s ease;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+.detail-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.detail-header h2 { font-size: 17px; font-weight: 700; color: var(--ink); }
+.detail-header .dh-sub { font-size: 13px; color: var(--ink-3); margin-top: 2px; }
+.detail-close { background: none; border: none; font-size: 18px; color: var(--ink-3); cursor: pointer; padding: 2px; }
+.detail-body { padding: 20px; }
+.detail-section-title { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-3); margin-bottom: 10px; margin-top: 16px; }
+.detail-section-title:first-child { margin-top: 0; }
+.detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.detail-field label { font-size: 11px; font-weight: 600; color: var(--ink-3); display: block; margin-bottom: 3px; }
+.detail-field .df-val { font-size: 14px; color: var(--ink); }
+.detail-timeline { }
+.timeline-item {
+  display: flex;
+  gap: 12px;
+  position: relative;
+  padding-bottom: 16px;
+}
+.timeline-item:last-child { padding-bottom: 0; }
+.timeline-item::before {
+  content: '';
+  position: absolute;
+  left: 5px;
+  top: 16px;
+  bottom: 0;
+  width: 1px;
+  background: var(--border);
+}
+.timeline-item:last-child::before { display: none; }
+.tl-dot { width: 12px; height: 12px; border-radius: 50%; background: var(--role-hue); margin-top: 3px; flex-shrink: 0; }
+.tl-content .tl-time { font-size: 11px; color: var(--ink-3); }
+.tl-content .tl-text { font-size: 13px; color: var(--ink-2); }
+.detail-footer { padding: 16px 20px; border-top: 1px solid var(--border); display: flex; gap: 8px; justify-content: flex-end; }
+
+/* ─── ANALYTICS / CHARTS ─────────────────────────────────────── */
+.chart-bar-list { }
+.chart-bar-item { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.chart-bar-item:last-child { margin-bottom: 0; }
+.chart-bar-label { font-size: 12px; color: var(--ink-2); width: 130px; flex-shrink: 0; }
+.chart-bar-track { flex: 1; height: 8px; background: var(--ground); border-radius: 4px; overflow: hidden; }
+.chart-bar-fill { height: 100%; border-radius: 4px; background: var(--role-hue); transition: width 0.6s ease; }
+.chart-bar-val { font-size: 12px; color: var(--ink-3); font-variant-numeric: tabular-nums; width: 28px; text-align: right; flex-shrink: 0; }
+
+/* ─── MINI SVG CHART ─────────────────────────────────────────── */
+.mini-line-chart { width: 100%; }
+.chart-axis-label { font-size: 10px; fill: #9ca3af; font-family: 'Inter', sans-serif; }
+
+/* ─── SECURITY TIMELINE ──────────────────────────────────────── */
+.timeline-list { }
+.tl-row {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+.tl-row:last-child { border-bottom: none; }
+.tl-time-col { font-size: 11px; color: var(--ink-3); width: 72px; flex-shrink: 0; font-variant-numeric: tabular-nums; padding-top: 2px; }
+.tl-dot-col { flex-shrink: 0; display: flex; flex-direction: column; align-items: center; }
+.tl-dot-big { width: 10px; height: 10px; border-radius: 50%; background: var(--role-hue); }
+.tl-text-col { flex: 1; }
+.tl-text-col .tl-event { font-size: 13px; font-weight: 600; color: var(--ink); }
+.tl-text-col .tl-detail { font-size: 12px; color: var(--ink-3); }
+
+/* ─── PATROL STATUS ──────────────────────────────────────────── */
+.patrol-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.patrol-card {
+  background: var(--ground);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px 12px;
+}
+.patrol-card .pc-name { font-size: 12px; font-weight: 600; color: var(--ink); }
+.patrol-card .pc-zone { font-size: 11px; color: var(--ink-3); }
+.patrol-card .pc-status { font-size: 11px; font-weight: 600; margin-top: 4px; }
+.pc-status.on-duty { color: var(--positive); }
+.pc-status.responding { color: var(--warn); }
+
+/* ─── HAZARD TABLE ───────────────────────────────────────────── */
+.hazard-row { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+.hazard-row:last-child { border-bottom: none; }
+.hazard-icon { font-size: 18px; flex-shrink: 0; }
+.hazard-info { flex: 1; }
+.hazard-info .hi-name { font-size: 13px; font-weight: 600; color: var(--ink); }
+.hazard-info .hi-loc { font-size: 11px; color: var(--ink-3); }
+.hazard-level { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 3px; }
+.hazard-level.low { background: #dcfce7; color: #166534; }
+.hazard-level.moderate { background: #fef3c7; color: #92400e; }
+.hazard-level.high { background: #fee2e2; color: var(--negative); }
+.hazard-level.critical { background: #7f1d1d; color: #fff; }
+
+/* ─── ADMIN ANALYTICS ────────────────────────────────────────── */
+.office-perf-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+.office-perf-row:last-child { border-bottom: none; }
+.opr-office { font-size: 13px; font-weight: 600; color: var(--ink); width: 130px; flex-shrink: 0; }
+.opr-bar-wrap { flex: 1; }
+.opr-bar-track { height: 6px; background: var(--ground); border-radius: 3px; overflow: hidden; margin-bottom: 3px; }
+.opr-bar-fill { height: 100%; border-radius: 3px; }
+.opr-stats { display: flex; gap: 12px; }
+.opr-stat { font-size: 11px; color: var(--ink-3); }
+.opr-stat span { font-weight: 600; color: var(--ink); }
+
+/* ─── EMPTY STATE ────────────────────────────────────────────── */
+.empty-state { text-align: center; padding: 40px 20px; color: var(--ink-3); }
+.empty-state .es-icon { font-size: 36px; margin-bottom: 8px; }
+.empty-state .es-text { font-size: 13px; }
+
+/* ─── MOBILE ─────────────────────────────────────────────────── */
+.hamburger { display: none; background: none; border: none; font-size: 20px; padding: 4px; cursor: pointer; color: var(--ink-2); }
+
+@media (max-width: 900px) {
+  .login-left { display: none; }
+  .login-right { width: 100%; }
+  .sidebar { transform: translateX(-100%); transition: transform 0.25s; }
+  .sidebar.open { transform: translateX(0); }
+  .main-canvas { margin-left: 0; }
+  .hamburger { display: flex; }
+  .topbar-brand { width: auto; }
+  .stat-row { grid-template-columns: repeat(2, 1fr); }
+  .stat-row.cols-8 { grid-template-columns: repeat(2, 1fr); }
+  .two-col { grid-template-columns: 1fr; }
+  .three-col { grid-template-columns: 1fr; }
+  .panic-grid { grid-template-columns: 1fr; }
+  .detail-grid { grid-template-columns: 1fr; }
+}
+
+/* ─── ANIMATIONS ─────────────────────────────────────────────── */
+.page.active .stat-card { animation: fade-up 0.3s ease both; }
+.page.active .stat-card:nth-child(2) { animation-delay: 0.05s; }
+.page.active .stat-card:nth-child(3) { animation-delay: 0.1s; }
+.page.active .stat-card:nth-child(4) { animation-delay: 0.15s; }
+.page.active .stat-card:nth-child(5) { animation-delay: 0.2s; }
+.page.active .stat-card:nth-child(6) { animation-delay: 0.25s; }
+.page.active .stat-card:nth-child(7) { animation-delay: 0.3s; }
+.page.active .stat-card:nth-child(8) { animation-delay: 0.35s; }
+@keyframes fade-up { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+.panel { animation: fade-up 0.35s ease both; }
+
+/* ─── ROLE THEMES ────────────────────────────────────────────── */
+/* School Clinic = Green Healthcare Theme */
+body.role-clinic {
+  --role-hue:           #15803d;
+  --role-hue-dark:      #14532d;
+  --role-hue-2:         #f0fdf4;
+  --role-hue-3:         #bbf7d0;
+  --role-accent:        #16a34a;
+  --role-banner-bg:     #f0fdf4;
+  --role-banner-border: #86efac;
+}
+
+/* Campus Security = Navy Blue Security Command Center Theme */
+body.role-security {
+  --role-hue:           #1e3a8a;
+  --role-hue-dark:      #0f172a;
+  --role-hue-2:         #eff6ff;
+  --role-hue-3:         #bfdbfe;
+  --role-accent:        #2563eb;
+  --role-banner-bg:     #eff6ff;
+  --role-banner-border: #93c5fd;
+}
+
+/* DRRMO = Orange Disaster Operations Center Theme */
+body.role-drrmo {
+  --role-hue:           #c2410c;
+  --role-hue-dark:      #7c2d12;
+  --role-hue-2:         #fff7ed;
+  --role-hue-3:         #fed7aa;
+  --role-accent:        #ea580c;
+  --role-banner-bg:     #fff7ed;
+  --role-banner-border: #fdba74;
+}
+
+/* Administrator = Purple Executive Monitoring Theme */
+body.role-admin {
+  --role-hue:           #6b21a8;
+  --role-hue-dark:      #3b0764;
+  --role-hue-2:         #faf5ff;
+  --role-hue-3:         #e9d5ff;
+  --role-accent:        #9333ea;
+  --role-banner-bg:     #faf5ff;
+  --role-banner-border: #d8b4fe;
+}
+
+/* ─── ON-DUTY PERSONNEL HEADER BADGES ───────────────────────── */
+.topbar-onduty-badge {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--role-hue-2);
+  border: 1px solid var(--role-hue-3);
+  padding: 4px 12px;
+  border-radius: 6px;
+  margin-left: 8px;
+}
+.onduty-live-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #16a34a;
+  flex-shrink: 0;
+  box-shadow: 0 0 0 0 rgba(22, 163, 74, 0.7);
+  animation: pulse-green 1.8s infinite;
+}
+@keyframes pulse-green {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(22, 163, 74, 0.7); }
+  70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(22, 163, 74, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(22, 163, 74, 0); }
+}
+.onduty-live-text {
+  display: flex;
+  flex-direction: column;
+}
+.onduty-sub {
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--role-hue);
+  line-height: 1;
+}
+.onduty-main {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1.3;
+  white-space: nowrap;
+}
+.onduty-banner {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  background: var(--role-banner-bg);
+  border: 1px solid var(--role-banner-border);
+  padding: 6px 14px;
+  border-radius: 6px;
+  margin-bottom: 8px;
+  font-size: 12px;
+}
+.onduty-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--role-hue);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  padding: 2px 7px;
+  border-radius: 4px;
+  text-transform: uppercase;
+}
+.live-dot-pulse {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #fff;
+  animation: pulse-dot 1.2s infinite;
+}
+@keyframes pulse-dot { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
+.onduty-officer-info strong { color: var(--ink); font-weight: 700; }
+.onduty-divider { color: var(--ink-3); font-weight: 300; }
+.onduty-office-info strong { color: var(--role-hue); font-weight: 700; }
+
+/* ─── HOME DASHBOARD GRID & CARDS ───────────────────────────── */
+.home-dashboard-flow {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.dashboard-top-grid {
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr;
+  gap: 20px;
+  align-items: stretch;
+}
+@media (max-width: 1080px) {
+  .dashboard-top-grid { grid-template-columns: 1fr; }
+}
+
+/* Active Emergency Alert Card */
+.active-alert-card {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+.active-alert-header {
+  background: #fff1f2;
+  border-bottom: 1px solid #fecdd3;
+  padding: 12px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.active-alert-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--negative);
+  text-transform: uppercase;
+}
+.pulse-alarm {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--negative);
+  animation: pulse-red 1s infinite;
+}
+.alert-time-elapsed {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+.active-alert-body {
+  padding: 18px 20px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+.active-alert-type {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--ink);
+  line-height: 1.25;
+  margin-bottom: 8px;
+}
+.active-alert-loc {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink-2);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.active-alert-meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.active-alert-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: auto;
+}
+.alert-switcher-strip {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 10px 16px;
+  background: var(--ground);
+  border-top: 1px solid var(--border);
+}
+.alert-chip-btn {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  background: #fff;
+  color: var(--ink-2);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.alert-chip-btn.active {
+  background: #fee2e2;
+  border-color: #fca5a5;
+  color: var(--negative);
+  font-weight: 700;
+}
+
+/* Incident Details Card (Below) */
+.incident-details-card {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+.incident-details-header {
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #fff;
+}
+.incident-details-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.incident-details-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  padding: 18px;
+}
+@media (max-width: 900px) {
+  .incident-details-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+@media (max-width: 520px) {
+  .incident-details-grid {
+    grid-template-columns: 1fr;
+  }
+}
+.id-item {
+  background: var(--ground);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.id-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ink-3);
+  margin-bottom: 4px;
+}
+.id-value {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1.3;
+}
+.id-value.font-highlight {
+  font-weight: 700;
+  color: var(--role-hue);
+}
+.id-sub {
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--ink-3);
+  margin-left: 4px;
+}
+
+/* Voice Transcript Card (Below Incident Details) */
+.voice-transcript-card {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+.vt-header {
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.vt-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.vt-body {
+  padding: 18px;
+}
+.vt-player-strip {
+  background: var(--role-hue-2);
+  border: 1px solid var(--role-hue-3);
+  border-radius: 8px;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+.vt-play-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--role-hue);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  border: none;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: transform 0.1s, opacity 0.15s;
+}
+.vt-play-btn:hover {
+  transform: scale(1.05);
+  opacity: 0.92;
+}
+.vt-waveform-box {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  height: 28px;
+}
+.vt-wave-bar {
+  width: 4px;
+  height: 8px;
+  border-radius: 2px;
+  background: var(--role-hue);
+  opacity: 0.5;
+  transition: height 0.15s ease;
+}
+.vt-waveform-box.playing .vt-wave-bar {
+  animation: wave-anim 0.7s ease-in-out infinite alternate;
+}
+.vt-waveform-box.playing .vt-wave-bar:nth-child(2n) { animation-delay: 0.15s; }
+.vt-waveform-box.playing .vt-wave-bar:nth-child(3n) { animation-delay: 0.3s; }
+@keyframes wave-anim {
+  0% { height: 6px; }
+  100% { height: 26px; }
+}
+.vt-quote-box {
+  background: var(--ground);
+  border-left: 4px solid var(--role-hue);
+  border-radius: 4px 6px 6px 4px;
+  padding: 14px 16px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--ink);
+  font-style: italic;
+  margin-bottom: 12px;
+}
+.vt-telemetry-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+  font-size: 11px;
+  color: var(--ink-3);
+  padding-top: 8px;
+  border-top: 1px dashed var(--border);
+}
+.vt-tel-item span {
+  font-weight: 600;
+  color: var(--ink-2);
+}
+
+/* AI Analysis and Priority Card (Below Voice Transcript) */
+.ai-analysis-card {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+.ai-header {
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #fff;
+}
+.ai-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.ai-priority-badge {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  padding: 3px 10px;
+  border-radius: 4px;
+  text-transform: uppercase;
+}
+.ai-badge-critical {
+  background: #fee2e2;
+  color: var(--negative);
+  border: 1px solid #fca5a5;
+}
+.ai-badge-danger {
+  background: #ffedd5;
+  color: #c2410c;
+  border: 1px solid #fed7aa;
+}
+.ai-badge-warning {
+  background: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fde68a;
+}
+.ai-body {
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.ai-score-strip {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: var(--role-hue-2);
+  border: 1px solid var(--role-hue-3);
+  border-radius: 8px;
+  padding: 12px 16px;
+}
+.ai-score-number {
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--role-hue);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+.ai-score-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  letter-spacing: 0.05em;
+  margin-bottom: 2px;
+}
+.ai-score-summary {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.ai-section-title {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ink-3);
+  margin-bottom: 6px;
+}
+.ai-narrative {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--ink-2);
+  background: var(--ground);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 12px 14px;
+}
+.ai-factors-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.ai-factor-chip {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 4px;
+  background: #fff;
+  border: 1px solid var(--border-2);
+  color: var(--ink);
+}
+.ai-protocol-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.ai-protocol-step {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink);
+  background: var(--ground);
+  border-left: 3px solid var(--role-hue);
+  padding: 8px 12px;
+  border-radius: 0 4px 4px 0;
+}
+.ai-footer-note {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--ink-3);
+  padding-top: 8px;
+  border-top: 1px dashed var(--border);
+}
+
+/* ─── CREATE REPORT MODAL ───────────────────────────────────── */
+.create-modal {
+  background: #fff;
+  border-radius: 10px;
+  width: 100%;
+  max-width: 560px;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+  animation: slide-up 0.25s ease;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+.create-modal-header {
+  background: var(--role-hue);
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.create-modal-header h2 { font-size: 16px; font-weight: 700; color: #fff; margin: 0; }
+.create-modal-header .cm-close { background: none; border: none; color: rgba(255,255,255,0.8); font-size: 18px; cursor: pointer; }
+.create-modal-body { padding: 20px; }
+.create-modal-footer { padding: 16px 20px; border-top: 1px solid var(--border); display: flex; gap: 8px; justify-content: flex-end; }
+
+/* ─── AUTH LOADING ───────────────────────────────────────────── */
+#auth-loading {
+  position: fixed; inset: 0; background: #fff;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  z-index: 9999; gap: 16px;
+}
+#auth-loading img { width: 64px; height: 64px; object-fit: contain; border-radius: 50%; background: var(--ssu-navy); padding: 6px; }
+#auth-loading p { font-size: 14px; color: var(--ink-3); }
+.spinner {
+  width: 28px; height: 28px; border: 3px solid var(--border);
+  border-top-color: var(--ssu-navy); border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ─── REGISTER SCREEN ────────────────────────────────────────── */
+.register-right { width: 480px; }
+.form-error {
+  background: #fee2e2; border: 1px solid #fca5a5; border-radius: 6px;
+  padding: 10px 14px; font-size: 13px; color: var(--negative);
+  margin-bottom: 16px; display: none;
+}
+.form-error.visible { display: block; }
+.form-success {
+  background: #dcfce7; border: 1px solid #86efac; border-radius: 6px;
+  padding: 10px 14px; font-size: 13px; color: #166534;
+  margin-bottom: 16px; display: none;
+}
+.form-success.visible { display: block; }
+.auth-switch { font-size: 13px; color: var(--ink-3); text-align: center; margin-top: 20px; }
+.auth-switch a { color: var(--ssu-navy); font-weight: 600; cursor: pointer; text-decoration: none; }
+.auth-switch a:hover { text-decoration: underline; }
+</style>
+<link rel="stylesheet" href="eoc.css">
+<link rel="stylesheet" href="eoc-polish.css">
+<link rel="stylesheet" href="eoc-monitor.css">
+<script type="importmap">{"imports":{"react":"https://esm.sh/react@18.3.1"}}</script>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!--  LOGIN SCREEN                                              -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div id="screen-login" class="screen active">
+  <div class="login-left">
+    <div class="login-brand">
+      <img class="seal" src="images/SSULOGO.png" alt="Samar State University Seal">
+      <div class="univ-name">Samar State University</div>
+      <div class="app-name">CAMPUS-ER</div>
+      <div class="app-subtitle">Embedded Campus-Wide Emergency Reporting and Alert System</div>
+      <div class="badge-row">
+        <div class="badge">🏥 Medical</div>
+        <div class="badge">🔒 Security</div>
+        <div class="badge">🔥 DRRMO</div>
+        <div class="badge">📋 Admin</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="login-right">
+    <h1>Sign In</h1>
+    <p class="login-sub">Access your CAMPUS-ER dashboard</p>
+
+    <div class="form-error" id="login-error"></div>
+
+    <form id="login-form" onsubmit="doLogin(event)">
+      <div class="form-group">
+        <label for="email">Email Address</label>
+        <input type="email" id="email" placeholder="Enter your official SSU email" required autocomplete="email">
+      </div>
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input type="password" id="password" placeholder="Enter your password" required autocomplete="current-password" minlength="6">
+      </div>
+      <button type="submit" id="login-btn" class="btn-login">Sign In to CAMPUS-ER</button>
+    </form>
+
+    <div style="margin-top:20px;padding-top:14px;border-top:1px solid var(--border);">
+      <div style="font-size:11px;font-weight:700;color:var(--ink-3);text-transform:uppercase;margin-bottom:8px;letter-spacing:0.04em;">On-Duty Shift Quick Access (Select Theme):</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+        <button type="button" class="btn btn-secondary" style="font-size:11px;height:32px;justify-content:center;color:#15803d;border-color:#bbf7d0;background:#f0fdf4;" onclick="quickAccessRole('School Clinic','Dr. Maria Santos')">🏥 School Clinic </button>
+        <button type="button" class="btn btn-secondary" style="font-size:11px;height:32px;justify-content:center;color:#1e3a8a;border-color:#bfdbfe;background:#eff6ff;" onclick="quickAccessRole('Campus Security','Officer Roberto Cruz')">🛡️ Securit </button>
+        <button type="button" class="btn btn-secondary" style="font-size:11px;height:32px;justify-content:center;color:#c2410c;border-color:#fed7aa;background:#fff7ed;" onclick="quickAccessRole('DRRMO','Chief Eduardo Reyes')">🚨 DRRMO </button>
+        <button type="button" class="btn btn-secondary" style="font-size:11px;height:32px;justify-content:center;color:#6b21a8;border-color:#e9d5ff;background:#faf5ff;" onclick="quickAccessRole('Administrator','Dean Arthur Salazar')">🏛️ Admin </button>
+      </div>
+    </div>
+
+    <p class="auth-switch">Don't have an account? <a onclick="showRegister()">Create account</a></p>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!--  REGISTER SCREEN                                           -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div id="screen-register" class="screen">
+  <div class="login-left">
+    <div class="login-brand">
+      <img class="seal" src="images/SSULOGO.png" alt="Samar State University Seal">
+      <div class="univ-name">Samar State University</div>
+      <div class="app-name">CAMPUS-ER</div>
+      <div class="app-subtitle">Embedded Campus-Wide Emergency Reporting and Alert System</div>
+      <div class="badge-row">
+        <div class="badge">🏥 Medical</div>
+        <div class="badge">🔒 Security</div>
+        <div class="badge">🔥 DRRMO</div>
+        <div class="badge">📋 Admin</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="login-right register-right">
+    <h1>Create Account</h1>
+    <p class="login-sub">Register your CAMPUS-ER staff account</p>
+
+    <div class="form-error" id="register-error"></div>
+    <div class="form-success" id="register-success"></div>
+
+    <form id="register-form" onsubmit="doRegister(event)">
+      <div class="form-group">
+        <label for="reg-fullname">Full Name</label>
+        <input type="text" id="reg-fullname" placeholder="e.g. Maria Santos" required autocomplete="name">
+      </div>
+      <div class="form-group">
+        <label for="reg-empid">Employee ID</label>
+        <input type="text" id="reg-empid" placeholder="e.g. SSU-2024-0001" required>
+      </div>
+      <div class="form-group">
+        <label for="reg-email">Email Address</label>
+        <input type="email" id="reg-email" placeholder="Enter your official SSU email" required autocomplete="email">
+      </div>
+      <div class="form-group">
+        <label for="reg-password">Password</label>
+        <input type="password" id="reg-password" placeholder="Minimum 6 characters" required autocomplete="new-password" minlength="6">
+      </div>
+      <div class="form-group">
+        <label for="reg-office">Office Assignment</label>
+        <select id="reg-office" required>
+          <option value="" disabled selected>Select your assigned office</option>
+          <option value="School Clinic">School Clinic</option>
+          <option value="Campus Security">Campus Security</option>
+          <option value="DRRMO">DRRMO</option>
+          <option value="Administrator">Administrator</option>
+        </select>
+      </div>
+      <button type="submit" id="register-btn" class="btn-login">Create Account</button>
+    </form>
+
+    <p class="auth-switch">Already have an account? <a onclick="showLogin()">Sign in</a></p>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!--  AUTH LOADING OVERLAY                                      -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div id="auth-loading">
+  <img src="images/SSULOGO.png" alt="SSU">
+  <div class="spinner"></div>
+  <p>Loading CAMPUS-ER…</p>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!--  APP SCREEN                                                -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div id="screen-app" class="screen">
+  <!-- Top Bar -->
+  <header class="app-topbar">
+    <div class="topbar-brand">
+      <button class="hamburger" id="hamburger-btn" aria-label="Toggle sidebar">☰</button>
+      <img src="images/SSULOGO.png" alt="SSU Seal">
+      <div class="topbar-brand-text">
+        <div class="tb-univ">Samar State University</div>
+        <div class="tb-app" id="topbar-app-name">CAMPUS-ER</div>
+      </div>
+    </div>
+    <div class="topbar-center">
+      <span class="topbar-page-name" id="topbar-page-name">Overview</span>
+      <div class="topbar-onduty-badge" id="topbar-onduty-badge" title="Automatically considered On-Duty Personnel">
+        <span class="onduty-live-dot"></span>
+        <div class="onduty-live-text">
+          <span class="onduty-sub">ON-DUTY PERSONNEL</span>
+          <span class="onduty-main" id="topbar-onduty-text">SSU Personnel · School Clinic</span>
+        </div>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <div class="topbar-user">
+        <div class="user-avatar" id="user-avatar">AD</div>
+        <div class="user-info">
+          <div class="ui-name" id="user-name">SSU Admin</div>
+          <div class="ui-role" id="user-role">Administrator</div>
+        </div>
+      </div>
+      <button class="btn-logout" onclick="doLogout()">Sign Out</button>
+    </div>
+  </header>
+
+  <div class="app-body">
+    <!-- Sidebar -->
+    <nav class="sidebar" id="sidebar" aria-label="Main navigation">
+      <div class="sidebar-section" id="sidebar-nav"></div>
+      <div class="sidebar-bottom">
+        <div class="sidebar-role-card">
+          <div class="src-label">On-Duty Shift</div>
+          <div class="src-name" id="sidebar-role-name" style="margin-bottom:6px;">School Clinic</div>
+          <select id="role-shift-switcher" onchange="switchRoleShift(this.value)" style="width:100%;font-size:11px;font-weight:600;padding:4px 6px;border-radius:4px;border:1px solid var(--role-hue-3);background:#fff;color:var(--ink);">
+            <option value="clinic">🏥 School Clinic </option>
+            <option value="security">🛡️ Campus Security </option>
+            <option value="drrmo">🚨 DRRMO </option>
+            <option value="admin">🏛️ Administrator </option>
+          </select>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Main Canvas -->
+    <main class="main-canvas" id="main-canvas">
+      <!-- Pages injected by JS -->
+    </main>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!--  PANIC ALERT MODAL                                         -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="panic-modal">
+  <div class="panic-modal">
+    <div class="panic-header">
+      <div class="panic-icon">🚨</div>
+      <div class="panic-header-text">
+        <div class="ph-title">PANIC ALERT ACTIVATED</div>
+        <div class="ph-sub">Emergency signal received — immediate response required</div>
+      </div>
+    </div>
+    <div class="panic-body">
+      <div class="audio-bar">
+        <div class="audio-icon">🔊</div>
+        <div class="audio-text">"Medical Emergency activated in Room 101, Engineering Building"</div>
+        <button class="audio-play-btn" onclick="playAlert()" title="Play audio alert">▶</button>
+      </div>
+      <div class="panic-grid">
+        <div class="panic-field"><label>Emergency Type</label><div class="pf-val">🏥 Medical Emergency</div></div>
+        <div class="panic-field"><label>Status</label><div class="pf-val"><span class="status-pill active">● Active</span></div></div>
+        <div class="panic-field"><label>Building</label><div class="pf-val">Engineering Building</div></div>
+        <div class="panic-field"><label>Floor</label><div class="pf-val">Ground Floor</div></div>
+        <div class="panic-field"><label>Room</label><div class="pf-val">Room 101</div></div>
+        <div class="panic-field"><label>Assigned Office</label><div class="pf-val">School Clinic</div></div>
+        <div class="panic-field"><label>Date</label><div class="pf-val">Oct 26, 2026</div></div>
+        <div class="panic-field"><label>Time</label><div class="pf-val">12:14 PM</div></div>
+      </div>
+      <div class="panic-signal">
+        <div>
+          <div style="font-size:11px;font-weight:600;color:var(--ink-3);margin-bottom:3px;">Signal Strength</div>
+          <div style="font-size:13px;font-weight:600;color:var(--ink);">Strong (–62 dBm)</div>
+        </div>
+        <div class="signal-bars">
+          <div class="signal-bar" style="height:8px;"></div>
+          <div class="signal-bar" style="height:12px;"></div>
+          <div class="signal-bar" style="height:16px;"></div>
+          <div class="signal-bar" style="height:20px;"></div>
+        </div>
+        <div>
+          <div style="font-size:11px;font-weight:600;color:var(--ink-3);margin-bottom:3px;">Transmission</div>
+          <div style="font-size:13px;font-weight:600;color:var(--ink);">Wi-Fi / IoT Sensor</div>
+        </div>
+      </div>
+      <div class="panic-actions">
+        <button class="btn btn-primary" onclick="acknowledgeAlert()">✔ Acknowledge</button>
+        <button class="btn" style="background:var(--warn);color:#fff;" onclick="dispatchResponders()">🚑 Dispatch Responders</button>
+        <button class="btn btn-secondary" onclick="closePanicModal()">Dismiss</button>
+        <button class="btn btn-success" onclick="resolveAlert()">✓ Mark Resolved</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!--  INCIDENT DETAIL MODAL                                     -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="detail-modal">
+  <div class="detail-modal">
+    <div class="detail-header">
+      <div>
+        <h2 id="detail-title">Incident Details</h2>
+        <div class="dh-sub" id="detail-subtitle">Incident Report</div>
+      </div>
+      <button class="detail-close" onclick="closeDetailModal()" aria-label="Close">✕</button>
+    </div>
+    <div class="detail-body" id="detail-body"></div>
+    <div class="detail-footer">
+      <button class="btn btn-secondary" onclick="closeDetailModal()">Close</button>
+      <button class="btn btn-primary" onclick="updateReportStatus(window._detailUUID,'acknowledged');closeDetailModal()">Acknowledge</button>
+      <button class="btn btn-success" onclick="updateReportStatus(window._detailUUID,'resolved');closeDetailModal()">Resolve</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!--  CREATE EMERGENCY REPORT MODAL                             -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="create-report-modal">
+  <div class="create-modal">
+    <div class="create-modal-header">
+      <h2>🚨 Create Emergency Report</h2>
+      <button class="cm-close" onclick="closeCreateReport()" aria-label="Close">✕</button>
+    </div>
+    <div class="create-modal-body">
+      <p style="font-size:12px;color:#6b7280;margin-bottom:16px;">Samar State University — CAMPUS-ER · The assigned office is determined automatically by emergency type.</p>
+      <div class="form-error" id="cr-error"></div>
+      <form id="cr-form" onsubmit="doCreateReport(event)">
+        <div class="form-group">
+          <label for="cr-station">Station (optional)</label>
+          <select id="cr-station">
+            <option value="">No station / Manual report</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="cr-type">Emergency Type</label>
+          <select id="cr-type" required>
+            <option value="" disabled selected>Select emergency type</option>
+            <option value="Medical Emergency">Medical Emergency → School Clinic</option>
+            <option value="Security Threat">Security Threat → Campus Security</option>
+            <option value="Fire/Disaster">Fire / Disaster → DRRMO</option>
+            <option value="General Emergency">General Emergency → Administrator</option>
+          </select>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div class="form-group">
+            <label for="cr-building">Building</label>
+            <select id="cr-building" required>
+              <option value="" disabled selected>Select building</option>
+              <option>Administration Building</option>
+              <option>Engineering Building</option>
+              <option>ICT Building</option>
+              <option>Security Office</option>
+              <option>College of Education</option>
+              <option>Arts &amp; Sciences Building</option>
+              <option>Science Building</option>
+              <option>University Library</option>
+              <option>University Clinic</option>
+              <option>DRRMO Office</option>
+              <option>College of Engineering</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="cr-floor">Floor</label>
+            <select id="cr-floor" required>
+              <option value="" disabled selected>Select floor</option>
+              <option>Ground Floor</option>
+              <option>2nd Floor</option>
+              <option>3rd Floor</option>
+              <option>4th Floor</option>
+              <option>Basement</option>
+              <option>Rooftop</option>
+            </select>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div class="form-group">
+            <label for="cr-room">Room / Area</label>
+            <input type="text" id="cr-room" placeholder="e.g. Room 101, Lab 302" required>
+          </div>
+          <div class="form-group">
+            <label for="cr-priority">Priority Level</label>
+            <select id="cr-priority" required>
+              <option value="" disabled selected>Select priority</option>
+              <option value="high">High — Immediate response</option>
+              <option value="medium">Medium — Urgent</option>
+              <option value="low">Low — Non-critical</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="cr-status">Initial Status</label>
+          <select id="cr-status" required>
+            <option value="active">Active</option>
+            <option value="pending">Pending</option>
+            <option value="acknowledged">Acknowledged</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="cr-transcript">Voice Transcript / Details</label>
+          <textarea id="cr-transcript" rows="3" placeholder="Describe the emergency situation or paste voice transcript here..." style="width:100%;border:1px solid var(--border-2);border-radius:6px;padding:8px 12px;font-size:13px;font-family:inherit;resize:vertical;"></textarea>
+        </div>
+      </form>
+    </div>
+    <div class="create-modal-footer">
+      <button class="btn btn-secondary" onclick="closeCreateReport()">Cancel</button>
+      <button class="btn btn-primary" id="cr-submit" onclick="doCreateReport(event)">Submit Report</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ─── INCIDENTS DATA (LOADED LIVE FROM SUPABASE) ────────────── */
+const INCIDENTS = []; // liveIncidents is the single source of truth
+
+const ROLES = {
+  admin:    { label:'Administrator',   avatar:'AD', theme:'admin',    menu:['overview','incidents','map','reports','settings'], bgColor:'#6b21a8', title:'Executive Monitoring Command' },
+  clinic:   { label:'School Clinic',   avatar:'SC', theme:'clinic',   menu:['overview','incidents','map','reports'], bgColor:'#15803d', title:'Medical Healthcare Command Center' },
+  security: { label:'Campus Security', avatar:'CS', theme:'security', menu:['overview','incidents','attendance','map','reports'], bgColor:'#1e3a8a', title:'Security Command & Tactical Center' },
+  drrmo:    { label:'DRRMO',           avatar:'DR', theme:'drrmo',    menu:['overview','incidents','map','reports'], bgColor:'#c2410c', title:'Disaster Operations & Incident Command' },
+};
+
+const MENU_CONFIG = {
+  overview:   { icon:'🏠', label:'Overview' },
+  incidents:  { icon:'📋', label:'Incident Reports' },
+  map:        { icon:'🗺️', label:'Campus Map' },
+  reports:    { icon:'📄', label:'Reports' },
+  settings:   { icon:'⚙️', label:'Settings' },
+  attendance: { icon:'👮', label:'Personnel Attendance' },
+};
+
+let currentRole = 'clinic';
+let currentPage = 'overview';
+let currentUser = null; // Supabase user object
+let currentProfile = { fullname: 'SSU On-Duty Personnel', office: 'School Clinic', employee_id: 'SSU-DUTY-01' };
+let selectedIncidentId = null;
+
+/* ─── SUPABASE INIT ──────────────────────────────────────────── */
+const SUPABASE_URL  = 'https://tqdalphmeycgrfaxxbqk.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRxZGFscGhtZXljZ3JmYXh4YnFrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI5OTk2NTMsImV4cCI6MjEwODU3NTY1M30.jwXzvLlMrbCyt2gqnyVFg2c5jO0BS8Guv_hDnorsQBY';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+/* Maps profiles.office → internal role key */
+const OFFICE_TO_ROLE = {
+  'School Clinic':   'clinic',
+  'Campus Security': 'security',
+  'DRRMO':           'drrmo',
+  'Administrator':   'admin',
+};
+
+/* ─── SCREEN HELPERS ─────────────────────────────────────────── */
+function showLogin() {
+  ['screen-app','screen-register'].forEach(id => document.getElementById(id).classList.remove('active'));
+  document.getElementById('screen-login').classList.add('active');
+  document.body.className = '';
+}
+function showRegister() {
+  ['screen-app','screen-login'].forEach(id => document.getElementById(id).classList.remove('active'));
+  document.getElementById('screen-register').classList.add('active');
+}
+function hideLoading() { document.getElementById('auth-loading').style.display = 'none'; }
+function showLoading() { document.getElementById('auth-loading').style.display = 'flex'; }
+
+/* ─── AUTH ───────────────────────────────────────────────────── */
+async function doLogin(e) {
+  e.preventDefault();
+  const errEl = document.getElementById('login-error');
+  errEl.classList.remove('visible');
+  const btn = document.getElementById('login-btn');
+  btn.textContent = 'Signing in…'; btn.disabled = true;
+
+  const email    = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value;
+
+  const { data, error } = await sb.auth.signInWithPassword({ email, password });
+
+  btn.textContent = 'Sign In to CAMPUS-ER'; btn.disabled = false;
+  if (error) {
+    if (error.message && error.message.toLowerCase().includes('confirm')) {
+      errEl.innerHTML = `Email confirmation pending in Supabase. <div style="margin-top:6px;"><button type="button" class="btn btn-secondary" style="font-size:11px;height:28px;" onclick="bypassLogin('${email}')">Access Dashboard as On-Duty Staff →</button></div>`;
+      errEl.classList.add('visible');
+      return;
+    }
+    errEl.textContent = error.message;
+    errEl.classList.add('visible');
+    return;
+  }
+  await loadProfileAndShow(data.user);
+}
+
+function quickAccessRole(office, name) {
+  currentRole = OFFICE_TO_ROLE[office] || 'clinic';
+  currentProfile = { fullname: name, office: office, employee_id: 'SSU-DUTY-2026' };
+  showApp(currentProfile);
+}
+
+async function bypassLogin(email) {
+  const { data: p } = await sb.from('profiles').select('*').eq('email', email).maybeSingle();
+  const profile = p || { fullname: email.split('@')[0], office: 'School Clinic', employee_id: 'SSU-2026' };
+  currentProfile = profile;
+  currentRole = OFFICE_TO_ROLE[profile.office] || 'clinic';
+  showApp(profile);
+}
+
+function switchRoleShift(newRole) {
+  currentRole = newRole;
+  const roleOffices = {
+    clinic: 'School Clinic',
+    security: 'Campus Security',
+    drrmo: 'DRRMO',
+    admin: 'Administrator'
+  };
+  const roleNames = {
+    clinic: 'Dr. Maria Santos',
+    security: 'Officer Roberto Cruz',
+    drrmo: 'Chief Eduardo Reyes',
+    admin: 'Dean Arthur Salazar'
+  };
+  currentProfile.office = roleOffices[newRole] || 'School Clinic';
+  if (!currentUser) {
+    currentProfile.fullname = roleNames[newRole];
+  }
+  showApp(currentProfile);
+}
+
+async function doRegister(e) {
+  e.preventDefault();
+  const errEl  = document.getElementById('register-error');
+  const okEl   = document.getElementById('register-success');
+  errEl.classList.remove('visible');
+  okEl.classList.remove('visible');
+
+  const btn      = document.getElementById('register-btn');
+  btn.textContent = 'Creating account…'; btn.disabled = true;
+
+  const fullname    = document.getElementById('reg-fullname').value.trim();
+  const employee_id = document.getElementById('reg-empid').value.trim();
+  const email       = document.getElementById('reg-email').value.trim();
+  const password    = document.getElementById('reg-password').value;
+  const office      = document.getElementById('reg-office').value;
+
+  // 1. Create auth user (email confirmation may be required in Supabase settings)
+  const { data, error } = await sb.auth.signUp({ email, password });
+  if (error) {
+    errEl.textContent = error.message;
+    errEl.classList.add('visible');
+    btn.textContent = 'Create Account'; btn.disabled = false;
+    return;
+  }
+
+  // 2. Insert profile row (uses auth UID)
+  const uid = data.user?.id;
+  if (uid) {
+    const { error: pErr } = await sb
+      .from('profiles')
+      .insert({ id: uid, fullname, employee_id, email, office });
+    if (pErr) {
+      errEl.textContent = 'Account created but profile save failed: ' + pErr.message;
+      errEl.classList.add('visible');
+      btn.textContent = 'Create Account'; btn.disabled = false;
+      return;
+    }
+  }
+
+  btn.textContent = 'Create Account'; btn.disabled = false;
+  okEl.textContent = 'Account created! You can now sign in.';
+  okEl.classList.add('visible');
+  document.getElementById('register-form').reset();
+  // Wait 2s then switch to login
+  setTimeout(() => showLogin(), 2000);
+}
+
+async function doLogout() {
+  await sb.auth.signOut();
+  currentUser = null;
+  showLogin();
+}
+
+async function loadProfileAndShow(user) {
+  currentUser = user;
+  // Fetch profile to get office assignment
+  const { data: profile, error } = await sb
+    .from('profiles')
+    .select('fullname, office, employee_id')
+    .eq('id', user.id)
+    .single();
+
+  if (error || !profile) {
+    // Profile missing — show error on login screen
+    document.getElementById('login-error').textContent =
+      'Profile not found. Please contact your administrator.';
+    document.getElementById('login-error').classList.add('visible');
+    await sb.auth.signOut();
+    return;
+  }
+
+  currentProfile = profile;
+  currentRole = OFFICE_TO_ROLE[profile.office] || 'clinic';
+  showApp(profile);
+}
+
+function showApp(profile) {
+  ['screen-login','screen-register'].forEach(id => document.getElementById(id).classList.remove('active'));
+  document.getElementById('screen-app').classList.add('active');
+  const r = ROLES[currentRole];
+  document.body.className = 'role-' + r.theme;
+  document.getElementById('user-avatar').textContent = r.avatar;
+  document.getElementById('user-avatar').style.background = r.bgColor;
+  currentProfile = profile || currentProfile;
+  const displayName = currentProfile.fullname || ('SSU ' + r.label);
+  const officeName  = currentProfile.office || r.label;
+  document.getElementById('user-name').textContent = displayName;
+  document.getElementById('user-role').textContent = officeName;
+  document.getElementById('sidebar-role-name').textContent = officeName;
+  
+  // Set On-Duty Personnel in topbar header
+  const tbOnDuty = document.getElementById('topbar-onduty-text');
+  if (tbOnDuty) {
+    tbOnDuty.textContent = displayName + ' · ' + officeName;
+  }
+
+  const switcher = document.getElementById('role-shift-switcher');
+  if (switcher) switcher.value = currentRole;
+
+  buildSidebar();
+  // load live data and stations in parallel, then navigate
+  Promise.all([fetchReports(), loadStations()]).then(() => navigate('overview'));
+  setupRealtime();
+}
+
+/* ─── SESSION RESTORE ON LOAD ────────────────────────────────── */
+(async () => {
+  const { data: { session } } = await sb.auth.getSession();
+  if (session?.user) {
+    await loadProfileAndShow(session.user);
+  }
+  hideLoading();
+})();
+
+/* ─── SUPABASE DATA LAYER ────────────────────────────────────── */
+let liveIncidents = [];
+let stationList = [];
+let realtimeChannel = null;
+
+const TYPE_TO_OFFICE = {
+  'Medical Emergency': 'School Clinic',
+  'Security Threat':   'Campus Security',
+  'Fire/Disaster':     'DRRMO',
+  'General Emergency': 'Administrator',
+};
+const TYPE_TO_CAT = {
+  'Medical Emergency': 'medical',
+  'Security Threat':   'security',
+  'Fire/Disaster':     'fire',
+  'General Emergency': 'general',
+};
+
+function getCategory(type) {
+  if (!type) return 'general';
+  const t = type.toLowerCase();
+  if (t.includes('medic') || t.includes('faint') || t.includes('cardiac') || t.includes('clinic')) return 'medical';
+  if (t.includes('secur') || t.includes('theft') || t.includes('suspicious') || t.includes('entry') || t.includes('disturb')) return 'security';
+  if (t.includes('fire') || t.includes('flood') || t.includes('disaster') || t.includes('quake') || t.includes('hazard')) return 'fire';
+  return TYPE_TO_CAT[type] || 'general';
+}
+
+function rowToInc(r) {
+  const d = r.created_at ? new Date(r.created_at) : new Date();
+  const cat = getCategory(r.emergency_type);
+  const office = r.assigned_office || TYPE_TO_OFFICE[r.emergency_type] || 'Administrator';
+  return {
+    id:       r.id ? r.id.slice(0,8).toUpperCase() : 'INC-' + Math.floor(Math.random()*1000),
+    _uuid:    r.id,
+    type:     r.emergency_type || 'General Emergency',
+    category: cat,
+    building: r.building || 'Campus',
+    floor:    r.floor || 'Ground Floor',
+    room:     r.room || 'General Area',
+    location: r.building ? (r.room ? `${r.room}, ${r.building}` : r.building) : 'Samar State University',
+    date:     d.toLocaleDateString('en-PH',{month:'short',day:'numeric',year:'numeric'}),
+    time:     d.toLocaleTimeString('en-PH',{hour:'2-digit',minute:'2-digit'}),
+    status:   r.status || 'active',
+    priority: r.priority_level || 'medium',
+    office:   office,
+    reporter: 'Campus Alert System',
+    notes:    r.voice_transcript || 'No transcript.',
+  };
+}
+
+/* ─── ROLE-BASED FETCHING ─────────────────────────────────────── */
+async function fetchReports() {
+  let q = sb.from('emergency_reports').select('*').order('created_at', { ascending: false });
+  // Role-based filtering:
+  // School Clinic   → Medical Emergency reports only
+  // Campus Security → Security Threat reports only
+  // DRRMO           → Fire/Disaster reports only
+  // Administrator   → All reports
+  if (currentRole === 'clinic') {
+    q = q.eq('emergency_type', 'Medical Emergency');
+  } else if (currentRole === 'security') {
+    q = q.eq('emergency_type', 'Security Threat');
+  } else if (currentRole === 'drrmo') {
+    q = q.eq('emergency_type', 'Fire/Disaster');
+  }
+  const { data, error } = await q;
+  if (error) {
+    console.error('fetchReports error:', error.message);
+    return;
+  }
+  liveIncidents = (data || []).map(rowToInc);
+  buildSidebar();
+}
+
+/* ─── AUDIO ALERT SYSTEM ─────────────────────────────────────── */
+let audioMuted = false;
+let audioVolume = 0.85;
+let alertBeepCtx = null;
+
+function playEmergencyBeep() {
+  if (audioMuted) return;
+  try {
+    if (!alertBeepCtx) alertBeepCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const ctx = alertBeepCtx;
+    [0, 0.35, 0.7].forEach(offset => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.frequency.value = 880;
+      osc.type = 'square';
+      gain.gain.setValueAtTime(audioVolume * 0.4, ctx.currentTime + offset);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + offset + 0.28);
+      osc.start(ctx.currentTime + offset);
+      osc.stop(ctx.currentTime + offset + 0.3);
+    });
+  } catch(e) { /* audio ctx blocked */ }
+}
+
+function speakEmergencyAlert(inc) {
+  if (audioMuted || !('speechSynthesis' in window)) return;
+  window.speechSynthesis.cancel();
+  const text = `Emergency Alert: ${inc.type || 'Emergency'} detected in ${inc.building || 'campus'}, ${inc.room || 'area'}. Respond immediately.`;
+  const utter = new SpeechSynthesisUtterance(text);
+  utter.rate = 0.92; utter.pitch = 1; utter.volume = audioVolume;
+  window.speechSynthesis.speak(utter);
+}
+
+function triggerAutoAlert(inc) {
+  playEmergencyBeep();
+  setTimeout(() => speakEmergencyAlert(inc), 1100);
+}
+
+/* ─── REALTIME UPDATES ───────────────────────────────────────── */
+function setupRealtime() {
+  if (realtimeChannel) {
+    sb.removeChannel(realtimeChannel);
+    realtimeChannel = null;
+  }
+  realtimeChannel = sb
+    .channel('campus_er_live_sync')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'emergency_reports' },
+      async (payload) => {
+        console.log('Realtime emergency_reports event received:', payload);
+        await fetchReports();
+        renderPage(currentPage);
+        const action = payload.eventType === 'INSERT' ? 'New emergency reported' :
+                       payload.eventType === 'UPDATE' ? 'Emergency status updated' :
+                       payload.eventType === 'DELETE' ? 'Emergency report deleted' : 'Reports refreshed';
+        showToast('🚨 Live: ' + action);
+        // Auto audio alert on new emergency
+        if (payload.eventType === 'INSERT' && payload.new) {
+          const newInc = rowToInc(payload.new);
+          triggerAutoAlert(newInc);
+        }
+      })
+    .subscribe();
+}
+
+async function updateReportStatus(uuid, newStatus) {
+  if (!uuid) { showToast('Cannot update: report ID missing'); return; }
+  const { error } = await sb
+    .from('emergency_reports')
+    .update({ status: newStatus })
+    .eq('id', uuid);
+  if (error) { showToast('Update failed: ' + error.message); return; }
+  await fetchReports();
+  renderPage(currentPage);
+  showToast('Status updated → ' + newStatus);
+}
+
+function openCreateReport() {
+  document.getElementById('create-report-modal').classList.add('open');
+}
+function closeCreateReport() {
+  document.getElementById('create-report-modal').classList.remove('open');
+  document.getElementById('cr-form').reset();
+  document.getElementById('cr-error').classList.remove('visible');
+  _editUUID = null;
+  document.querySelector('.create-modal-header h2').textContent = '🚨 Create Emergency Report';
+  document.getElementById('cr-submit').textContent = 'Submit Report';
+  document.getElementById('cr-submit').onclick = (e) => doCreateReport(e);
+}
+
+async function doCreateReport(e) {
+  e.preventDefault();
+  const errEl = document.getElementById('cr-error');
+  errEl.classList.remove('visible');
+  const btn = document.getElementById('cr-submit');
+  btn.textContent = 'Submitting…'; btn.disabled = true;
+
+  const emergency_type   = document.getElementById('cr-type').value;
+  const building         = document.getElementById('cr-building').value;
+  const floor            = document.getElementById('cr-floor').value;
+  const room             = document.getElementById('cr-room').value.trim();
+  const priority_level   = document.getElementById('cr-priority').value;
+  const status           = document.getElementById('cr-status').value;
+  let voice_transcript   = document.getElementById('cr-transcript').value.trim();
+  const station_id       = document.getElementById('cr-station').value;
+  if (station_id) {
+    const st = stationList.find(s => s.id === station_id);
+    const stLabel = st ? [st.building, st.floor].filter(Boolean).join(' ') : ('Station ' + station_id.slice(0,6));
+    voice_transcript = voice_transcript ? `[Station: ${stLabel}] ${voice_transcript}` : `[Station: ${stLabel}]`;
+  }
+  const assigned_office  = TYPE_TO_OFFICE[emergency_type] || 'Administrator';
+
+  const { error } = await sb.from('emergency_reports').insert({
+    emergency_type, building, floor, room,
+    assigned_office, priority_level, status, voice_transcript,
+  });
+
+  btn.textContent = 'Submit Report'; btn.disabled = false;
+  if (error) {
+    errEl.textContent = error.message;
+    errEl.classList.add('visible');
+    return;
+  }
+  closeCreateReport();
+  showToast('Report submitted → ' + assigned_office);
+  await fetchReports();
+  renderPage(currentPage);
+}
+
+/* ─── EDIT REPORT ────────────────────────────────────────────── */
+let _editUUID = null;
+
+async function openEditReport(uuid) {
+  const { data, error } = await sb
+    .from('emergency_reports')
+    .select('*')
+    .eq('id', uuid)
+    .single();
+  if (error || !data) { showToast('Could not load report: ' + (error?.message || 'not found')); return; }
+
+  _editUUID = uuid;
+  document.querySelector('.create-modal-header h2').textContent = '✏ Edit Emergency Report';
+  document.getElementById('cr-submit').textContent = 'Save Changes';
+  document.getElementById('cr-submit').onclick = (e) => doEditReport(e);
+
+  document.getElementById('cr-type').value     = data.emergency_type;
+  document.getElementById('cr-building').value = data.building;
+  document.getElementById('cr-floor').value    = data.floor;
+  document.getElementById('cr-room').value     = data.room;
+  document.getElementById('cr-priority').value = data.priority_level;
+  document.getElementById('cr-status').value   = data.status;
+  document.getElementById('cr-transcript').value = data.voice_transcript || '';
+
+  document.getElementById('create-report-modal').classList.add('open');
+}
+
+async function doEditReport(e) {
+  e.preventDefault();
+  const errEl = document.getElementById('cr-error');
+  errEl.classList.remove('visible');
+  const btn = document.getElementById('cr-submit');
+  btn.textContent = 'Saving…'; btn.disabled = true;
+
+  const emergency_type   = document.getElementById('cr-type').value;
+  const building         = document.getElementById('cr-building').value;
+  const floor            = document.getElementById('cr-floor').value;
+  const room             = document.getElementById('cr-room').value.trim();
+  const priority_level   = document.getElementById('cr-priority').value;
+  const status           = document.getElementById('cr-status').value;
+  const voice_transcript = document.getElementById('cr-transcript').value.trim();
+  const assigned_office  = TYPE_TO_OFFICE[emergency_type] || 'Administrator';
+
+  const { error } = await sb
+    .from('emergency_reports')
+    .update({ emergency_type, building, floor, room, assigned_office, priority_level, status, voice_transcript })
+    .eq('id', _editUUID);
+
+  btn.textContent = 'Save Changes'; btn.disabled = false;
+  if (error) { errEl.textContent = error.message; errEl.classList.add('visible'); return; }
+
+  closeCreateReport();
+  showToast('Report updated successfully');
+  await fetchReports();
+  renderPage(currentPage);
+}
+
+/* ─── DELETE REPORT ──────────────────────────────────────────── */
+async function deleteReport(uuid, displayId) {
+  if (!confirm(`Delete report ${displayId}? This cannot be undone.`)) return;
+  const { error } = await sb.from('emergency_reports').delete().eq('id', uuid);
+  if (error) { showToast('Delete failed: ' + error.message); return; }
+  showToast('Report ' + displayId + ' deleted');
+  await fetchReports();
+  renderPage(currentPage);
+}
+
+/* ─── STATIONS TABLE LOADER ──────────────────────────────────── */
+async function loadStations() {
+  const { data, error } = await sb.from('stations').select('*').order('created_at', { ascending: false });
+  if (error) { console.warn('loadStations error:', error.message); return; }
+  stationList = data || [];
+  const sel = document.getElementById('cr-station');
+  if (!sel) return;
+  if (stationList.length === 0) {
+    sel.innerHTML = '<option value="">No station / Manual report</option>';
+  } else {
+    sel.innerHTML = '<option value="">No station / Manual report</option>'
+      + stationList.map(s => {
+        const loc = [s.building, s.floor].filter(Boolean).join(' — ') || ('Station ' + s.id.slice(0,6).toUpperCase());
+        return `<option value="${s.id}">${loc} (${s.status || 'online'})</option>`;
+      }).join('');
+  }
+}
+
+/* ─── SIDEBAR ────────────────────────────────────────────────── */
+function buildSidebar() {
+  const nav = document.getElementById('sidebar-nav');
+  const items = ROLES[currentRole].menu;
+  const activeCount = liveIncidents.filter(i => i.status === 'active').length;
+  nav.innerHTML = items.map(key => {
+    const m = MENU_CONFIG[key];
+    const badge = key === 'incidents' && activeCount > 0 ? `<span class="nav-badge">${activeCount}</span>` : '';
+    return `<button class="nav-item" id="nav-${key}" onclick="navigate('${key}')" aria-label="${m.label}">
+      <span class="nav-icon">${m.icon}</span>${m.label}${badge}
+    </button>`;
+  }).join('');
+}
+function navigate(page) {
+  currentPage = page;
+  document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+  const btn = document.getElementById('nav-' + page);
+  if (btn) btn.classList.add('active');
+  const label = MENU_CONFIG[page]?.label || page;
+  document.getElementById('topbar-page-name').textContent = label;
+  document.getElementById('topbar-app-name').textContent = 'CAMPUS-ER | ' + ROLES[currentRole].label;
+  renderPage(page);
+  // close mobile sidebar
+  document.getElementById('sidebar').classList.remove('open');
+}
+
+/* ─── PAGE ROUTER ─────────────────────────────────────────────── */
+function renderPage(page) {
+  const canvas = document.getElementById('main-canvas');
+  canvas.innerHTML = '';
+  const div = document.createElement('div');
+  div.className = 'page active';
+  div.id = 'page-' + page;
+  switch(page) {
+    case 'overview':    div.innerHTML = buildOverview(); break;
+    case 'incidents':   div.innerHTML = buildIncidents(); break;
+    case 'map':         div.innerHTML = buildMapPage(); break;
+    case 'reports':     div.innerHTML = buildReports(); break;
+    case 'settings':    div.innerHTML = buildSettings(); break;
+    case 'attendance':  div.innerHTML = buildAttendance(); break;
+    default: div.innerHTML = `<div class="empty-state"><div class="es-icon">🚧</div><div class="es-text">Page not found</div></div>`;
+  }
+  canvas.appendChild(div);
+  initMapIfNeeded();
+  animateCharts();
+}
+
+/* ─── FILTER INCIDENTS BY ROLE ────────────────────────────────── */
+function myIncidents() {
+  // liveIncidents is already filtered by fetchReports() for non-admin roles
+  return liveIncidents;
+}
+
+/* ─── ACTIVE EMERGENCY & INCIDENT SELECTOR ───────────────────── */
+function getDefaultEmergency(role) {
+  const now = new Date();
+  const timeStr = now.toLocaleTimeString('en-PH', { hour: '2-digit', minute: '2-digit' });
+  const dateStr = now.toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' });
+  
+  if (role === 'clinic') {
+    return {
+      id: 'MED-101',
+      _uuid: 'demo-med-101',
+      type: 'Medical Emergency',
+      category: 'medical',
+      building: 'College of Engineering',
+      floor: 'Ground Floor',
+      room: 'Room 101',
+      location: 'Room 101, College of Engineering',
+      time: timeStr,
+      date: dateStr,
+      status: 'active',
+      priority: 'high',
+      office: 'School Clinic',
+      reporter: 'Emergency Panic Station #ENG-01',
+      notes: 'Medical Emergency: Student collapsed during laboratory session in Room 101, College of Engineering. Shallow breathing, unresponsive. Immediate medical team with stretcher and oxygen kit needed.',
+    };
+  } else if (role === 'security') {
+    return {
+      id: 'SEC-204',
+      _uuid: 'demo-sec-204',
+      type: 'Security Threat',
+      category: 'security',
+      building: 'ICT Building',
+      floor: 'Ground Floor',
+      room: 'Rear Server Corridor',
+      location: 'Rear Server Corridor, ICT Building',
+      time: timeStr,
+      date: dateStr,
+      status: 'active',
+      priority: 'high',
+      office: 'Campus Security',
+      reporter: 'Security Emergency Station #ICT-02',
+      notes: 'Security Threat: Unauthorized individual forcing rear door into server corridor, ICT Building. Verbal confrontation in progress. Immediate tactical backup requested.',
+    };
+  } else if (role === 'drrmo') {
+    return {
+      id: 'DRR-305',
+      _uuid: 'demo-drr-305',
+      type: 'Fire/Disaster',
+      category: 'fire',
+      building: 'Science Building',
+      floor: '2nd Floor',
+      room: 'Electrical Switchboard Room',
+      location: '2nd Floor, Science Building',
+      time: timeStr,
+      date: dateStr,
+      status: 'active',
+      priority: 'critical',
+      office: 'DRRMO',
+      reporter: 'Thermal & Smoke Sensor #SCI-03',
+      notes: 'Fire & Hazard Alert: Rapid smoke propagation detected from 2nd floor electrical switchboard room, Science Building. High thermal reading. Building evacuation protocol initiated.',
+    };
+  } else {
+    return {
+      id: 'ADM-401',
+      _uuid: 'demo-adm-401',
+      type: 'Medical Emergency',
+      category: 'medical',
+      building: 'College of Engineering',
+      floor: 'Ground Floor',
+      room: 'Room 101',
+      location: 'Room 101, College of Engineering',
+      time: timeStr,
+      date: dateStr,
+      status: 'active',
+      priority: 'high',
+      office: 'School Clinic',
+      reporter: 'Emergency Panic Station #ENG-01',
+      notes: 'Medical Emergency: Student collapsed during laboratory session in Room 101, College of Engineering. Shallow breathing, unresponsive. Immediate medical team with stretcher and oxygen kit needed.',
+    };
+  }
+}
+
+function getSelectedIncident() {
+  const incidents = myIncidents();
+  if (selectedIncidentId) {
+    const found = incidents.find(i => i.id === selectedIncidentId || i._uuid === selectedIncidentId);
+    if (found) return found;
+  }
+  const active = incidents.find(i => i.status === 'active');
+  if (active) {
+    selectedIncidentId = active.id;
+    return active;
+  }
+  if (incidents.length > 0) {
+    selectedIncidentId = incidents[0].id;
+    return incidents[0];
+  }
+  const def = getDefaultEmergency(currentRole);
+  selectedIncidentId = def.id;
+  return def;
+}
+
+function selectIncident(id) {
+  selectedIncidentId = id;
+  renderPage('overview');
+}
+
+/* ─── AI ANALYSIS GENERATOR ──────────────────────────────────── */
+function generateAIAnalysis(inc) {
+  const type = inc.type || 'General Emergency';
+  const building = inc.building || 'Campus';
+  const room = inc.room || 'General Area';
+
+  if (type.includes('Medic')) {
+    return {
+      severityScore: 94,
+      severityLevel: 'LEVEL 1 — CRITICAL',
+      priorityLabel: 'CRITICAL',
+      priorityColor: '#dc2626',
+      badgeClass: 'ai-badge-critical',
+      headline: 'Acute Medical Crisis — Rapid Clinical Intervention Protocol',
+      assessment: `Acoustic and station telemetry indicates sudden severe physiological collapse in ${room}, ${building}. Voice stress and ambient acoustic profiling detected sudden fall impact, labored respiratory pattern, and unresponsiveness. Immediate clinical triage required within 3-minute survival window.`,
+      keywords: ['Collapse', 'Unresponsive', 'Medical Emergency', 'Laboratory', 'Stretcher'],
+      factors: [
+        'Sudden Unresponsiveness',
+        'Lab Environment Risk',
+        'Direct Stretcher Path via Ground Floor',
+        'Clinical Response Target < 3 Mins'
+      ],
+      protocol: [
+        `Dispatch Medical Response Team to ${building}, ${room} with AED and portable oxygen.`,
+        `Alert Campus Security to open North Emergency Gate for ambulance transit.`,
+        `Put Catbalogan Provincial Hospital emergency desk on standby.`
+      ],
+      receivingOffice: 'School Clinic',
+      modelInfo: 'CAMPUS-ER Neural Clinical Classifier v2.4 · 98.2% Confidence'
+    };
+  } else if (type.includes('Secur')) {
+    return {
+      severityScore: 91,
+      severityLevel: 'LEVEL 1 — HIGH PRIORITY',
+      priorityLabel: 'HIGH',
+      priorityColor: '#c2410c',
+      badgeClass: 'ai-badge-critical',
+      headline: 'Active Physical Security Breach & Confrontation Alert',
+      assessment: `Acoustic and sensor signal confirms unauthorized perimeter intrusion at ${room}, ${building}. Voice stress index indicates active agitation and refusal to comply with security personnel. Potential risk to adjoining university server infrastructure.`,
+      keywords: ['Unauthorized Entry', 'Security Breach', 'Confrontation', 'Restricted Zone'],
+      factors: [
+        'Unauthorized Perimeter Breach',
+        'Elevated Voice Stress Signature',
+        'Server Infrastructure Zone',
+        'Restricted Access Point'
+      ],
+      protocol: [
+        `Mobilize nearest Security Patrol Unit for immediate tactical containment at ${building}.`,
+        `Remotely activate magnetic access locks on adjoining corridor doors.`,
+        `Keep Catbalogan PNP precinct on hot-line stand-by if physical resistance continues.`
+      ],
+      receivingOffice: 'Campus Security',
+      modelInfo: 'CAMPUS-ER Acoustic Security Classifier v2.4 · 96.8% Confidence'
+    };
+  } else if (type.includes('Fire') || type.includes('Disaster')) {
+    return {
+      severityScore: 97,
+      severityLevel: 'LEVEL 1 — LIFE SAFETY THREAT',
+      priorityLabel: 'CRITICAL',
+      priorityColor: '#dc2626',
+      badgeClass: 'ai-badge-danger',
+      headline: 'Active Combustion / Environmental Hazard Propagation',
+      assessment: `Thermal / audio report confirms rapid smoke and heat buildup at ${room}, ${building}. High danger of vertical smoke propagation through ventilation risers across multiple floors. Rapid evacuation must be prioritized over property containment.`,
+      keywords: ['Fire', 'Smoke', 'Disaster', 'Evacuation', 'Electrical Hazard'],
+      factors: [
+        'Active Smoke Propagation',
+        'Electrical Distribution Vicinity',
+        'Multi-Story Evacuation Required',
+        'High Occupancy Risk'
+      ],
+      protocol: [
+        `Trigger building evacuation klaxon for ${building} and coordinate DRRMO floor wardens.`,
+        `Deploy DRRMO Rapid Suppression Crew with Class C ABC chemical suppressants and SCBA gear.`,
+        `Shut down master circuit breaker for ${building} and notify Catbalogan Bureau of Fire Protection (BFP).`
+      ],
+      receivingOffice: 'DRRMO',
+      modelInfo: 'CAMPUS-ER Environmental Threat Neural Net v2.4 · 99.1% Confidence'
+    };
+  } else {
+    return {
+      severityScore: 82,
+      severityLevel: 'LEVEL 2 — MEDIUM PRIORITY',
+      priorityLabel: 'MEDIUM',
+      priorityColor: '#d97706',
+      badgeClass: 'ai-badge-warning',
+      headline: 'Campus Facility Disruption & Environmental Emergency',
+      assessment: `Elevated operational hazard logged at ${room}, ${building}. Coordinated response required across campus administration and technical operations to prevent escalation.`,
+      keywords: ['Campus Emergency', 'Facility Disruption', 'Infrastructure'],
+      factors: [
+        'Campus Infrastructure Impact',
+        'Access Way Obstruction',
+        'Inter-Department Coordination'
+      ],
+      protocol: [
+        `Dispatch facilities inspection team to assess structural and electrical integrity at ${building}.`,
+        `Issue campus advisory bulletin to students and faculty regarding area restrictions.`,
+        `Record all incident response timestamps in central university disaster log.`
+      ],
+      receivingOffice: 'Administrator',
+      modelInfo: 'CAMPUS-ER Incident Classifier v2.4 · 94.5% Confidence'
+    };
+  }
+}
+
+/* ─── VOICE PLAYBACK (SPEECH SYNTHESIS) ───────────────────────── */
+function playIncidentAudio(text) {
+  if (!('speechSynthesis' in window)) {
+    showToast('Voice audio not supported in this browser');
+    return;
+  }
+  if (window.speechSynthesis.speaking) {
+    window.speechSynthesis.cancel();
+    setWaveformState(false);
+    return;
+  }
+  const clean = (text || '').replace(/\[Station:[^\]]+\]/g, '').trim();
+  const utter = new SpeechSynthesisUtterance(clean || 'Emergency panic alert activated on campus');
+  utter.rate = 0.95;
+  utter.pitch = 1.0;
+  setWaveformState(true);
+  utter.onend = () => setWaveformState(false);
+  utter.onerror = () => setWaveformState(false);
+  window.speechSynthesis.speak(utter);
+}
+
+function setWaveformState(isPlaying) {
+  const box = document.getElementById('vt-waveform');
+  const btn = document.getElementById('vt-play-btn');
+  if (box) {
+    if (isPlaying) box.classList.add('playing');
+    else box.classList.remove('playing');
+  }
+  if (btn) {
+    btn.innerHTML = isPlaying ? '⏹' : '▶';
+    btn.title = isPlaying ? 'Stop playback' : 'Play Voice Recording';
+  }
+}
+
+function escapeQuotes(str) {
+  if (!str) return '';
+  return str.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+}
+
+function dispatchRespondersForActive(uuid, bld, rm) {
+  showToast(`Responders dispatched to ${rm}, ${bld}`);
+  if (uuid) {
+    updateReportStatus(uuid, 'acknowledged');
+  }
+}
+
+function statusLabel(s) {
+  return {active:'● Active',pending:'⏳ Pending',resolved:'✓ Resolved',acknowledged:'✔ Acknowledged'}[s] || s;
+}
+
+/* ─── OVERVIEW PAGE (REDESIGNED EMERGENCY COMMAND CENTER) ──────── */
+function buildOverview() {
+  const all = myIncidents();
+  const inc = getSelectedIncident();
+  const ai = generateAIAnalysis(inc);
+
+  const onDutyName   = currentProfile?.fullname || 'SSU On-Duty Personnel';
+  const onDutyOffice = currentProfile?.office || ROLES[currentRole].label;
+  const roleTitle    = ROLES[currentRole].title || ROLES[currentRole].label;
+
+  // Alert switcher chips if multiple incidents exist
+  const switcherList = all.length > 0 ? all.slice(0, 5) : [inc];
+  const switcherHTML = switcherList.length > 1 ? `
+    <div class="alert-switcher-strip">
+      <span style="font-size:11px;font-weight:700;color:var(--ink-3);display:flex;align-items:center;padding-right:4px;">SWITCH ALERT:</span>
+      ${switcherList.map(item => `
+        <button class="alert-chip-btn ${item.id === inc.id ? 'active' : ''}" onclick="selectIncident('${item.id}')">
+          ${item.status === 'active' ? '🚨' : '📋'} ${item.id} · ${item.building}
+        </button>`).join('')}
+    </div>` : '';
+
+  return `
+    <div class="home-dashboard-flow">
+      <!-- DASHBOARD HEADER WITH ON-DUTY PERSONNEL -->
+      <div class="page-header" style="margin-bottom:0;">
+        <div class="page-header-left">
+          <div class="onduty-banner">
+            <span class="onduty-tag"><span class="live-dot-pulse"></span> ON-DUTY ACTIVE SHIFT</span>
+            <span class="onduty-officer-info">Personnel: <strong>${onDutyName}</strong></span>
+            <span class="onduty-divider">/</span>
+            <span class="onduty-office-info">Assigned Office: <strong>${onDutyOffice}</strong></span>
+          </div>
+          <h1 class="page-title">${roleTitle}</h1>
+          <div class="page-sub">Samar State University CAMPUS-ER · Real-Time Incident Stream & Emergency Visibility</div>
+        </div>
+        <div class="page-header-right">
+          <div id="audio-control-bar" style="display:flex;align-items:center;gap:8px;background:var(--ground);border:1px solid var(--border);border-radius:6px;padding:5px 10px;font-size:12px;">
+            <span style="font-weight:600;color:var(--ink);white-space:nowrap;">🔊 Alerts</span>
+            <button id="audio-mute-btn" onclick="toggleMute()" style="height:26px;padding:0 8px;border-radius:4px;border:1px solid var(--border-2);background:#fff;font-size:11px;cursor:pointer;font-weight:500;color:var(--ink-2);">${audioMuted ? '🔇 Unmute' : '🔊 Mute'}</button>
+            <input type="range" id="audio-vol" min="0" max="1" step="0.05" value="${audioVolume}" oninput="setAudioVolume(this.value)" style="width:72px;accent-color:var(--role-hue);" aria-label="Alert volume">
+            <button onclick="testAlert()" style="height:26px;padding:0 8px;border-radius:4px;border:1px solid var(--border-2);background:#fff;font-size:11px;cursor:pointer;color:var(--ink-2);">Test</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- TOP GRID: LEFT = CAMPUS MAP, RIGHT = ACTIVE EMERGENCY ALERT CARD -->
+      <div class="dashboard-top-grid">
+        <!-- LEFT SIDE: CAMPUS MAP -->
+        <div class="panel" style="display:flex;flex-direction:column;">
+          <div class="panel-header">
+            <div class="panel-title">🗺️ Campus Map — Samar State University</div>
+            <button class="panel-action" onclick="navigate('map')">Full Interactive Map →</button>
+          </div>
+          <div class="panel-body" style="padding:0;flex:1;">
+            ${buildCampusMap(true, inc)}
+          </div>
+        </div>
+
+        <!-- RIGHT SIDE: ACTIVE EMERGENCY ALERT CARD -->
+        <div class="active-alert-card">
+          <div class="active-alert-header">
+            <div class="active-alert-badge">
+              <span class="pulse-alarm"></span>
+              <span>${inc.status === 'active' ? 'Active Emergency Alert' : 'Selected Emergency Incident'}</span>
+            </div>
+            <div class="alert-time-elapsed">Activated: ${inc.time}</div>
+          </div>
+          <div class="active-alert-body">
+            <div>
+              <div class="active-alert-type">${inc.type}</div>
+              <div class="active-alert-loc">📍 <strong>${inc.room}</strong>, ${inc.building} (${inc.floor})</div>
+              <div class="active-alert-meta-row">
+                <span class="status-pill ${inc.status}">${statusLabel(inc.status)}</span>
+                <span class="priority-badge priority-${inc.priority}">${(inc.priority || 'HIGH').toUpperCase()} PRIORITY</span>
+                <span class="type-badge type-${inc.category}">${inc.office}</span>
+                <span class="type-badge" style="background:#f1f5f9;color:var(--ink-2);">ID: ${inc.id}</span>
+              </div>
+              <div style="font-size:12px;color:var(--ink-3);margin-bottom:12px;">
+                Reported by: <strong style="color:var(--ink);">${inc.reporter}</strong>
+              </div>
+            </div>
+
+            <div class="active-alert-actions">
+              <button class="btn btn-secondary" onclick="updateReportStatus('${inc._uuid}','acknowledged')">✔ Acknowledge</button>
+              <button class="btn btn-primary" onclick="dispatchRespondersForActive('${inc._uuid}','${inc.building}','${inc.room}')">⚡ Dispatch Responders</button>
+              <button class="btn btn-success" onclick="updateReportStatus('${inc._uuid}','resolved')">✓ Mark Resolved</button>
+              <button class="btn btn-secondary" onclick="playIncidentAudio('${escapeQuotes(inc.notes)}')">🔊 Broadcast Voice</button>
+            </div>
+          </div>
+          ${switcherHTML}
+        </div>
+      </div>
+
+      <!-- BELOW: INCIDENT DETAILS -->
+      <div class="incident-details-card">
+        <div class="incident-details-header">
+          <div class="incident-details-title">
+            <span>📋 Incident Details</span>
+            <span style="font-size:11px;font-weight:600;color:var(--ink-3);">Case Ref: ${inc.id}</span>
+          </div>
+          <div>
+            ${inc._uuid ? `<button class="btn btn-secondary" style="height:28px;font-size:11px;padding:0 8px;" onclick="openEditReport('${inc._uuid}')">✏ Edit Record</button>` : ''}
+          </div>
+        </div>
+        <div class="incident-details-grid">
+          <div class="id-item">
+            <div class="id-label">Emergency Type</div>
+            <div class="id-value"><span class="type-badge type-${inc.category}">${inc.type}</span></div>
+          </div>
+          <div class="id-item">
+            <div class="id-label">Building</div>
+            <div class="id-value font-highlight">🏛️ ${inc.building}</div>
+          </div>
+          <div class="id-item">
+            <div class="id-label">Floor</div>
+            <div class="id-value">🏢 ${inc.floor}</div>
+          </div>
+          <div class="id-item">
+            <div class="id-label">Room</div>
+            <div class="id-value font-highlight">📍 ${inc.room}</div>
+          </div>
+          <div class="id-item">
+            <div class="id-label">Activation Time</div>
+            <div class="id-value">⏱️ ${inc.time} <span class="id-sub">${inc.date}</span></div>
+          </div>
+          <div class="id-item">
+            <div class="id-label">Status</div>
+            <div class="id-value"><span class="status-pill ${inc.status}">${statusLabel(inc.status)}</span></div>
+          </div>
+          <div class="id-item">
+            <div class="id-label">Priority Level</div>
+            <div class="id-value"><span class="priority-badge priority-${inc.priority}">${(inc.priority || 'HIGH').toUpperCase()}</span></div>
+          </div>
+          <div class="id-item">
+            <div class="id-label">Assigned Office</div>
+            <div class="id-value font-highlight">🏢 ${inc.office}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- BELOW INCIDENT DETAILS: VOICE TRANSCRIPT CARD -->
+      <div class="voice-transcript-card">
+        <div class="vt-header">
+          <div class="vt-title">
+            <span>🎙️ Voice Transcript Card</span>
+            <span style="font-size:11px;font-weight:600;color:var(--ink-3);">Station Audio Capture Feed</span>
+          </div>
+          <div style="font-size:11px;font-weight:600;color:var(--role-hue);">
+            ● IoT Live Audio Channel
+          </div>
+        </div>
+        <div class="vt-body">
+          <div class="vt-player-strip">
+            <button class="vt-play-btn" id="vt-play-btn" title="Play Voice Audio" onclick="playIncidentAudio('${escapeQuotes(inc.notes)}')">▶</button>
+            <div class="vt-waveform-box" id="vt-waveform">
+              <span class="vt-wave-bar"></span>
+              <span class="vt-wave-bar"></span>
+              <span class="vt-wave-bar"></span>
+              <span class="vt-wave-bar"></span>
+              <span class="vt-wave-bar"></span>
+              <span class="vt-wave-bar"></span>
+              <span class="vt-wave-bar"></span>
+              <span class="vt-wave-bar"></span>
+              <span class="vt-wave-bar"></span>
+              <span class="vt-wave-bar"></span>
+              <span class="vt-wave-bar"></span>
+              <span class="vt-wave-bar"></span>
+              <span class="vt-wave-bar"></span>
+              <span class="vt-wave-bar"></span>
+              <span class="vt-wave-bar"></span>
+              <span class="vt-wave-bar"></span>
+              <span class="vt-wave-bar"></span>
+              <span class="vt-wave-bar"></span>
+            </div>
+            <span style="font-size:11px;font-weight:600;color:var(--role-hue);white-space:nowrap;">Play Audio Recording</span>
+          </div>
+
+          <div class="vt-quote-box">
+            "${inc.notes}"
+          </div>
+
+          <!-- multilingual metadata row -->
+          <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
+            ${[['🌐 Detected Language','Filipino / Tagalog'],['📊 Confidence Score','97.8%'],['⏱️ Original Report Time',inc.time],['🎙️ Source',inc.reporter]].map(([l,v])=>`
+              <div style="background:var(--ground);border:1px solid var(--border);border-radius:5px;padding:6px 10px;">
+                <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;color:var(--ink-3);margin-bottom:2px;">${l}</div>
+                <div style="font-size:12px;font-weight:600;color:var(--ink);">${v}</div>
+              </div>`).join('')}
+          </div>
+
+          <div class="vt-telemetry-row">
+            <div class="vt-tel-item">Signal Strength: <span>–58 dBm (Strong)</span></div>
+            <div class="vt-tel-item">Sample Rate: <span>48 kHz Opus</span></div>
+            <div class="vt-tel-item">Languages Supported: <span>English · Filipino · Waray-Waray</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- BELOW VOICE TRANSCRIPT: AI ANALYSIS AND PRIORITY CARD -->
+      <div class="ai-analysis-card">
+        <div class="ai-header">
+          <div class="ai-title">
+            <span>🧠 AI Priority Analysis</span>
+            <span style="font-size:11px;font-weight:600;color:var(--ink-3);">CAMPUS-ER Neural Incident Classifier</span>
+          </div>
+          <span class="ai-priority-badge ${ai.badgeClass}">${ai.priorityLabel}</span>
+        </div>
+        <div class="ai-body">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+            <div style="background:var(--ground);border:1px solid var(--border);border-radius:8px;padding:14px 16px;">
+              <div class="ai-score-label" style="margin-bottom:4px;">Priority Level</div>
+              <div style="font-size:22px;font-weight:800;color:${ai.priorityColor};line-height:1;">${ai.priorityLabel}</div>
+              <div style="font-size:11px;color:var(--ink-3);margin-top:4px;">${ai.severityLevel}</div>
+            </div>
+            <div style="background:var(--ground);border:1px solid var(--border);border-radius:8px;padding:14px 16px;">
+              <div class="ai-score-label" style="margin-bottom:4px;">AI Confidence Score</div>
+              <div style="font-size:22px;font-weight:800;color:var(--role-hue);line-height:1;">${ai.severityScore}<span style="font-size:13px;font-weight:500;color:var(--ink-3);">/100</span></div>
+              <div style="font-size:11px;color:var(--ink-3);margin-top:4px;">${ai.headline}</div>
+            </div>
+          </div>
+          <div>
+            <div class="ai-section-title">Automated Situation Assessment</div>
+            <div class="ai-narrative">${ai.assessment}</div>
+          </div>
+          <div>
+            <div class="ai-section-title">Detected Keywords</div>
+            <div class="ai-factors-row">
+              ${ai.keywords.map(k => `<span class="ai-factor-chip" style="background:#fee2e2;border-color:#fca5a5;color:var(--negative);">🔑 ${k}</span>`).join('')}
+            </div>
+          </div>
+          <div>
+            <div class="ai-section-title">Detected Risk Indicators</div>
+            <div class="ai-factors-row">
+              ${ai.factors.map(f => `<span class="ai-factor-chip">⚡ ${f}</span>`).join('')}
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+            <div>
+              <div class="ai-section-title">Suggested Action</div>
+              <div class="ai-protocol-list">
+                ${ai.protocol.map(p => `<div class="ai-protocol-step">${p}</div>`).join('')}
+              </div>
+            </div>
+            <div>
+              <div class="ai-section-title">Recommended Receiving Office</div>
+              <div style="background:var(--role-hue-2);border:1px solid var(--role-hue-3);border-radius:6px;padding:12px 14px;">
+                <div style="font-size:16px;font-weight:700;color:var(--role-hue);">${ai.receivingOffice}</div>
+                <div style="font-size:11px;color:var(--ink-3);margin-top:4px;">Auto-routed by emergency type classification</div>
+              </div>
+            </div>
+          </div>
+          <div class="ai-footer-note">
+            <span>${ai.modelInfo}</span>
+            <span>On-Duty Personnel: ${onDutyOffice}</span>
+          </div>
+        </div>
+      </div>
+    </div>`;
+}
+
+/* ─── CAMPUS MAP SVG (DYNAMIC) ────────────────────────────────── */
+function buildCampusMap(mini=false, focusInc=null) {
+  const h = mini ? 400 : 500;
+  const activeEmergencies = liveIncidents.filter(i => i.status === 'active');
+  const targetBuilding = focusInc?.building || '';
+  const targetRoom = focusInc?.room || '';
+
+  const hasEngEmer    = targetBuilding.includes('Engineering') || activeEmergencies.some(i => i.building && i.building.includes('Engineering'));
+  const hasSciEmer    = targetBuilding.includes('Science')     || activeEmergencies.some(i => i.building && i.building.includes('Science'));
+  const hasIctEmer    = targetBuilding.includes('ICT')         || activeEmergencies.some(i => i.building && i.building.includes('ICT'));
+  const hasSecEmer    = (targetBuilding.includes('Security') || targetBuilding.includes('Patrol')) || activeEmergencies.some(i => i.building && (i.building.includes('Security') || i.building.includes('Patrol')));
+  const hasEduEmer    = targetBuilding.includes('Education')   || activeEmergencies.some(i => i.building && i.building.includes('Education'));
+  const hasArtsEmer   = targetBuilding.includes('Arts')        || activeEmergencies.some(i => i.building && i.building.includes('Arts'));
+  const hasLibEmer    = targetBuilding.includes('Library')     || activeEmergencies.some(i => i.building && i.building.includes('Library'));
+  const hasClinicEmer = targetBuilding.includes('Clinic')      || activeEmergencies.some(i => i.building && i.building.includes('Clinic'));
+  const hasDrrmoEmer  = targetBuilding.includes('DRRMO')       || activeEmergencies.some(i => i.building && i.building.includes('DRRMO'));
+  const hasAdminEmer  = targetBuilding.includes('Admin')       || activeEmergencies.some(i => i.building && i.building.includes('Admin'));
+
+  const markerPos = hasEngEmer ? '290,60' :
+                    hasSciEmer ? '490,165' :
+                    hasIctEmer ? '460,60' :
+                    hasAdminEmer ? '115,60' :
+                    hasClinicEmer ? '295,270' :
+                    hasDrrmoEmer ? '635,165' :
+                    hasSecEmer ? '615,60' : '350,250';
+  
+  const isRoom101Emer = targetRoom.includes('101') || (hasEngEmer && targetRoom.includes('101'));
+
+  return `
+    <div class="campus-map-wrap" style="height:${h}px;" id="campus-map-wrap">
+      <svg class="campus-map-svg" viewBox="0 0 700 500" xmlns="http://www.w3.org/2000/svg" id="campus-svg">
+        <!-- Ground / roads -->
+        <rect width="700" height="500" fill="#e8f0e4"/>
+        <rect x="0" y="230" width="700" height="14" fill="#d4c89a" opacity="0.6"/>
+        <rect x="310" y="0" width="14" height="500" fill="#d4c89a" opacity="0.6"/>
+        <rect x="0" y="380" width="700" height="10" fill="#d4c89a" opacity="0.4"/>
+        <!-- Trees / grass -->
+        <circle cx="50" cy="50" r="18" fill="#5a9e5a" opacity="0.4"/>
+        <circle cx="650" cy="50" r="16" fill="#5a9e5a" opacity="0.4"/>
+        <circle cx="50" cy="460" r="20" fill="#5a9e5a" opacity="0.4"/>
+        <circle cx="650" cy="460" r="18" fill="#5a9e5a" opacity="0.4"/>
+        <circle cx="350" cy="460" r="14" fill="#5a9e5a" opacity="0.3"/>
+
+        <!-- Administration Building -->
+        <g class="map-building ${hasAdminEmer ? 'emergency' : ''}" onclick="showBuildingTip('Administration Building','${hasAdminEmer ? 'Active Emergency' : 'Online'}')">
+          <rect x="50" y="50" width="130" height="70" rx="4" fill="${hasAdminEmer ? '#dc2626' : '#4a7ab5'}"/>
+          <text x="115" y="82" text-anchor="middle" fill="white" font-size="9" font-weight="600" font-family="Inter,sans-serif">Administration</text>
+          <text x="115" y="94" text-anchor="middle" fill="white" font-size="8" font-family="Inter,sans-serif">Building</text>
+          <circle cx="160" cy="60" r="5" fill="${hasAdminEmer ? '#fff' : '#22c55e'}"/>
+        </g>
+        <!-- College of Engineering -->
+        <g class="map-building ${hasEngEmer ? 'emergency' : ''}" id="bld-engineering" onclick="showBuildingTip('College of Engineering','${hasEngEmer ? 'Active Emergency' : 'Online'}')">
+          <rect x="220" y="50" width="140" height="80" rx="4" fill="${hasEngEmer ? '#dc2626' : '#4a7ab5'}"/>
+          <text x="290" y="85" text-anchor="middle" fill="white" font-size="9" font-weight="700" font-family="Inter,sans-serif">College of</text>
+          <text x="290" y="97" text-anchor="middle" fill="white" font-size="9" font-weight="700" font-family="Inter,sans-serif">Engineering</text>
+          <circle cx="350" cy="60" r="6" fill="${hasEngEmer ? '#fff' : '#22c55e'}"/>
+        </g>
+        <!-- ICT Building -->
+        <g class="map-building ${hasIctEmer ? 'emergency' : ''}" onclick="showBuildingTip('ICT Building','${hasIctEmer ? 'Active Emergency' : 'Online'}')">
+          <rect x="410" y="50" width="100" height="65" rx="4" fill="${hasIctEmer ? '#dc2626' : '#4a7ab5'}"/>
+          <text x="460" y="79" text-anchor="middle" fill="white" font-size="9" font-weight="600" font-family="Inter,sans-serif">ICT</text>
+          <text x="460" y="91" text-anchor="middle" fill="white" font-size="8" font-family="Inter,sans-serif">Building</text>
+          <circle cx="500" cy="60" r="5" fill="${hasIctEmer ? '#fff' : '#22c55e'}"/>
+        </g>
+        <!-- Security Office -->
+        <g class="map-building ${hasSecEmer ? 'emergency' : ''}" onclick="showBuildingTip('Security Office','${hasSecEmer ? 'Active Emergency' : 'Online'}')">
+          <rect x="560" y="50" width="110" height="55" rx="4" fill="${hasSecEmer ? '#dc2626' : '#1e3a8a'}"/>
+          <text x="615" y="74" text-anchor="middle" fill="white" font-size="9" font-weight="600" font-family="Inter,sans-serif">Security</text>
+          <text x="615" y="86" text-anchor="middle" fill="white" font-size="8" font-family="Inter,sans-serif">Office</text>
+          <circle cx="660" cy="60" r="5" fill="${hasSecEmer ? '#fff' : '#22c55e'}"/>
+        </g>
+
+        <!-- College of Education -->
+        <g class="map-building ${hasEduEmer ? 'emergency' : ''}" onclick="showBuildingTip('College of Education','${hasEduEmer ? 'Active Emergency' : 'Online'}')">
+          <rect x="50" y="155" width="130" height="65" rx="4" fill="${hasEduEmer ? '#dc2626' : '#4a7ab5'}"/>
+          <text x="115" y="180" text-anchor="middle" fill="white" font-size="9" font-weight="600" font-family="Inter,sans-serif">College of</text>
+          <text x="115" y="192" text-anchor="middle" fill="white" font-size="9" font-weight="600" font-family="Inter,sans-serif">Education</text>
+          <circle cx="170" cy="165" r="5" fill="${hasEduEmer ? '#fff' : '#22c55e'}"/>
+        </g>
+        <!-- College of Arts and Sciences -->
+        <g class="map-building ${hasArtsEmer ? 'emergency' : ''}" onclick="showBuildingTip('College of Arts and Sciences','${hasArtsEmer ? 'Active Emergency' : 'Online'}')">
+          <rect x="220" y="155" width="165" height="65" rx="4" fill="${hasArtsEmer ? '#dc2626' : '#4a7ab5'}"/>
+          <text x="302" y="180" text-anchor="middle" fill="white" font-size="9" font-weight="600" font-family="Inter,sans-serif">College of Arts</text>
+          <text x="302" y="192" text-anchor="middle" fill="white" font-size="9" font-weight="600" font-family="Inter,sans-serif">and Sciences</text>
+          <circle cx="375" cy="165" r="5" fill="${hasArtsEmer ? '#fff' : '#22c55e'}"/>
+        </g>
+        <!-- Science Building -->
+        <g class="map-building ${hasSciEmer ? 'emergency' : ''}" id="bld-science" onclick="showBuildingTip('Science Building','${hasSciEmer ? 'Active Emergency' : 'Online'}')">
+          <rect x="430" y="155" width="120" height="65" rx="4" fill="${hasSciEmer ? '#dc2626' : '#4a7ab5'}"/>
+          <text x="490" y="180" text-anchor="middle" fill="white" font-size="9" font-weight="700" font-family="Inter,sans-serif">Science</text>
+          <text x="490" y="192" text-anchor="middle" fill="white" font-size="9" font-weight="700" font-family="Inter,sans-serif">Building ${hasSciEmer ? '🔥' : ''}</text>
+          <circle cx="540" cy="165" r="6" fill="${hasSciEmer ? '#fff' : '#22c55e'}"/>
+        </g>
+        <!-- DRRMO Office -->
+        <g class="map-building ${hasDrrmoEmer ? 'emergency' : ''}" onclick="showBuildingTip('DRRMO Office','${hasDrrmoEmer ? 'Active Emergency' : 'Online'}')">
+          <rect x="590" y="155" width="90" height="65" rx="4" fill="${hasDrrmoEmer ? '#dc2626' : '#c2410c'}"/>
+          <text x="635" y="180" text-anchor="middle" fill="white" font-size="9" font-weight="600" font-family="Inter,sans-serif">DRRMO</text>
+          <text x="635" y="192" text-anchor="middle" fill="white" font-size="8" font-family="Inter,sans-serif">Office</text>
+          <circle cx="670" cy="165" r="5" fill="${hasDrrmoEmer ? '#fff' : '#22c55e'}"/>
+        </g>
+
+        <!-- University Library -->
+        <g class="map-building ${hasLibEmer ? 'emergency' : ''}" onclick="showBuildingTip('University Library','${hasLibEmer ? 'Active Emergency' : 'Online'}')">
+          <rect x="50" y="260" width="140" height="65" rx="4" fill="${hasLibEmer ? '#dc2626' : '#4a7ab5'}"/>
+          <text x="120" y="285" text-anchor="middle" fill="white" font-size="9" font-weight="600" font-family="Inter,sans-serif">University</text>
+          <text x="120" y="297" text-anchor="middle" fill="white" font-size="9" font-weight="600" font-family="Inter,sans-serif">Library</text>
+          <circle cx="180" cy="270" r="5" fill="${hasLibEmer ? '#fff' : '#22c55e'}"/>
+        </g>
+        <!-- University Clinic -->
+        <g class="map-building ${hasClinicEmer ? 'emergency' : ''}" onclick="showBuildingTip('University Clinic','${hasClinicEmer ? 'Active Emergency' : 'Online'}')">
+          <rect x="230" y="260" width="130" height="65" rx="4" fill="${hasClinicEmer ? '#dc2626' : '#15803d'}"/>
+          <text x="295" y="285" text-anchor="middle" fill="white" font-size="9" font-weight="600" font-family="Inter,sans-serif">University</text>
+          <text x="295" y="297" text-anchor="middle" fill="white" font-size="9" font-weight="600" font-family="Inter,sans-serif">Clinic ✚</text>
+          <circle cx="350" cy="270" r="5" fill="${hasClinicEmer ? '#fff' : '#22c55e'}"/>
+        </g>
+        <!-- Rooms grid -->
+        <g>
+          <rect x="400" y="260" width="60" height="30" rx="2" fill="${isRoom101Emer ? '#dc2626' : '#6b7280'}" opacity="${isRoom101Emer ? '1' : '0.7'}"/>
+          <text x="430" y="279" text-anchor="middle" fill="white" font-size="8" font-weight="${isRoom101Emer ? '700' : '400'}" font-family="Inter,sans-serif">Room 101 ${isRoom101Emer ? '🚨' : ''}</text>
+          <rect x="470" y="260" width="60" height="30" rx="2" fill="#6b7280" opacity="0.7"/>
+          <text x="500" y="279" text-anchor="middle" fill="white" font-size="8" font-family="Inter,sans-serif">Room 102</text>
+          <rect x="540" y="260" width="60" height="30" rx="2" fill="#6b7280" opacity="0.7"/>
+          <text x="570" y="279" text-anchor="middle" fill="white" font-size="8" font-family="Inter,sans-serif">Room 103</text>
+          <rect x="610" y="260" width="60" height="30" rx="2" fill="#6b7280" opacity="0.7"/>
+          <text x="640" y="279" text-anchor="middle" fill="white" font-size="8" font-family="Inter,sans-serif">Room 104</text>
+          <rect x="400" y="300" width="60" height="30" rx="2" fill="#6b7280" opacity="0.7"/>
+          <text x="430" y="319" text-anchor="middle" fill="white" font-size="8" font-family="Inter,sans-serif">Room 105</text>
+        </g>
+
+        <!-- Quadrangle -->
+        <rect x="50" y="395" width="300" height="80" rx="4" fill="#c8dbb8"/>
+        <text x="200" y="440" text-anchor="middle" fill="#2d5a2d" font-size="12" font-weight="600" font-family="Inter,sans-serif">University Quadrangle</text>
+
+        <!-- Parking -->
+        <rect x="380" y="395" width="300" height="80" rx="4" fill="#b8c8db"/>
+        <text x="530" y="440" text-anchor="middle" fill="#1a3a6e" font-size="11" font-weight="600" font-family="Inter,sans-serif">Parking / Grounds</text>
+
+        <!-- Dynamic Emergency marker -->
+        <g id="emergency-marker" transform="translate(${markerPos})">
+          <circle r="13" fill="#dc2626" opacity="0.9">
+            <animate attributeName="r" values="13;20;13" dur="1.2s" repeatCount="indefinite"/>
+            <animate attributeName="opacity" values="0.9;0.25;0.9" dur="1.2s" repeatCount="indefinite"/>
+          </circle>
+          <circle r="6" fill="#fff"/>
+          <text x="0" y="4" text-anchor="middle" fill="#dc2626" font-size="8" font-weight="700" font-family="Inter,sans-serif">!</text>
+        </g>
+
+        <!-- Compass -->
+        <g transform="translate(660,460)">
+          <circle r="18" fill="rgba(255,255,255,0.9)" stroke="#ccc" stroke-width="1"/>
+          <text x="0" y="-6" text-anchor="middle" fill="#1a3a6e" font-size="9" font-weight="700" font-family="Inter,sans-serif">N</text>
+          <polygon points="0,-5 3,2 0,0 -3,2" fill="#1a3a6e"/>
+          <polygon points="0,5 3,-2 0,0 -3,-2" fill="#9ca3af"/>
+        </g>
+      </svg>
+      <!-- Legend -->
+      <div class="map-legend">
+        <div class="map-legend-item"><div class="legend-dot" style="background:#22c55e;"></div> Online Station</div>
+        <div class="map-legend-item"><div class="legend-dot" style="background:#9ca3af;"></div> Offline Station</div>
+        <div class="map-legend-item"><div class="legend-dot" style="background:#dc2626;"></div> Active Emergency</div>
+      </div>
+      <div class="map-tooltip" id="map-tooltip"></div>
+    </div>`;
+}
+
+function showBuildingTip(name, status) {
+  const tip = document.getElementById('map-tooltip');
+  if (!tip) return;
+  tip.textContent = name + ' — ' + status;
+  tip.style.opacity = '1';
+  tip.style.top = '10px';
+  tip.style.left = '50%';
+  tip.style.transform = 'translateX(-50%)';
+  setTimeout(() => { tip.style.opacity = '0'; }, 2500);
+}
+
+function initMapIfNeeded() {}
+
+/* ─── MAP PAGE ────────────────────────────────────────────────── */
+function buildMapPage() {
+  const activeEmergencies = liveIncidents.filter(i => i.status === 'active');
+  const blds = [
+    'Administration Building','College of Engineering','ICT Building','Security Office',
+    'College of Education','College of Arts and Sciences','Science Building',
+    'University Library','University Clinic','DRRMO Office'
+  ];
+
+  return `
+    <div class="page-header">
+      <div class="page-header-left">
+        <h1 class="page-title">Campus Map</h1>
+        <div class="page-sub">Samar State University — Live Building Status</div>
+      </div>
+      <div class="page-header-right">
+        <button class="btn btn-secondary" onclick="loadStations();fetchReports();renderPage('map')">🔄 Refresh Map</button>
+      </div>
+    </div>
+    <div class="panel" style="margin-bottom:20px;">
+      <div class="panel-header">
+        <div class="panel-title">Interactive Campus Map — Samar State University</div>
+        <div style="font-size:12px;color:var(--ink-3);">${activeEmergencies.length} active emergencies · ${stationList.length} stations loaded</div>
+      </div>
+      <div class="panel-body" style="padding:0;">
+        ${buildCampusMap(false)}
+      </div>
+    </div>
+    <div class="three-col">
+      <div class="panel">
+        <div class="panel-header"><div class="panel-title">Building Status</div></div>
+        <div class="panel-body">
+          ${blds.map(b => {
+            const isEmer = activeEmergencies.some(inc => inc.building && (inc.building.includes(b) || b.includes(inc.building)));
+            return `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:12px;">
+              <span style="color:var(--ink-2);">${b}</span>
+              <span style="font-weight:600;color:${isEmer ? 'var(--negative)' : 'var(--positive)'};">${isEmer ? '⚠️ Emergency' : '● Online'}</span>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-header"><div class="panel-title">Station & Room Status</div></div>
+        <div class="panel-body">
+          ${stationList.length > 0 ? stationList.map(s => {
+            const isEmer = activeEmergencies.some(i => i.building && i.building === s.building);
+            return `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:12px;">
+              <span style="color:var(--ink-2);">${s.building || 'Station'} — ${s.floor || 'Area'}</span>
+              <span style="font-weight:600;color:${isEmer ? 'var(--negative)' : 'var(--positive)'};">${isEmer ? '🔴 Emergency' : '🟢 ' + (s.status || 'Online')}</span>
+            </div>`;
+          }).join('') : `
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:12px;">
+              <span style="color:var(--ink-2);">Room 101 — Engineering Bldg</span>
+              <span style="font-weight:600;color:${activeEmergencies.some(i => i.building && i.building.includes('Engineering')) ? 'var(--negative)' : 'var(--positive)'};">${activeEmergencies.some(i => i.building && i.building.includes('Engineering')) ? '🔴 Emergency' : '🟢 Online'}</span>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:12px;">
+              <span style="color:var(--ink-2);">Lab 302 — Science Bldg</span>
+              <span style="font-weight:600;color:${activeEmergencies.some(i => i.building && i.building.includes('Science')) ? 'var(--negative)' : 'var(--positive)'};">${activeEmergencies.some(i => i.building && i.building.includes('Science')) ? '🔴 Emergency' : '🟢 Online'}</span>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:12px;">
+              <span style="color:var(--ink-2);">Study Area B — Library</span>
+              <span style="font-weight:600;color:var(--positive);">🟢 Online</span>
+            </div>
+          `}
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-header"><div class="panel-title">Active Emergencies</div></div>
+        <div class="panel-body">
+          ${activeEmergencies.length ? activeEmergencies.map(inc => `
+            <div style="background:#fff5f5;border:1px solid #fca5a5;border-radius:6px;padding:10px 12px;margin-bottom:10px;">
+              <div style="font-size:12px;font-weight:700;color:var(--negative);margin-bottom:4px;">🚨 ${inc.type}</div>
+              <div style="font-size:11px;color:var(--ink-2);">📍 ${inc.room}, ${inc.building}</div>
+              <div style="font-size:11px;color:var(--ink-3);">${inc.time} · Assigned: ${inc.office}</div>
+              <button class="btn btn-danger" style="margin-top:8px;height:28px;font-size:11px;" onclick="openDetail('${inc.id}')">View Details</button>
+            </div>`).join('') : '<div class="empty-state"><div class="es-icon">✅</div><div class="es-text">No active emergencies</div></div>'}
+        </div>
+      </div>
+    </div>`;
+}
+
+
+/* ─── INCIDENTS PAGE ─────────────────────────────────────────── */
+function buildIncidents() {
+  const incidents = myIncidents();
+  const roleTitle = {
+    admin:'All Incident Reports', clinic:'Medical Emergency Reports',
+    security:'Security Threat Reports', drrmo:'Fire & Disaster Reports'
+  }[currentRole];
+  const rows = incidents.map(inc => `
+    <tr>
+      <td><div class="inc-type">${inc.id}</div></td>
+      <td><span class="type-badge type-${inc.category}">${inc.type}</span></td>
+      <td>${inc.building}</td>
+      <td>${inc.floor} · ${inc.room}</td>
+      <td><span class="priority-badge priority-${inc.priority}">${inc.priority.toUpperCase()}</span></td>
+      <td>${inc.date}</td>
+      <td>${inc.time}</td>
+      <td><span class="status-pill ${inc.status}">${statusLabel(inc.status)}</span></td>
+      <td style="white-space:nowrap;">
+        <button class="btn-row-action" onclick="openDetail('${inc.id}')" style="margin-right:4px;">View</button>
+        <button class="btn-row-action" onclick="updateReportStatus('${inc._uuid}','acknowledged')" style="border-color:var(--ssu-navy);color:var(--ssu-navy);margin-right:4px;">Ack</button>
+        ${inc._uuid ? `<button class="btn-row-action" onclick="openEditReport('${inc._uuid}')" style="border-color:#b45309;color:#b45309;margin-right:4px;">✏ Edit</button>
+        <button class="btn-row-action" onclick="deleteReport('${inc._uuid}','${inc.id}')" style="border-color:var(--negative);color:var(--negative);">&#x1f5d1; Del</button>` : ''}
+      </td>
+    </tr>`).join('');
+
+  return `
+    <div class="page-header">
+      <div class="page-header-left">
+        <h1 class="page-title">${roleTitle}</h1>
+        <div class="page-sub">${incidents.length} reports · Samar State University · ESP32 Emergency Stations Only</div>
+      </div>
+      <div class="page-header-right">
+        <select style="height:34px;border:1px solid var(--border-2);border-radius:6px;padding:0 10px;font-size:13px;background:#fff;" onchange="">
+          <option>All Status</option><option>Active</option><option>Pending</option><option>Resolved</option>
+        </select>
+        <button class="btn btn-secondary" onclick="fetchReports().then(()=>renderPage('incidents'))">🔄 Refresh</button>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">Incident Log</div>
+        <div style="font-size:12px;color:var(--ink-3);">Updated: ${new Date().toLocaleString('en-PH',{month:'short',day:'numeric',year:'numeric',hour:'2-digit',minute:'2-digit'})}</div>
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="incident-table">
+          <thead><tr><th>ID</th><th>Type</th><th>Building</th><th>Location</th><th>Priority</th><th>Date</th><th>Time</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody>${rows || '<tr><td colspan="9" style="text-align:center;padding:32px;color:var(--ink-3);">No incident reports found. Emergency reports originate automatically from ESP32 stations.</td></tr>'}</tbody>
+        </table>
+      </div>
+    </div>`;
+}
+
+/* ─── ANALYTICS PAGE (DYNAMIC) ─────────────────────────────────── */
+function buildAnalytics() {
+  const total = liveIncidents.length;
+  const active = liveIncidents.filter(i => i.status === 'active').length;
+  const resolved = liveIncidents.filter(i => i.status === 'resolved').length;
+  const respRate = total > 0 ? Math.round((resolved / total) * 100) : 100;
+
+  const medCases  = liveIncidents.filter(i => i.category === 'medical').length;
+  const secCases  = liveIncidents.filter(i => i.category === 'security').length;
+  const fireCases = liveIncidents.filter(i => i.category === 'fire').length;
+  const genCases  = liveIncidents.filter(i => i.category === 'general').length;
+  const maxCat    = Math.max(medCases, secCases, fireCases, genCases, 1);
+
+  const highPri  = liveIncidents.filter(i => i.priority === 'high').length;
+  const medPri   = liveIncidents.filter(i => i.priority === 'medium').length;
+  const lowPri   = liveIncidents.filter(i => i.priority === 'low').length;
+  const totalPri = highPri + medPri + lowPri || 1;
+  const highPct  = Math.round((highPri / totalPri) * 100);
+  const medPct   = Math.round((medPri / totalPri) * 100);
+  const lowPct   = Math.round((lowPri / totalPri) * 100);
+
+  const blds = [
+    ['Engineering Bldg', liveIncidents.filter(i => i.building && i.building.includes('Engineering')).length],
+    ['Science Building', liveIncidents.filter(i => i.building && i.building.includes('Science')).length],
+    ['Library',          liveIncidents.filter(i => i.building && i.building.includes('Library')).length],
+    ['Education Bldg',   liveIncidents.filter(i => i.building && i.building.includes('Education')).length],
+    ['Arts & Sciences',  liveIncidents.filter(i => i.building && i.building.includes('Arts')).length],
+    ['Admin Building',   liveIncidents.filter(i => i.building && i.building.includes('Admin')).length],
+    ['Security Office',  liveIncidents.filter(i => i.building && i.building.includes('Security')).length],
+    ['DRRMO Office',     liveIncidents.filter(i => i.building && i.building.includes('DRRMO')).length],
+  ];
+  const maxBld = Math.max(...blds.map(b => b[1]), 1);
+
+  const offices = [
+    { name: 'School Clinic', color: '#166534', cat: 'medical' },
+    { name: 'Campus Security', color: '#1e3a8a', cat: 'security' },
+    { name: 'DRRMO', color: '#b45309', cat: 'fire' },
+    { name: 'Administrator', color: '#6b21a8', cat: 'general' },
+  ].map(o => {
+    const cases = liveIncidents.filter(i => i.office === o.name || i.category === o.cat).length;
+    const resCount = liveIncidents.filter(i => (i.office === o.name || i.category === o.cat) && i.status === 'resolved').length;
+    const rateStr = cases > 0 ? Math.round((resCount / cases) * 100) + '%' : '100%';
+    return { ...o, cases, resolved: resCount, rate: rateStr };
+  });
+
+  return `
+    <div class="page-header">
+      <div class="page-header-left">
+        <h1 class="page-title">Incident Analytics</h1>
+        <div class="page-sub">Campus-wide emergency trends · Samar State University</div>
+      </div>
+      <div class="page-header-right">
+        <button class="btn btn-secondary" onclick="fetchReports();renderPage('analytics')">🔄 Refresh Stats</button>
+      </div>
+    </div>
+    <div class="stat-row">
+      <div class="stat-card"><div class="stat-label">Resolution Rate</div><div class="stat-value accent">${respRate}%</div><div class="stat-delta up">${resolved} of ${total} closed</div></div>
+      <div class="stat-card"><div class="stat-label">Active Emergencies</div><div class="stat-value negative">${active}</div><div class="stat-delta down">Ongoing cases</div></div>
+      <div class="stat-card"><div class="stat-label">Total Documented</div><div class="stat-value">${total}</div><div class="stat-delta">Database records</div></div>
+      <div class="stat-card"><div class="stat-label">Registered Stations</div><div class="stat-value" style="font-size:16px;">${stationList.length}</div><div class="stat-delta">Stations table</div></div>
+    </div>
+    <div class="two-col">
+      <div>
+        <div class="panel" style="margin-bottom:20px;">
+          <div class="panel-header"><div class="panel-title">Incidents by Category</div></div>
+          <div class="panel-body">
+            <div class="chart-bar-list" id="cat-chart">
+              ${[
+                ['Medical Emergency', medCases, '#166534'],
+                ['Security Threat', secCases, '#1e3a8a'],
+                ['Fire / Disaster', fireCases, '#b45309'],
+                ['General Emergency', genCases, '#6b21a8']
+              ].map(([l,v,c])=>`
+                <div class="chart-bar-item">
+                  <div class="chart-bar-label">${l}</div>
+                  <div class="chart-bar-track"><div class="chart-bar-fill" style="width:${(v/maxCat)*100}%;background:${c};" data-target="${(v/maxCat)*100}"></div></div>
+                  <div class="chart-bar-val">${v}</div>
+                </div>`).join('')}
+            </div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-header"><div class="panel-title">Incidents by Building</div></div>
+          <div class="panel-body">
+            <div class="chart-bar-list">
+              ${blds.map(([l,v])=>`
+                <div class="chart-bar-item">
+                  <div class="chart-bar-label">${l}</div>
+                  <div class="chart-bar-track"><div class="chart-bar-fill" style="width:${(v/maxBld)*100}%;" data-target="${(v/maxBld)*100}"></div></div>
+                  <div class="chart-bar-val">${v}</div>
+                </div>`).join('')}
+            </div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="panel" style="margin-bottom:20px;">
+          <div class="panel-header"><div class="panel-title">Office Performance</div></div>
+          <div class="panel-body">
+            ${offices.map(o=>`
+              <div class="office-perf-row">
+                <div class="opr-office">${o.name}</div>
+                <div class="opr-bar-wrap">
+                  <div class="opr-bar-track"><div class="opr-bar-fill" style="width:${o.rate};background:${o.color};"></div></div>
+                  <div class="opr-stats">
+                    <div class="opr-stat"><span>${o.cases}</span> cases</div>
+                    <div class="opr-stat"><span>${o.resolved}</span> resolved</div>
+                    <div class="opr-stat"><span>${o.rate}</span> rate</div>
+                  </div>
+                </div>
+              </div>`).join('')}
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-header"><div class="panel-title">Priority Breakdown</div></div>
+          <div class="panel-body">
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;text-align:center;">
+              <div><div style="font-size:32px;font-weight:700;color:var(--negative);">${highPri}</div><div style="font-size:12px;color:var(--ink-3);">High Priority</div></div>
+              <div><div style="font-size:32px;font-weight:700;color:var(--warn);">${medPri}</div><div style="font-size:12px;color:var(--ink-3);">Medium</div></div>
+              <div><div style="font-size:32px;font-weight:700;color:var(--ink-3);">${lowPri}</div><div style="font-size:12px;color:var(--ink-3);">Low</div></div>
+            </div>
+            <div style="margin-top:20px;">
+              <div style="height:12px;border-radius:6px;overflow:hidden;display:flex;gap:2px;">
+                <div style="flex:${highPri || 1};background:var(--negative);border-radius:4px 0 0 4px;"></div>
+                <div style="flex:${medPri || 1};background:var(--warn);"></div>
+                <div style="flex:${lowPri || 1};background:var(--ink-3);border-radius:0 4px 4px 0;"></div>
+              </div>
+              <div style="display:flex;justify-content:space-between;margin-top:6px;font-size:11px;color:var(--ink-3);">
+                <span>High ${highPct}%</span><span>Medium ${medPct}%</span><span>Low ${lowPct}%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>`;
+}
+
+/* ─── SECURITY PERSONNEL ATTENDANCE PANEL ───────────────────── */
+function buildAttendance() {
+  const guards = [
+    {name:'Guard Villanueva', id:'CSG-001', status:'on-duty',   statusLabel:'On Duty',   statusColor:'var(--positive)'},
+    {name:'Guard De Leon',    id:'CSG-002', status:'responding', statusLabel:'Responding', statusColor:'var(--warn)'},
+    {name:'Guard Bautista',   id:'CSG-003', status:'on-duty',   statusLabel:'On Duty',   statusColor:'var(--positive)'},
+    {name:'Guard Santos',     id:'CSG-004', status:'responding', statusLabel:'Responding', statusColor:'var(--warn)'},
+    {name:'Guard Cruz',       id:'CSG-005', status:'on-duty',   statusLabel:'On Duty',   statusColor:'var(--positive)'},
+    {name:'Guard Reyes',      id:'CSG-006', status:'off-duty',  statusLabel:'Off Duty',  statusColor:'var(--ink-3)'},
+    {name:'Guard Macaraeg',   id:'CSG-007', status:'available', statusLabel:'Available', statusColor:'#2563eb'},
+    {name:'Guard Dela Cruz',  id:'CSG-008', status:'on-duty',   statusLabel:'On Duty',   statusColor:'var(--positive)'},
+  ];
+  const onDutyCount = guards.filter(g=>g.status==='on-duty').length;
+  const respondingCount = guards.filter(g=>g.status==='responding').length;
+  const availableCount = guards.filter(g=>g.status==='available').length;
+  const offDutyCount = guards.filter(g=>g.status==='off-duty').length;
+  const activeThreats = liveIncidents.filter(i=>i.status==='active').length;
+
+  return `
+    <div class="page-header">
+      <div class="page-header-left">
+        <h1 class="page-title">Security Personnel Attendance</h1>
+        <div class="page-sub">Active security personnel — Campus Security Command · Samar State University</div>
+      </div>
+    </div>
+    <div class="stat-row">
+      <div class="stat-card"><div class="stat-label">On Duty</div><div class="stat-value positive">${onDutyCount}</div></div>
+      <div class="stat-card"><div class="stat-label">Off Duty</div><div class="stat-value" style="color:var(--ink-3)">${offDutyCount}</div></div>
+      <div class="stat-card"><div class="stat-label">Responding</div><div class="stat-value" style="color:var(--warn)">${respondingCount}</div></div>
+      <div class="stat-card"><div class="stat-label">Total Guards</div><div class="stat-value">${guards.length}</div></div>
+    </div>
+    <div class="two-col">
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">👮 Security Personnel Roster</div>
+          <div style="font-size:12px;color:var(--ink-3);">${guards.length} registered personnel</div>
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="incident-table" style="min-width:400px;">
+            <thead>
+              <tr><th>Guard Name</th><th>ID</th><th>Status</th></tr>
+            </thead>
+            <tbody>
+              ${guards.map(g=>`
+                <tr>
+                  <td>
+                    <div style="display:flex;align-items:center;gap:8px;">
+                      <div style="width:32px;height:32px;border-radius:50%;background:var(--role-hue-2);border:1px solid var(--role-hue-3);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--role-hue);">${g.name.split(' ').pop()[0]}</div>
+                      <span style="font-weight:600;color:var(--ink);">${g.name}</span>
+                    </div>
+                  </td>
+                  <td style="font-size:12px;color:var(--ink-3);">${g.id}</td>
+                  <td><span style="font-weight:700;color:${g.statusColor};font-size:12px;">● ${g.statusLabel}</span></td>
+                </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div>
+        <div class="panel" style="margin-bottom:20px;">
+          <div class="panel-header"><div class="panel-title">Active Security Threats</div></div>
+          <div class="panel-body">
+            ${liveIncidents.filter(i=>i.status==='active').length ? liveIncidents.filter(i=>i.status==='active').map(inc=>`
+              <div style="background:#fff5f5;border:1px solid #fca5a5;border-radius:6px;padding:10px 12px;margin-bottom:10px;">
+                <div style="font-size:12px;font-weight:700;color:var(--negative);margin-bottom:4px;">🚨 ${inc.type}</div>
+                <div style="font-size:11px;color:var(--ink-2);">📍 ${inc.room}, ${inc.building}</div>
+                <div style="font-size:11px;color:var(--ink-3);">${inc.time}</div>
+              </div>`).join('') : '<div class="empty-state"><div class="es-icon">✅</div><div class="es-text">No active threats</div></div>'}
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-header"><div class="panel-title">Status Legend</div></div>
+          <div class="panel-body">
+            ${[
+              ['On Duty','var(--positive)','Personnel actively deployed at post'],
+              ['Responding','var(--warn)','Personnel responding to an active incident'],
+              ['Available','#2563eb','Personnel available for deployment'],
+              ['Off Duty','var(--ink-3)','Personnel not on current shift']
+            ].map(([s,c,d])=>`
+              <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);">
+                <span style="font-weight:700;color:${c};white-space:nowrap;">● ${s}</span>
+                <span style="font-size:12px;color:var(--ink-3);">${d}</span>
+              </div>`).join('')}
+          </div>
+        </div>
+      </div>
+    </div>`;
+}
+
+/* ─── REPORTS PAGE ───────────────────────────────────────────── */
+function buildReports() {
+  if (currentRole === 'clinic')    return buildReportsClinic();
+  if (currentRole === 'security')  return buildReportsSecurity();
+  if (currentRole === 'drrmo')     return buildReportsDrrmo();
+  return buildReportsAdmin();
+}
+
+/* ─── REPORTS: ADMINISTRATOR ─────────────────────────────────── */
+function buildReportsAdmin() {
+  const total      = liveIncidents.length;
+  const medCases   = liveIncidents.filter(i=>i.category==='medical').length;
+  const secCases   = liveIncidents.filter(i=>i.category==='security').length;
+  const drrmoCases = liveIncidents.filter(i=>i.category==='fire').length;
+  return `
+    <div class="page-header">
+      <div class="page-header-left">
+        <h1 class="page-title">Reports — Administrator</h1>
+        <div class="page-sub">All campus emergency records · Samar State University</div>
+      </div>
+      <div class="page-header-right">
+        <button class="btn btn-primary" onclick="fetchReports();renderPage('reports')">🔄 Refresh</button>
+      </div>
+    </div>
+    <div class="three-col">
+      ${[
+        {title:'Daily Incident Summary',  date:new Date().toLocaleDateString('en-PH',{month:'short',day:'numeric',year:'numeric'}), count:total},
+        {title:'Medical Cases Log',       date:'SSU Clinic Records',        count:medCases},
+        {title:'Security Threats Log',    date:'SSU Security Command',      count:secCases},
+        {title:'DRRMO Disaster Log',      date:'Disaster Risk Records',     count:drrmoCases},
+        {title:'Campus Station Audits',   date:'IoT Stations Monitor',      count:stationList.length},
+        {title:'All Emergency Logs',      date:'Supabase Table Archive',    count:total},
+      ].map(r=>`
+        <div class="panel"><div class="panel-body">
+          <div style="font-size:22px;margin-bottom:10px;">📄</div>
+          <div style="font-size:14px;font-weight:600;color:var(--ink);margin-bottom:4px;">${r.title}</div>
+          <div style="font-size:12px;color:var(--ink-3);margin-bottom:8px;">${r.date}</div>
+          <div style="font-size:12px;color:var(--ink-2);margin-bottom:12px;">${r.count} records loaded</div>
+          <div style="display:flex;gap:8px;">
+            <button class="btn btn-primary" style="font-size:12px;height:30px;flex:1;" onclick="navigate('incidents')">View Incidents</button>
+            <button class="btn btn-secondary" style="font-size:12px;height:30px;" onclick="window.print()">Print</button>
+          </div>
+        </div></div>`).join('')}
+    </div>`;
+}
+
+/* ─── SHARED: INCIDENT LOG TABLE ─────────────────────────────── */
+function buildIncidentLogTable(incs, cols) {
+  // cols: array of {label, fn} where fn(inc) => cell html
+  if (!incs.length) return `<div class="empty-state"><div class="es-icon">✅</div><div class="es-text">No incidents found.</div></div>`;
+  return `<div style="overflow-x:auto;">
+    <table class="incident-table">
+      <thead><tr>${cols.map(c=>`<th>${c.label}</th>`).join('')}</tr></thead>
+      <tbody>
+        ${incs.map(inc=>`<tr>${cols.map(c=>`<td>${c.fn(inc)}</td>`).join('')}</tr>`).join('')}
+      </tbody>
+    </table>
+  </div>`;
+}
+
+/* ─── REPORTS: SCHOOL CLINIC ─────────────────────────────────── */
+function buildReportsClinic() {
+  const incs    = liveIncidents.filter(i=>i.category==='medical' || (i.type && i.type.toLowerCase().includes('medic')));
+  const total   = incs.length;
+  const pending = incs.filter(i=>i.status==='active'||i.status==='pending').length;
+  const acked   = incs.filter(i=>i.status==='acknowledged').length;
+  const resolved= incs.filter(i=>i.status==='resolved').length;
+
+  const statCards = [
+    {label:'Total Medical Emergencies Today', value:total,    color:'var(--ink)'},
+    {label:'Pending Cases',                   value:pending,  color:'var(--negative)'},
+    {label:'Acknowledged Cases',              value:acked,    color:'var(--warn)'},
+    {label:'Resolved Cases',                  value:resolved, color:'var(--positive)'},
+  ];
+
+  const cols = [
+    {label:'Time Reported',        fn:i=>`<span style="font-size:12px;">${i.time}</span>`},
+    {label:'Building',             fn:i=>i.building},
+    {label:'Floor',                fn:i=>i.floor},
+    {label:'Room',                 fn:i=>`<strong>${i.room}</strong>`},
+    {label:'Priority',             fn:i=>`<span class="priority-badge priority-${i.priority}">${i.priority.toUpperCase()}</span>`},
+    {label:'Transcript Available', fn:i=>i.notes&&i.notes.length>10?'<span style="color:var(--positive);font-weight:600;">✔ Available</span>':'<span style="color:var(--ink-3);">—</span>'},
+    {label:'Current Status',       fn:i=>`<span class="status-pill ${i.status}">${statusLabel(i.status)}</span>`},
+  ];
+
+  return `
+    <div class="page-header">
+      <div class="page-header-left">
+        <h1 class="page-title">Reports — School Clinic</h1>
+        <div class="page-sub">Medical Emergency Reports · Samar State University</div>
+      </div>
+      <div class="page-header-right">
+        <button class="btn btn-primary" onclick="fetchReports();renderPage('reports')">🔄 Refresh</button>
+      </div>
+    </div>
+
+    <div class="stat-row">
+      ${statCards.map(s=>`
+        <div class="stat-card">
+          <div class="stat-label">${s.label}</div>
+          <div class="stat-value" style="color:${s.color};">${s.value}</div>
+        </div>`).join('')}
+    </div>
+
+    <div class="panel" style="margin-bottom:20px;">
+      <div class="panel-header">
+        <div class="panel-title">📋 Daily Incident Summary</div>
+        <div style="font-size:12px;color:var(--ink-3);">${new Date().toLocaleDateString('en-PH',{weekday:'long',month:'long',day:'numeric',year:'numeric'})}</div>
+      </div>
+      <div class="panel-body">
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;text-align:center;">
+          ${statCards.map(s=>`
+            <div style="background:var(--ground);border-radius:8px;padding:14px 10px;">
+              <div style="font-size:28px;font-weight:800;color:${s.color};">${s.value}</div>
+              <div style="font-size:11px;color:var(--ink-3);margin-top:4px;">${s.label}</div>
+            </div>`).join('')}
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">🏥 Medical Cases Log</div>
+        <div style="font-size:12px;color:var(--ink-3);">${total} records · Medical Emergency Only</div>
+      </div>
+      <div class="panel-body" style="padding:0;">
+        ${buildIncidentLogTable(incs, cols)}
+      </div>
+    </div>`;
+}
+
+/* ─── REPORTS: CAMPUS SECURITY ───────────────────────────────── */
+function buildReportsSecurity() {
+  const incs     = liveIncidents.filter(i=>i.category==='security' || (i.type && i.type.toLowerCase().includes('secur')));
+  const total    = incs.length;
+  const active   = incs.filter(i=>i.status==='active').length;
+  const resolved = incs.filter(i=>i.status==='resolved').length;
+
+  const statCards = [
+    {label:'Total Security Reports Today', value:total,    color:'var(--ink)'},
+    {label:'Active Threats',               value:active,   color:'var(--negative)'},
+    {label:'Resolved Threats',             value:resolved, color:'var(--positive)'},
+  ];
+
+  const cols = [
+    {label:'Time Reported',      fn:i=>`<span style="font-size:12px;">${i.time}</span>`},
+    {label:'Building',           fn:i=>i.building},
+    {label:'Floor',              fn:i=>i.floor},
+    {label:'Room',               fn:i=>`<strong>${i.room}</strong>`},
+    {label:'Priority',           fn:i=>`<span class="priority-badge priority-${i.priority}">${i.priority.toUpperCase()}</span>`},
+    {label:'Threat Description', fn:i=>`<span style="font-size:11px;color:var(--ink-2);">${i.notes.slice(0,60)}${i.notes.length>60?'…':''}</span>`},
+    {label:'Status',             fn:i=>`<span class="status-pill ${i.status}">${statusLabel(i.status)}</span>`},
+  ];
+
+  return `
+    <div class="page-header">
+      <div class="page-header-left">
+        <h1 class="page-title">Reports — Campus Security</h1>
+        <div class="page-sub">Security Threat Reports · Samar State University</div>
+      </div>
+      <div class="page-header-right">
+        <button class="btn btn-primary" onclick="fetchReports();renderPage('reports')">🔄 Refresh</button>
+      </div>
+    </div>
+
+    <div class="stat-row">
+      ${statCards.map(s=>`
+        <div class="stat-card">
+          <div class="stat-label">${s.label}</div>
+          <div class="stat-value" style="color:${s.color};">${s.value}</div>
+        </div>`).join('')}
+    </div>
+
+    <div class="panel" style="margin-bottom:20px;">
+      <div class="panel-header">
+        <div class="panel-title">📋 Daily Incident Summary</div>
+        <div style="font-size:12px;color:var(--ink-3);">${new Date().toLocaleDateString('en-PH',{weekday:'long',month:'long',day:'numeric',year:'numeric'})}</div>
+      </div>
+      <div class="panel-body">
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;text-align:center;">
+          ${statCards.map(s=>`
+            <div style="background:var(--ground);border-radius:8px;padding:14px 10px;">
+              <div style="font-size:28px;font-weight:800;color:${s.color};">${s.value}</div>
+              <div style="font-size:11px;color:var(--ink-3);margin-top:4px;">${s.label}</div>
+            </div>`).join('')}
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">🚨 Security Threats Log</div>
+        <div style="font-size:12px;color:var(--ink-3);">${total} records · Security Threat Only</div>
+      </div>
+      <div class="panel-body" style="padding:0;">
+        ${buildIncidentLogTable(incs, cols)}
+      </div>
+    </div>`;
+}
+
+/* ─── REPORTS: DRRMO ─────────────────────────────────────────── */
+function buildReportsDrrmo() {
+  const incs     = liveIncidents.filter(i=>i.category==='fire' || (i.type && (i.type.toLowerCase().includes('fire')||i.type.toLowerCase().includes('disaster'))));
+  const total    = incs.length;
+  const active   = incs.filter(i=>i.status==='active').length;
+  const resolved = incs.filter(i=>i.status==='resolved').length;
+
+  const statCards = [
+    {label:'Total Fire/Disaster Reports Today', value:total,    color:'var(--ink)'},
+    {label:'Active Incidents',                  value:active,   color:'var(--negative)'},
+    {label:'Resolved Incidents',                value:resolved, color:'var(--positive)'},
+  ];
+
+  const cols = [
+    {label:'Time Reported',  fn:i=>`<span style="font-size:12px;">${i.time}</span>`},
+    {label:'Building',       fn:i=>i.building},
+    {label:'Floor',          fn:i=>i.floor},
+    {label:'Room',           fn:i=>`<strong>${i.room}</strong>`},
+    {label:'Priority',       fn:i=>`<span class="priority-badge priority-${i.priority}">${i.priority.toUpperCase()}</span>`},
+    {label:'Incident Type',  fn:i=>`<span class="type-badge type-${i.category}">${i.type}</span>`},
+    {label:'Current Status', fn:i=>`<span class="status-pill ${i.status}">${statusLabel(i.status)}</span>`},
+  ];
+
+  return `
+    <div class="page-header">
+      <div class="page-header-left">
+        <h1 class="page-title">Reports — DRRMO</h1>
+        <div class="page-sub">Fire &amp; Disaster Reports · Samar State University</div>
+      </div>
+      <div class="page-header-right">
+        <button class="btn btn-primary" onclick="fetchReports();renderPage('reports')">🔄 Refresh</button>
+      </div>
+    </div>
+
+    <div class="stat-row">
+      ${statCards.map(s=>`
+        <div class="stat-card">
+          <div class="stat-label">${s.label}</div>
+          <div class="stat-value" style="color:${s.color};">${s.value}</div>
+        </div>`).join('')}
+    </div>
+
+    <div class="panel" style="margin-bottom:20px;">
+      <div class="panel-header">
+        <div class="panel-title">📋 Daily Incident Summary</div>
+        <div style="font-size:12px;color:var(--ink-3);">${new Date().toLocaleDateString('en-PH',{weekday:'long',month:'long',day:'numeric',year:'numeric'})}</div>
+      </div>
+      <div class="panel-body">
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;text-align:center;">
+          ${statCards.map(s=>`
+            <div style="background:var(--ground);border-radius:8px;padding:14px 10px;">
+              <div style="font-size:28px;font-weight:800;color:${s.color};">${s.value}</div>
+              <div style="font-size:11px;color:var(--ink-3);margin-top:4px;">${s.label}</div>
+            </div>`).join('')}
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">🔥 DRRMO Disaster Log</div>
+        <div style="font-size:12px;color:var(--ink-3);">${total} records · Fire/Disaster Only</div>
+      </div>
+      <div class="panel-body" style="padding:0;">
+        ${buildIncidentLogTable(incs, cols)}
+      </div>
+    </div>`;
+}
+
+/* ─── SETTINGS PAGE ──────────────────────────────────────────── */
+function buildSettings() {
+  return `
+    <div class="page-header">
+      <div class="page-header-left">
+        <h1 class="page-title">Settings</h1>
+        <div class="page-sub">System configuration · Administrator access</div>
+      </div>
+    </div>
+    <div class="two-col">
+      <div>
+        <div class="panel" style="margin-bottom:20px;">
+          <div class="panel-header"><div class="panel-title">System Information</div></div>
+          <div class="panel-body">
+            ${[['System Name','CAMPUS-ER'],['Institution','Samar State University'],['Version','1.0.0 (Connected)'],['Database','Supabase PostgreSQL'],['Realtime Sync','Enabled (postgres_changes)'],['Stations Loaded',stationList.length.toString()],['Reports Loaded',liveIncidents.length.toString()]].map(([k,v])=>`
+              <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;">
+                <span style="color:var(--ink-3);">${k}</span><span style="font-weight:600;color:var(--ink);">${v}</span>
+              </div>`).join('')}
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-header"><div class="panel-title">Routing Configuration</div></div>
+          <div class="panel-body">
+            ${[['Medical Emergency','School Clinic','#166534'],['Security Threat','Campus Security','#1e3a8a'],['Fire / Disaster','DRRMO','#b45309'],['General Emergency','Administrator','#6b21a8']].map(([t,o,c])=>`
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;">
+                <span style="color:var(--ink-2);">${t}</span>
+                <span style="font-weight:600;color:${c};background:${c}20;padding:2px 8px;border-radius:4px;">${o}</span>
+              </div>`).join('')}
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="panel">
+          <div class="panel-header"><div class="panel-title">Alert Settings</div></div>
+          <div class="panel-body">
+            ${[['Audio Alerts','Enabled'],['Push Notifications','Enabled'],['Realtime Refresh','Active'],['Supabase Channel','campus_er_live_sync'],['Role Filtering','Active'],['CCTV Integration','Enabled']].map(([k,v])=>`
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);font-size:13px;">
+                <span style="color:var(--ink-2);">${k}</span>
+                <span style="font-weight:600;color:${v==='Enabled'||v==='Active'?'var(--positive)':'var(--ink-3)'};">${v}</span>
+              </div>`).join('')}
+          </div>
+        </div>
+      </div>
+    </div>`;
+}
+
+/* ─── INCIDENT DETAIL MODAL ──────────────────────────────────── */
+function openDetail(id) {
+  const inc = liveIncidents.find(i => i.id === id || i._uuid === id);
+  if (!inc) return;
+  window._detailUUID = inc._uuid || null; // stored for modal footer buttons
+  document.getElementById('detail-title').textContent = inc.type;
+  document.getElementById('detail-subtitle').textContent = inc.id + ' · ' + inc.office;
+  document.getElementById('detail-body').innerHTML = `
+    <div class="detail-section-title">Incident Classification</div>
+    <div class="detail-grid">
+      <div class="detail-field"><label>Emergency Type</label><div class="df-val"><span class="type-badge type-${inc.category}">${inc.type}</span></div></div>
+      <div class="detail-field"><label>Assigned Office</label><div class="df-val">${inc.office}</div></div>
+      <div class="detail-field"><label>Priority Level</label><div class="df-val"><span class="priority-badge priority-${inc.priority}">${inc.priority.toUpperCase()}</span></div></div>
+      <div class="detail-field"><label>Status</label><div class="df-val"><span class="status-pill ${inc.status}">${statusLabel(inc.status)}</span></div></div>
+    </div>
+    <div class="detail-section-title">Location</div>
+    <div class="detail-grid">
+      <div class="detail-field"><label>Building</label><div class="df-val">${inc.building}</div></div>
+      <div class="detail-field"><label>Floor</label><div class="df-val">${inc.floor}</div></div>
+      <div class="detail-field"><label>Room</label><div class="df-val">${inc.room}</div></div>
+      <div class="detail-field"><label>Location</label><div class="df-val">${inc.location}</div></div>
+    </div>
+    <div class="detail-section-title">Report Info</div>
+    <div class="detail-grid">
+      <div class="detail-field"><label>Date</label><div class="df-val">${inc.date}</div></div>
+      <div class="detail-field"><label>Time</label><div class="df-val">${inc.time}</div></div>
+      <div class="detail-field"><label>Reported By</label><div class="df-val">${inc.reporter}</div></div>
+      <div class="detail-field"><label>Report ID</label><div class="df-val">${inc.id}</div></div>
+    </div>
+    <div class="detail-section-title">Notes</div>
+    <div style="background:var(--ground);border-radius:6px;padding:12px;font-size:13px;color:var(--ink-2);">${inc.notes}</div>
+    <div class="detail-section-title">Activity Log</div>
+    <div class="detail-timeline">
+      <div class="timeline-item">
+        <div class="tl-dot"></div>
+        <div class="tl-content"><div class="tl-time">${inc.time}</div><div class="tl-text">Emergency report submitted by ${inc.reporter}</div></div>
+      </div>
+      <div class="timeline-item">
+        <div class="tl-dot"></div>
+        <div class="tl-content"><div class="tl-time">${inc.time} +2m</div><div class="tl-text">Alert routed to ${inc.office}</div></div>
+      </div>
+      ${inc.status !== 'active' ? `<div class="timeline-item"><div class="tl-dot"></div><div class="tl-content"><div class="tl-time">${inc.time} +5m</div><div class="tl-text">Report acknowledged by ${inc.office}</div></div></div>` : ''}
+      ${inc.status === 'resolved' ? `<div class="timeline-item"><div class="tl-dot" style="background:var(--positive)"></div><div class="tl-content"><div class="tl-time">${inc.time} +18m</div><div class="tl-text">Incident resolved and closed</div></div></div>` : ''}
+    </div>`;
+  document.getElementById('detail-modal').classList.add('open');
+}
+function closeDetailModal() { document.getElementById('detail-modal').classList.remove('open'); }
+
+/* ─── PANIC MODAL ─────────────────────────────────────────────── */
+function openPanicModal() { document.getElementById('panic-modal').classList.add('open'); }
+function closePanicModal() { document.getElementById('panic-modal').classList.remove('open'); }
+function acknowledgeAlert() {
+  closePanicModal();
+  showToast('Alert acknowledged — responders notified');
+}
+function dispatchResponders() {
+  closePanicModal();
+  showToast('Responders dispatched to Room 101, Engineering Building');
+}
+function resolveAlert() {
+  closePanicModal();
+  showToast('Incident marked as resolved');
+}
+function playAlert() {
+  // Use Web Speech API as fallback for audio
+  if ('speechSynthesis' in window) {
+    const u = new SpeechSynthesisUtterance('Medical Emergency activated in Room 101, Engineering Building');
+    u.rate = 0.9; u.pitch = 1;
+    speechSynthesis.speak(u);
+  }
+}
+
+/* ─── AUDIO ALERT CONTROLS ───────────────────────────────────── */
+function toggleMute() {
+  audioMuted = !audioMuted;
+  const btn = document.getElementById('audio-mute-btn');
+  if (btn) btn.textContent = audioMuted ? '🔇 Unmute' : '🔊 Mute';
+  showToast(audioMuted ? '🔇 Alert audio muted' : '🔊 Alert audio enabled');
+}
+
+function setAudioVolume(val) {
+  audioVolume = parseFloat(val);
+}
+
+function testAlert() {
+  const fakeInc = { type: 'Test Alert', building: 'Campus', room: 'Test Room' };
+  triggerAutoAlert(fakeInc);
+  showToast('🔊 Testing alert audio...');
+}
+
+/* ─── TOAST ──────────────────────────────────────────────────── */
+function showToast(msg) {
+  let t = document.getElementById('toast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = 'toast';
+    t.style.cssText = 'position:fixed;bottom:24px;right:24px;background:var(--ink);color:#fff;padding:10px 18px;border-radius:6px;font-size:13px;z-index:9999;transition:opacity 0.3s;';
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.style.opacity = '1';
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => { t.style.opacity = '0'; }, 3000);
+}
+
+/* ─── CHART ANIMATION ────────────────────────────────────────── */
+function animateCharts() {
+  setTimeout(() => {
+    document.querySelectorAll('.chart-bar-fill').forEach(el => {
+      const target = el.dataset.target;
+      if (target) { el.style.width = '0'; setTimeout(() => { el.style.width = target + '%'; }, 100); }
+    });
+  }, 100);
+}
+
+/* ─── MOBILE HAMBURGER ───────────────────────────────────────── */
+document.getElementById('hamburger-btn').addEventListener('click', () => {
+  document.getElementById('sidebar').classList.toggle('open');
+});
+
+/* ─── CLOSE MODALS ON OVERLAY CLICK ─────────────────────────── */
+document.getElementById('panic-modal').addEventListener('click', e => { if (e.target === e.currentTarget) closePanicModal(); });
+document.getElementById('detail-modal').addEventListener('click', e => { if (e.target === e.currentTarget) closeDetailModal(); });
+document.getElementById('create-report-modal').addEventListener('click', e => { if (e.target === e.currentTarget) closeCreateReport(); });
+
+/* ─── PWA ────────────────────────────────────────────────────── */
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
+</script>
+<script src="eoc.js"></script>
+<script src="eoc-monitor.js"></script>
+<script type="module" src="eoc-icons.mjs"></script>
+</body>
+</html>
