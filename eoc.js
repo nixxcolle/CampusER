@@ -12,9 +12,9 @@ const eocResponse = inc => inc?.status==='resolved' ? '' : inc && eocDemoReports
 const eocEscape = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const eocIcon = name => `<span class="eoc-icon" data-lucide-react="${name}" aria-hidden="true"></span>`;
 const eocBuildings = [
-  ['Administration Building',55,60,145,72],['College of Engineering',260,60,170,82],
-  ['ICT Building',490,60,140,72],['Security Office',525,208,110,65],
-  ['College of Education',55,215,145,78],['Science Building',265,215,165,78],
+  ['CONHS',55,60,145,72],['College of Engineering',260,60,170,82],
+  ['CIT',490,60,140,72],['Security Office',525,208,110,65],
+  ['College of Education',55,215,145,78],['Old CAS',265,215,165,78],
   ['College of Arts and Sciences',55,365,145,72],['University Library',265,365,165,72],
   ['School Clinic',490,365,140,72],['DRRMO Office',520,295,115,45]
 ];
@@ -114,11 +114,11 @@ function eocPlay(automatic=false){
 function eocToggleMute(button){toggleMute();if(audioMuted)eocStopVoice();button.innerHTML=eocIcon(audioMuted?'VolumeX':'Volume2')+' '+(audioMuted?'Unmute':'Mute');}
 function eocClearDemo(){eocStopVoice();eocDemoReports.clear();eocDemo=null;renderPage('overview');}
 function eocSimulate(type){
-  const cases={medical:['Medical Emergency','College of Engineering','Room 101','School Clinic','A student needs medical assistance in Room 101.'],security:['Security Threat','ICT Building','Server corridor','Campus Security','An unauthorized entry has been reported near the server corridor.'],fire:['Fire/Disaster','Science Building','Room 204','DRRMO','Smoke has been reported in Room 204. Please assess the area.'],general:['General Emergency','Administration Building','Main lobby','Administrator','Assistance requested at the main lobby.']};
+  const cases={medical:['Medical Emergency','College of Engineering','Room 101','School Clinic','A student needs medical assistance in Room 101.'],security:['Security Threat','CIT','Room 202','Campus Security','An unauthorized entry has been reported near the Room 202.'],fire:['Fire/Disaster','Old CAS','Room 204','DRRMO','Smoke has been reported in Room 204. Please assess the area.'],general:['General Emergency','CONHS','Faculty Room','Administrator','Assistance requested at the Faculty Room.']};
   const c=cases[type];if(!c)return;
   const transcripts={
-    fil:{medical:'May estudyanteng nangangailangan ng tulong medikal sa Room 101, College of Engineering.',security:'May iniulat na hindi awtorisadong pagpasok malapit sa server corridor ng ICT Building.',fire:'May naiulat na usok sa Room 204 ng Science Building. Kailangan ng agarang tulong.',general:'Humihingi ng tulong sa main lobby ng Administration Building.'},
-    war:{medical:'May estudyante nga nagkikinahanglan hin bulig medikal ha Room 101, College of Engineering.',security:'May tawo nga waray permiso nga sinulod hirani ha server corridor han ICT Building.',fire:'May aso ha Room 204 han Science Building. Kinahanglan hin madagmit nga bulig.',general:'Kinahanglan hin bulig ha main lobby han Administration Building.'}
+    fil:{medical:'May estudyanteng nangangailangan ng tulong medikal sa Room 101, College of Engineering.',security:'May iniulat na hindi awtorisadong pagpasok malapit sa Room 202 ng CIT.',fire:'May naiulat na usok sa Room 204 ng Old CAS. Kailangan ng agarang tulong.',general:'Humihingi ng tulong sa Faculty Room ng CONHS.'},
+    war:{medical:'May estudyante nga nagkikinahanglan hin bulig medikal ha Room 101, College of Engineering.',security:'May tawo nga waray permiso nga sinulod hirani ha Room 202 han CIT.',fire:'May aso ha Room 204 han Old CAS. Kinahanglan hin madagmit nga bulig.',general:'Kinahanglan hin bulig ha Faculty Room han CONHS.'}
   };
   eocStopVoice();
   eocDemo={id:'DEMO-'+type.toUpperCase(),type:c[0],building:c[1],room:c[2],office:c[3],notes:transcripts[eocVoiceLanguage]?.[type]||c[4],voiceLanguage:eocVoiceLanguage,priority:{medical:'critical',security:'high',fire:'critical',general:'medium'}[type],status:'active',category:type,time:new Date().toLocaleTimeString('en-PH',{hour:'2-digit',minute:'2-digit'})};

@@ -1,0 +1,15 @@
+{
+  "buildings": [
+    {"name":"COED","code":"COED","aliases":["College of Education"],"x":50,"y":65,"color":"#a9d7c5"},
+    {"name":"Old CAS","code":"OLD-CAS","aliases":["Old CAS Building"],"x":255,"y":65,"color":"#e0c6ac"},
+    {"name":"CONHS","code":"CONHS","aliases":["College of Nursing and Health Sciences"],"x":50,"y":265,"color":"#c8d8ed"},
+    {"name":"College of Arts and Sciences","code":"CAS","aliases":["Arts & Sciences Building","Arts and Sciences Building"],"x":460,"y":230,"color":"#d3c5e6"},
+    {"name":"College of Engineering","code":"COENG","aliases":["Engineering Building"],"x":460,"y":45,"color":"#b8d9dd"},
+    {"name":"CIT","code":"CIT","aliases":["CIT Building","College of Industrial Technology"],"x":760,"y":140,"color":"#edcea2"}
+  ],
+  "floors": [
+    {"number":1,"label":"1st Floor","rooms":["Dean's Office","Faculty Room","Room 101","Room 102","Room 103","Room 104","Room 105"]},
+    {"number":2,"label":"2nd Floor","rooms":["Room 201","Room 202","Room 203","Room 204","Room 205"]},
+    {"number":3,"label":"3rd Floor","rooms":["Room 301","Room 302","Room 303","Room 304","Room 305"]}
+  ]
+}

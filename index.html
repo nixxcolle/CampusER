@@ -1457,6 +1457,9 @@ body.role-admin {
 <link rel="stylesheet" href="eoc-polish.css">
 <link rel="stylesheet" href="eoc-monitor.css">
 <link rel="stylesheet" href="eoc-insights.css">
+<link rel="stylesheet" href="eoc-brand.css">
+<link rel="stylesheet" href="eoc-signin.css">
+<link rel="stylesheet" href="campus-map.css">
 <script type="importmap">{"imports":{"react":"https://esm.sh/react@18.3.1"}}</script>
 </head>
 <body>
@@ -1467,7 +1470,7 @@ body.role-admin {
 <div id="screen-login" class="screen active">
   <div class="login-left">
     <div class="login-brand">
-      <img class="seal" src="images/SSULOGO.png" alt="Samar State University Seal">
+      <span class="ssu-seal"><img src="images/SSULOGO.png" alt="Samar State University seal" width="1200" height="800"></span>
       <div class="univ-name">Samar State University</div>
       <div class="app-name">CAMPUS-ER</div>
       <div class="app-subtitle">Embedded Campus-Wide Emergency Reporting and Alert System</div>
@@ -1498,11 +1501,11 @@ body.role-admin {
       <button type="submit" id="login-btn" class="btn-login">Sign In to CAMPUS-ER</button>
     </form>
 
-    <div style="margin-top:20px;padding-top:14px;border-top:1px solid var(--border);">
-      <div style="font-size:11px;font-weight:700;color:var(--ink-3);text-transform:uppercase;margin-bottom:8px;letter-spacing:0.04em;">On-Duty Shift Quick Access (Select Theme):</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+    <div class="signin-quick-access">
+      <div class="signin-quick-heading">Office quick access</div>
+      <div class="signin-quick-grid">
         <button type="button" class="btn btn-secondary" style="font-size:11px;height:32px;justify-content:center;color:#15803d;border-color:#bbf7d0;background:#f0fdf4;" onclick="quickAccessRole('School Clinic','Dr. Maria Santos')">🏥 School Clinic </button>
-        <button type="button" class="btn btn-secondary" style="font-size:11px;height:32px;justify-content:center;color:#1e3a8a;border-color:#bfdbfe;background:#eff6ff;" onclick="quickAccessRole('Campus Security','Officer Roberto Cruz')">🛡️ Securit </button>
+        <button type="button" class="btn btn-secondary" style="font-size:11px;height:32px;justify-content:center;color:#1e3a8a;border-color:#bfdbfe;background:#eff6ff;" onclick="quickAccessRole('Campus Security','Officer Roberto Cruz')">🛡️ Security </button>
         <button type="button" class="btn btn-secondary" style="font-size:11px;height:32px;justify-content:center;color:#c2410c;border-color:#fed7aa;background:#fff7ed;" onclick="quickAccessRole('DRRMO','Chief Eduardo Reyes')">🚨 DRRMO </button>
         <button type="button" class="btn btn-secondary" style="font-size:11px;height:32px;justify-content:center;color:#6b21a8;border-color:#e9d5ff;background:#faf5ff;" onclick="quickAccessRole('Administrator','Dean Arthur Salazar')">🏛️ Admin </button>
       </div>
@@ -1518,7 +1521,7 @@ body.role-admin {
 <div id="screen-register" class="screen">
   <div class="login-left">
     <div class="login-brand">
-      <img class="seal" src="images/SSULOGO.png" alt="Samar State University Seal">
+      <span class="ssu-seal"><img src="images/SSULOGO.png" alt="Samar State University seal" width="1200" height="800"></span>
       <div class="univ-name">Samar State University</div>
       <div class="app-name">CAMPUS-ER</div>
       <div class="app-subtitle">Embedded Campus-Wide Emergency Reporting and Alert System</div>
@@ -1575,10 +1578,21 @@ body.role-admin {
 <!-- ═══════════════════════════════════════════════════════════ -->
 <!--  AUTH LOADING OVERLAY                                      -->
 <!-- ═══════════════════════════════════════════════════════════ -->
-<div id="auth-loading">
-  <img src="images/SSULOGO.png" alt="SSU">
-  <div class="spinner"></div>
-  <p>Loading CAMPUS-ER…</p>
+<div id="auth-loading" role="status" aria-live="polite" aria-label="Loading CAMPUS-ER">
+  <div class="eoc-loading-shell">
+    <div class="eoc-loading-content">
+      <span class="ssu-seal"><img src="images/SSULOGO.png" alt="Samar State University seal" width="1200" height="800" fetchpriority="high"></span>
+      <div class="eoc-loading-institution">Samar State University</div>
+      <h1>CAMPUS-ER</h1>
+      <p class="eoc-loading-description">Your campus emergency<br>operations workspace.</p>
+      <div class="eoc-loading-status"><span class="spinner" aria-hidden="true"></span><span>Preparing your workspace…</span></div>
+      <div class="eoc-loading-track" aria-hidden="true"><span></span></div>
+    </div>
+    <div class="eoc-loading-photo" role="img" aria-label="Samar State University campus">
+      <div class="eoc-loading-photo-caption"><span>Campus emergency operations</span><strong>Connected campus.<br>Coordinated response.</strong></div>
+    </div>
+  </div>
+  <div class="eoc-loading-footer">CAMPUS-ER <span aria-hidden="true"></span> Samar State University</div>
 </div>
 
 <!-- ═══════════════════════════════════════════════════════════ -->
@@ -1589,7 +1603,7 @@ body.role-admin {
   <header class="app-topbar">
     <div class="topbar-brand">
       <button class="hamburger" id="hamburger-btn" aria-label="Toggle sidebar">☰</button>
-      <img src="images/SSULOGO.png" alt="SSU Seal">
+      <span class="ssu-seal"><img src="images/SSULOGO.png" alt="Samar State University seal" width="1200" height="800"></span>
       <div class="topbar-brand-text">
         <div class="tb-univ">Samar State University</div>
         <div class="tb-app" id="topbar-app-name">CAMPUS-ER</div>
@@ -2220,7 +2234,7 @@ async function doCreateReport(e) {
   let voice_transcript   = document.getElementById('cr-transcript').value.trim();
   const station_id       = document.getElementById('cr-station').value;
   if (station_id) {
-    const st = stationList.find(s => s.id === station_id);
+    const st = stationList.find(s => String(s.id) === station_id);
     const stLabel = st ? [st.building, st.floor].filter(Boolean).join(' ') : ('Station ' + station_id.slice(0,6));
     voice_transcript = voice_transcript ? `[Station: ${stLabel}] ${voice_transcript}` : `[Station: ${stLabel}]`;
   }
@@ -2322,7 +2336,7 @@ async function loadStations() {
   } else {
     sel.innerHTML = '<option value="">No station / Manual report</option>'
       + stationList.map(s => {
-        const loc = [s.building, s.floor].filter(Boolean).join(' — ') || ('Station ' + s.id.slice(0,6).toUpperCase());
+        const loc = [s.building, s.floor].filter(Boolean).join(' — ') || ('Station ' + String(s.id).slice(0,6).toUpperCase());
         return `<option value="${s.id}">${loc} (${s.status || 'online'})</option>`;
       }).join('');
   }
@@ -3885,6 +3899,8 @@ if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
 <script src="eoc.js"></script>
 <script src="eoc-monitor.js"></script>
 <script src="eoc-insights.js"></script>
+<script src="campus-data.js"></script>
+<script src="campus-map.js"></script>
 <script type="module" src="eoc-icons.mjs"></script>
 </body>
 </html>

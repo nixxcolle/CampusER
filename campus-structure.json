@@ -1,0 +1,32 @@
+{
+  "buildings": [
+    {"name":"COED","code":"COED","aliases":["College of Education"],"x":80,"y":300,"color":"#a9d7c5"},
+    {"name":"Old CAS","code":"OLD-CAS","aliases":["Old CAS Building"],"x":330,"y":300,"color":"#e0c6ac"},
+    {"name":"CONHS","code":"CONHS","aliases":["College of Nursing and Health Sciences"],"x":250,"y":590,"color":"#c8d8ed"},
+    {"name":"College of Arts and Sciences","code":"CAS","aliases":["Arts & Sciences Building","Arts and Sciences Building"],"x":530,"y":300,"color":"#d3c5e6"},
+    {"name":"College of Engineering","code":"COENG","aliases":["Engineering Building"],"x":530,"y":125,"color":"#b8d9dd"},
+    {"name":"CIT","code":"CIT","aliases":["CIT Building","College of Industrial Technology"],"x":1010,"y":360,"color":"#edcea2"}
+  ],
+  "map": {
+    "width":1200,"height":880,
+    "supportingBuildings":[
+      {"name":"COED","lines":["COED"],"x":80,"y":590,"width":145,"height":90},
+      {"name":"SIIM","lines":["SIIM"],"x":455,"y":590,"width":115,"height":85},
+      {"name":"Graduate School","lines":["Graduate","School"],"x":530,"y":475,"width":170,"height":105},
+      {"name":"Student Center","lines":["Student","Center"],"x":750,"y":125,"width":145,"height":90},
+      {"name":"Research Innovation Center","lines":["Research","Innovation","Center"],"x":750,"y":300,"width":145,"height":105},
+      {"name":"School Gymnasium","lines":["School","Gymnasium"],"x":750,"y":500,"width":145,"height":90},
+      {"name":"Bahay Alumni","lines":["Bahay","Alumni"],"x":240,"y":755,"width":145,"height":90},
+      {"name":"OSAS","lines":["OSAS"],"x":410,"y":755,"width":145,"height":90},
+      {"name":"DOST","lines":["DOST"],"x":580,"y":755,"width":145,"height":90},
+      {"name":"School Clinic","lines":["School","Clinic"],"x":750,"y":755,"width":145,"height":90},
+      {"name":"SSU Convention","lines":["SSU","Convention"],"x":1010,"y":550,"width":170,"height":105},
+      {"name":"Security Station","lines":["Security","Station"],"x":1010,"y":755,"width":170,"height":90}
+    ]
+  },
+  "floors": [
+    {"number":1,"label":"1st Floor","rooms":["Dean's Office","Faculty Room","Room 101","Room 102","Room 103","Room 104","Room 105"]},
+    {"number":2,"label":"2nd Floor","rooms":["Room 201","Room 202","Room 203","Room 204","Room 205"]},
+    {"number":3,"label":"3rd Floor","rooms":["Room 301","Room 302","Room 303","Room 304","Room 305"]}
+  ]
+}
