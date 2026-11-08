@@ -1,69 +1,63 @@
-/* Presentation-only attention cues for the existing emergency entry points. */
-let emergencyAttention=null;
+/* Presentation-only attention cues. Incident status remains owned by the existing report handlers. */
+const emergencyArrivals=new Map();
+const emergencyKey=inc=>String(inc._uuid||inc.id);
 const emergencyIndicator=document.createElement('button');
-emergencyIndicator.type='button';
-emergencyIndicator.className='emergency-top-indicator';
-emergencyIndicator.hidden=true;
-emergencyIndicator.innerHTML=eocIcon('Siren')+'<span>Emergency active</span>';
+emergencyIndicator.type='button';emergencyIndicator.className='emergency-top-indicator';emergencyIndicator.hidden=true;
 document.querySelector('.app-topbar').append(emergencyIndicator);
-
+const emergencyTray=document.createElement('aside');
+emergencyTray.className='emergency-alert-tray';emergencyTray.hidden=true;emergencyTray.setAttribute('aria-label','Unacknowledged emergency alerts');
+document.body.append(emergencyTray);
 const emergencyPopup=document.createElement('dialog');
-emergencyPopup.className='emergency-attention-popup';
-emergencyPopup.setAttribute('role','alertdialog');
-emergencyPopup.setAttribute('aria-modal','true');
-emergencyPopup.setAttribute('aria-labelledby','emergency-popup-title');
-emergencyPopup.setAttribute('aria-describedby','emergency-popup-description');
-emergencyPopup.innerHTML=`<div class="emergency-popup-heading">${eocIcon('Siren')}<span>EMERGENCY — IMMEDIATE ATTENTION</span><button type="button" class="emergency-popup-dismiss" aria-label="Dismiss emergency popup">${eocIcon('X')}</button></div><div class="emergency-popup-content"><h2 id="emergency-popup-title"></h2><p id="emergency-popup-description"></p><p class="emergency-popup-office"></p><span class="emergency-popup-demo" hidden>Simulation alert</span></div><div class="emergency-popup-actions"><button type="button" class="btn btn-secondary emergency-popup-dismiss">Dismiss</button><button type="button" class="btn btn-primary emergency-popup-view">View Emergency ${eocIcon('ArrowUpRight')}</button></div>`;
+emergencyPopup.className='emergency-attention-popup';emergencyPopup.setAttribute('role','alertdialog');emergencyPopup.setAttribute('aria-modal','true');emergencyPopup.setAttribute('aria-labelledby','emergency-popup-title');
+emergencyPopup.innerHTML=`<div class="emergency-popup-heading">${eocIcon('Siren')}<span>EMERGENCY — IMMEDIATE ATTENTION</span><button type="button" class="emergency-popup-dismiss" aria-label="Close emergency popup">${eocIcon('X')}</button></div><div class="emergency-popup-content"><h2 id="emergency-popup-title"></h2><p>Each incident requires a separate response.</p><div class="emergency-popup-list"></div></div><div class="emergency-popup-actions"><button type="button" class="btn btn-secondary emergency-popup-dismiss">Close popup</button></div>`;
 document.body.append(emergencyPopup);
 emergencyPopup.querySelectorAll('.emergency-popup-dismiss').forEach(button=>button.onclick=()=>emergencyPopup.close());
-function emergencyCurrentAttention(){
-  if(!emergencyAttention||emergencyAttention.user!==(currentUser?.id||'guest')||!document.getElementById('screen-app').classList.contains('active'))return null;
-  const inc=emergencyAttention.demo?eocDemoReports.get(emergencyAttention.id):liveIncidents.find(i=>(i._uuid||i.id)===emergencyAttention.id);
-  return inc&&eocReceives(inc)&&['active','pending'].includes(inc.status)?inc:null;
+function emergencyActiveAlerts(){
+  if(!document.getElementById('screen-app').classList.contains('active'))return [];
+  const rows=new Map();
+  for(const inc of liveIncidents){const key=emergencyKey(inc);emergencyArrivals.delete(key);rows.set(key,inc);}
+  for(const [key,inc] of emergencyArrivals)if(!rows.has(key))rows.set(key,inc);
+  for(const inc of eocDemoReports.values())rows.set(emergencyKey(inc),inc);
+  return [...rows.values()].filter(inc=>eocReceives(inc)&&['active','pending'].includes(inc.status));
 }
+function emergencyCards(rows){return rows.map(inc=>`<article class="emergency-alert-card" data-emergency-id="${eocEscape(emergencyKey(inc))}"><div class="emergency-alert-badges"><strong>${eocIcon('Siren')} ${eocEscape(String(inc.priority||'UNASSESSED').toUpperCase())} PRIORITY</strong><span>${eocEscape(statusLabel(inc.status))}</span></div><h3>${eocEscape(inc.type||'Emergency report')}</h3><p>${eocEscape([inc.building,inc.floor,inc.room].filter(Boolean).join(' · '))}</p><p class="emergency-alert-meta">Receiving office: ${eocEscape(inc.office||'')}<br><time>${eocEscape([inc.date,inc.time].filter(Boolean).join(' · ')||'Time unavailable')}</time> · ${eocEscape(inc.id||emergencyKey(inc))}</p><button type="button" class="btn btn-secondary emergency-alert-view">View Emergency ${eocIcon('ArrowUpRight')}</button></article>`).join('');}
+let emergencySnapshot='';
 function emergencySyncAttention(){
-  const inc=emergencyCurrentAttention();
-  emergencyIndicator.hidden=!inc;
+  const rows=emergencyActiveAlerts();
+  emergencyIndicator.hidden=!rows.length;emergencyTray.hidden=!rows.length;
+  emergencyIndicator.innerHTML=eocIcon('Siren')+'<span>'+rows.length+' active emergenc'+(rows.length===1?'y':'ies')+'</span>';
+  emergencyIndicator.setAttribute('aria-label',rows.length+' active emergencies. Open all alerts.');
   document.querySelectorAll('.emergency-attention-highlight').forEach(card=>card.classList.remove('emergency-attention-highlight'));
-  if(!inc){if(emergencyPopup.open)emergencyPopup.close();return;}
-  emergencyIndicator.setAttribute('aria-label','Emergency active: '+inc.type+'. Open alert.');
   const displayed=eocDemo||eocSelected();
-  if((displayed?._uuid||displayed?.id)===(inc._uuid||inc.id))document.querySelector('.eoc-incident')?.classList.add('emergency-attention-highlight');
+  if(displayed&&rows.some(inc=>emergencyKey(inc)===emergencyKey(displayed)))document.querySelector('.eoc-incident')?.classList.add('emergency-attention-highlight');
+  const snapshot=JSON.stringify(rows);if(snapshot!==emergencySnapshot){
+    emergencySnapshot=snapshot;
+    emergencyTray.innerHTML='<header role="status" aria-live="assertive" aria-atomic="true">'+eocIcon('Siren')+' '+rows.length+' emergencies awaiting acknowledgement</header><div class="emergency-tray-list">'+emergencyCards(rows)+'</div>';
+    emergencyPopup.querySelector('.emergency-popup-list').innerHTML=emergencyCards(rows);
+    emergencyPopup.querySelector('h2').textContent=rows.length+' active emergenc'+(rows.length===1?'y':'ies');
+  }
+  if(!rows.length&&emergencyPopup.open)emergencyPopup.close();
 }
-function emergencyClearAttention() {
-  emergencyAttention = null;
-  emergencySyncAttention();
-}
-function emergencyOpenPopup(){
-  const inc=emergencyCurrentAttention();if(!inc)return;
-  emergencyPopup.querySelector('h2').textContent=inc.type||'Emergency report';
-  emergencyPopup.querySelector('#emergency-popup-description').textContent=[inc.building,inc.floor,inc.room].filter(Boolean).join(' · ');
-  emergencyPopup.querySelector('.emergency-popup-office').textContent='Receiving office: '+inc.office;
-  emergencyPopup.querySelector('.emergency-popup-demo').hidden=!emergencyAttention.demo;
-  if(!emergencyPopup.open)emergencyPopup.showModal();
-}
+function emergencyOpenPopup(){emergencySyncAttention();if(emergencyActiveAlerts().length&&!emergencyPopup.open)emergencyPopup.showModal();}
 function emergencyShowAttention(inc,demo=false){
   if(!inc||!eocReceives(inc)||!['active','pending'].includes(inc.status))return;
-  const displayed=eocDemo||eocSelected();
-  emergencyAttention={id:inc._uuid||inc.id,demo,user:currentUser?.id||'guest'};
-  selectedIncidentId=inc._uuid||inc.id;
-  if(!demo)eocDemo=null;
-  if(currentPage==='overview'&&(displayed?._uuid||displayed?.id)!==(inc._uuid||inc.id))renderPage('overview');
+  if(!demo&&!liveIncidents.some(i=>emergencyKey(i)===emergencyKey(inc)))emergencyArrivals.set(emergencyKey(inc),inc);
   emergencySyncAttention();emergencyOpenPopup();
 }
-emergencyIndicator.onclick=emergencyOpenPopup;
-emergencyPopup.querySelector('.emergency-popup-view').onclick=()=>{
-  const inc=emergencyCurrentAttention();emergencyPopup.close();if(!inc)return;
-  selectedIncidentId=inc._uuid||inc.id;eocDemo=emergencyAttention.demo?inc:null;
-  navigate('overview');
-  const card=document.querySelector('.eoc-incident');
-  if(card){card.setAttribute('tabindex','-1');card.focus({preventScroll:true});card.scrollIntoView({block:'center',behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});}
-};
+function emergencyView(event){
+  const button=event.target.closest('.emergency-alert-view');if(!button)return;
+  const key=button.closest('[data-emergency-id]').dataset.emergencyId;
+  const inc=emergencyActiveAlerts().find(i=>emergencyKey(i)===key);if(!inc)return;
+  emergencyPopup.close();selectedIncidentId=inc._uuid||inc.id;eocDemo=eocDemoReports.get(key)||null;navigate('overview');
+  const card=document.querySelector('.eoc-incident');if(card){card.setAttribute('tabindex','-1');card.focus({preventScroll:true});card.scrollIntoView({block:'center',behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});}
+}
+emergencyTray.onclick=emergencyView;emergencyPopup.addEventListener('click',emergencyView);emergencyIndicator.onclick=emergencyOpenPopup;
 const emergencyOriginalSimulate=eocSimulate;
 eocSimulate=function(type){emergencyOriginalSimulate(type);const inc=eocDemoReports.get('DEMO-'+String(type).toUpperCase());if(inc)emergencyShowAttention(inc,true);};
 const emergencyOriginalAutoAlert=triggerAutoAlert;
 triggerAutoAlert=function(inc){emergencyOriginalAutoAlert(inc);emergencyShowAttention(inc);};
 const emergencyOriginalRender=renderPage;
 renderPage=function(page){emergencyOriginalRender(page);emergencySyncAttention();};
+function emergencyClearAttention(){emergencyArrivals.clear();emergencySnapshot='';emergencyTray.hidden=true;emergencyTray.innerHTML='';emergencyPopup.querySelector('.emergency-popup-list').innerHTML='';emergencyIndicator.hidden=true;emergencyPopup.close();}
 const emergencyOriginalLogout=doLogout;
 doLogout=async function(){emergencyClearAttention();return emergencyOriginalLogout();};
