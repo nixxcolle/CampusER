@@ -1,16 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta name="campus-er-release" content="637aa66053c73dc8">
+<meta name="campus-er-release" content="02bfecede11b2dc4">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>CAMPUS-ER | Samar State University Emergency Reporting System</title>
 <meta name="description" content="CAMPUS-ER — Embedded Campus-Wide Emergency Reporting and Alert System for Samar State University">
-<link rel="manifest" href="manifest.json?v=637aa66053c73dc8">
+<link rel="manifest" href="manifest.json?v=02bfecede11b2dc4">
 <meta name="theme-color" content="#1a3a6e">
-<link rel="apple-touch-icon" href="images/SSULOGO.png?v=637aa66053c73dc8">
-<link rel="stylesheet" href="vendor/inter.css?v=637aa66053c73dc8">
-<script src="vendor/supabase.min.js?v=637aa66053c73dc8"></script>
+<link rel="apple-touch-icon" href="images/SSULOGO.png?v=02bfecede11b2dc4">
+<link rel="stylesheet" href="vendor/inter.css?v=02bfecede11b2dc4">
+<script src="vendor/supabase.min.js?v=02bfecede11b2dc4"></script>
 <style>
 /* ─── TOKENS ─────────────────────────────────────────────────── */
 :root {
@@ -1452,15 +1452,18 @@ body.role-admin {
 .auth-switch a { color: var(--ssu-navy); font-weight: 600; cursor: pointer; text-decoration: none; }
 .auth-switch a:hover { text-decoration: underline; }
 </style>
-<link rel="stylesheet" href="eoc.css?v=637aa66053c73dc8">
-<link rel="stylesheet" href="eoc-polish.css?v=637aa66053c73dc8">
-<link rel="stylesheet" href="eoc-monitor.css?v=637aa66053c73dc8">
-<link rel="stylesheet" href="eoc-insights.css?v=637aa66053c73dc8">
-<link rel="stylesheet" href="eoc-brand.css?v=637aa66053c73dc8">
-<link rel="stylesheet" href="eoc-signin.css?v=637aa66053c73dc8">
-<link rel="stylesheet" href="campus-map.css?v=637aa66053c73dc8">
-<link rel="stylesheet" href="emergency-attention.css?v=637aa66053c73dc8">
-<link rel="stylesheet" href="records-design.css?v=637aa66053c73dc8">
+<link rel="stylesheet" href="eoc.css?v=02bfecede11b2dc4">
+<link rel="stylesheet" href="eoc-polish.css?v=02bfecede11b2dc4">
+<link rel="stylesheet" href="eoc-monitor.css?v=02bfecede11b2dc4">
+<link rel="stylesheet" href="eoc-insights.css?v=02bfecede11b2dc4">
+<link rel="stylesheet" href="eoc-brand.css?v=02bfecede11b2dc4">
+<link rel="stylesheet" href="eoc-signin.css?v=02bfecede11b2dc4">
+<link rel="stylesheet" href="campus-map.css?v=02bfecede11b2dc4">
+<link rel="stylesheet" href="emergency-attention.css?v=02bfecede11b2dc4">
+<link rel="stylesheet" href="records-design.css?v=02bfecede11b2dc4">
+<link rel="stylesheet" href="pi-dashboard.css?v=02bfecede11b2dc4">
+<script src="campus-er-config.js"></script>
+<script src="pi-dashboard.js?v=02bfecede11b2dc4"></script>
 <script type="importmap">{"imports":{"react":"./vendor/react.mjs"}}</script>
 </head>
 <body>
@@ -1471,7 +1474,7 @@ body.role-admin {
 <div id="screen-login" class="screen active">
   <div class="login-left">
     <div class="login-brand">
-      <span class="ssu-seal"><img src="images/SSULOGO.png?v=637aa66053c73dc8" alt="Samar State University seal" width="1200" height="800"></span>
+      <span class="ssu-seal"><img src="images/SSULOGO.png?v=02bfecede11b2dc4" alt="Samar State University seal" width="1200" height="800"></span>
       <div class="univ-name">Samar State University</div>
       <div class="app-name">CAMPUS-ER</div>
       <div class="app-subtitle">Embedded Campus-Wide Emergency Reporting and Alert System</div>
@@ -1512,7 +1515,7 @@ body.role-admin {
 <div id="screen-register" class="screen">
   <div class="login-left">
     <div class="login-brand">
-      <span class="ssu-seal"><img src="images/SSULOGO.png?v=637aa66053c73dc8" alt="Samar State University seal" width="1200" height="800"></span>
+      <span class="ssu-seal"><img src="images/SSULOGO.png?v=02bfecede11b2dc4" alt="Samar State University seal" width="1200" height="800"></span>
       <div class="univ-name">Samar State University</div>
       <div class="app-name">CAMPUS-ER</div>
       <div class="app-subtitle">Embedded Campus-Wide Emergency Reporting and Alert System</div>
@@ -1572,7 +1575,7 @@ body.role-admin {
 <div id="auth-loading" role="status" aria-live="polite" aria-label="Loading CAMPUS-ER">
   <div class="eoc-loading-shell">
     <div class="eoc-loading-content">
-      <span class="ssu-seal"><img src="images/SSULOGO.png?v=637aa66053c73dc8" alt="Samar State University seal" width="1200" height="800" fetchpriority="high"></span>
+      <span class="ssu-seal"><img src="images/SSULOGO.png?v=02bfecede11b2dc4" alt="Samar State University seal" width="1200" height="800" fetchpriority="high"></span>
       <div class="eoc-loading-institution">Samar State University</div>
       <h1>CAMPUS-ER</h1>
       <p class="eoc-loading-description">Your campus emergency<br>operations workspace.</p>
@@ -1594,7 +1597,7 @@ body.role-admin {
   <header class="app-topbar">
     <div class="topbar-brand">
       <button class="hamburger" id="hamburger-btn" aria-label="Toggle sidebar">☰</button>
-      <span class="ssu-seal"><img src="images/SSULOGO.png?v=637aa66053c73dc8" alt="Samar State University seal" width="1200" height="800"></span>
+      <span class="ssu-seal"><img src="images/SSULOGO.png?v=02bfecede11b2dc4" alt="Samar State University seal" width="1200" height="800"></span>
       <div class="topbar-brand-text">
         <div class="tb-univ">Samar State University</div>
         <div class="tb-app" id="topbar-app-name">CAMPUS-ER</div>
@@ -1802,6 +1805,9 @@ body.role-admin {
 </div>
 
 <script>
+// A missing network-only configuration must not select cloud data on the Pi.
+const PI_MODE = window.CAMPUS_ER_SOURCE !== 'supabase';
+document.documentElement.classList.toggle('pi-mode', PI_MODE);
 /* ─── INCIDENTS DATA (LOADED LIVE FROM SUPABASE) ────────────── */
 const INCIDENTS = []; // liveIncidents is the single source of truth
 
@@ -1847,6 +1853,7 @@ function showLogin() {
   document.body.className = '';
 }
 function showRegister() {
+  if (PI_MODE) { piLoginMessage('Use an approved staff account. Ask the Pi administrator to assign your office.'); return; }
   ['screen-app','screen-login'].forEach(id => document.getElementById(id).classList.remove('active'));
   document.getElementById('screen-register').classList.add('active');
 }
@@ -1855,6 +1862,7 @@ function showLoading() { document.getElementById('auth-loading').style.display =
 
 /* ─── AUTH ───────────────────────────────────────────────────── */
 async function doLogin(e) {
+  if (PI_MODE) return piSignIn(e);
   e.preventDefault();
   const errEl = document.getElementById('login-error');
   errEl.classList.remove('visible');
@@ -1882,6 +1890,7 @@ async function doLogin(e) {
 
 async function doRegister(e) {
   e.preventDefault();
+  if (PI_MODE) { piLoginMessage('Ask the Pi administrator to approve your staff account and office.'); return; }
   const errEl  = document.getElementById('register-error');
   const okEl   = document.getElementById('register-success');
   errEl.classList.remove('visible');
@@ -1928,12 +1937,19 @@ async function doRegister(e) {
 }
 
 async function doLogout() {
+  if (PI_MODE) {
+    piStop();
+    showLogin();
+    await sb.auth.signOut({ scope: 'local' });
+    return;
+  }
   await sb.auth.signOut();
   currentUser = null;
   showLogin();
 }
 
 async function loadProfileAndShow(user) {
+  if (PI_MODE) return piLoadProfileAndShow(user);
   currentUser = user;
   // Fetch profile to get office assignment
   const { data: profile, error } = await sb
@@ -1957,6 +1973,7 @@ async function loadProfileAndShow(user) {
 }
 
 function showApp(profile) {
+  if (PI_MODE && (!currentUser || !piDashboard.office)) return;
   ['screen-login','screen-register'].forEach(id => document.getElementById(id).classList.remove('active'));
   document.getElementById('screen-app').classList.add('active');
   const r = ROLES[currentRole];
@@ -1977,12 +1994,30 @@ function showApp(profile) {
 
   buildSidebar();
   // load live data and stations in parallel, then navigate
-  Promise.all([fetchReports(), loadStations()]).then(() => navigate('overview'));
+  const piGeneration = PI_MODE ? piDashboard.generation : null;
+  Promise.all([fetchReports(), loadStations()]).then(() => {
+    if (!PI_MODE || piGeneration === piDashboard.generation && piDashboard.office) navigate('overview');
+  });
   setupRealtime();
 }
 
 /* ─── SESSION RESTORE ON LOAD ────────────────────────────────── */
 (async () => {
+  if (PI_MODE) {
+    try {
+      if (window.CAMPUS_ER_SOURCE !== 'pi') {
+        piLoginMessage('Data source configuration could not load. Reconnect and reload this page.');
+        return;
+      }
+      const { data: { session } } = await sb.auth.getSession();
+      if (session?.user) await loadProfileAndShow(session.user);
+    } catch {
+      piLoginMessage('Sign in with an approved staff account. Authentication requires a network connection.');
+    } finally {
+      hideLoading();
+    }
+    return;
+  }
   const { data: { session } } = await sb.auth.getSession();
   if (session?.user) {
     await loadProfileAndShow(session.user);
@@ -2042,6 +2077,7 @@ function rowToInc(r) {
 
 /* ─── ROLE-BASED FETCHING ─────────────────────────────────────── */
 async function fetchReports() {
+  if (PI_MODE) return piFetchReports();
   let q = sb.from('emergency_reports').select('*').order('created_at', { ascending: false });
   // Role-based filtering:
   // School Clinic   → Medical Emergency reports only
@@ -2104,6 +2140,7 @@ function triggerAutoAlert(inc) {
 
 /* ─── REALTIME UPDATES ───────────────────────────────────────── */
 function setupRealtime() {
+  if (PI_MODE) { piStartPolling(); return; }
   if (realtimeChannel) {
     sb.removeChannel(realtimeChannel);
     realtimeChannel = null;
@@ -2129,6 +2166,7 @@ function setupRealtime() {
 }
 
 async function updateReportStatus(uuid, newStatus) {
+  if (PI_MODE) return piReadOnly();
   if (!uuid) { showToast('Cannot update: report ID missing'); return; }
   const { error } = await sb
     .from('emergency_reports')
@@ -2141,6 +2179,7 @@ async function updateReportStatus(uuid, newStatus) {
 }
 
 function openCreateReport() {
+  if (PI_MODE) return piReadOnly();
   document.getElementById('create-report-modal').classList.add('open');
 }
 function closeCreateReport() {
@@ -2155,6 +2194,7 @@ function closeCreateReport() {
 
 async function doCreateReport(e) {
   e.preventDefault();
+  if (PI_MODE) return piReadOnly();
   const errEl = document.getElementById('cr-error');
   errEl.classList.remove('visible');
   const btn = document.getElementById('cr-submit');
@@ -2196,6 +2236,7 @@ async function doCreateReport(e) {
 let _editUUID = null;
 
 async function openEditReport(uuid) {
+  if (PI_MODE) return piReadOnly();
   const { data, error } = await sb
     .from('emergency_reports')
     .select('*')
@@ -2221,6 +2262,7 @@ async function openEditReport(uuid) {
 
 async function doEditReport(e) {
   e.preventDefault();
+  if (PI_MODE) return piReadOnly();
   const errEl = document.getElementById('cr-error');
   errEl.classList.remove('visible');
   const btn = document.getElementById('cr-submit');
@@ -2251,6 +2293,7 @@ async function doEditReport(e) {
 
 /* ─── DELETE REPORT ──────────────────────────────────────────── */
 async function deleteReport(uuid, displayId) {
+  if (PI_MODE) return piReadOnly();
   if (!confirm(`Delete report ${displayId}? This cannot be undone.`)) return;
   const { error } = await sb.from('emergency_reports').delete().eq('id', uuid);
   if (error) { showToast('Delete failed: ' + error.message); return; }
@@ -2261,6 +2304,7 @@ async function deleteReport(uuid, displayId) {
 
 /* ─── STATIONS TABLE LOADER ──────────────────────────────────── */
 async function loadStations() {
+  if (PI_MODE) { stationList = []; return; }
   const { data, error } = await sb.from('stations').select('*').order('created_at', { ascending: false });
   if (error) { console.warn('loadStations error:', error.message); return; }
   stationList = data || [];
@@ -2285,7 +2329,7 @@ function buildSidebar() {
   nav.innerHTML = items.map(key => {
     const m = MENU_CONFIG[key];
     const badge = key === 'incidents' && activeCount > 0 ? `<span class="nav-badge">${activeCount}</span>` : '';
-    return `<button class="nav-item" id="nav-${key}" onclick="navigate('${key}')" aria-label="${m.label}">
+    return `<button class="nav-item${key === currentPage ? ' active' : ''}" id="nav-${key}" onclick="navigate('${key}')" aria-label="${m.label}">
       <span class="nav-icon">${m.icon}</span>${m.label}${badge}
     </button>`;
   }).join('');
@@ -2307,6 +2351,10 @@ function navigate(page) {
 function renderPage(page) {
   const canvas = document.getElementById('main-canvas');
   canvas.innerHTML = '';
+  if (PI_MODE) {
+    canvas.insertAdjacentHTML('beforeend', '<div id="pi-dashboard-status" role="status" aria-live="polite"></div>');
+    piUpdateStatus();
+  }
   const div = document.createElement('div');
   div.className = 'page active';
   div.id = 'page-' + page;
@@ -2580,6 +2628,7 @@ function escapeQuotes(str) {
 }
 
 function dispatchRespondersForActive(uuid, bld, rm) {
+  if (PI_MODE) return piReadOnly();
   showToast(`Responders dispatched to ${rm}, ${bld}`);
   if (uuid) {
     updateReportStatus(uuid, 'acknowledged');
@@ -3119,18 +3168,18 @@ function buildIncidents() {
   }[currentRole];
   const rows = incidents.map(inc => `
     <tr>
-      <td><div class="inc-type">${inc.id}</div></td>
-      <td><span class="type-badge type-${inc.category}">${inc.type}</span></td>
-      <td>${inc.building}</td>
-      <td>${inc.floor} · ${inc.room}</td>
+      <td><div class="inc-type">${eocEscape(inc.id)}</div></td>
+      <td><span class="type-badge type-${inc.category}">${eocEscape(inc.type)}</span></td>
+      <td>${eocEscape(inc.building)}</td>
+      <td>${PI_MODE ? eocEscape(inc.stationId) : `${eocEscape(inc.floor)} · ${eocEscape(inc.room)}`}</td>
       <td><span class="priority-badge priority-${inc.priority}">${inc.priority.toUpperCase()}</span></td>
-      <td>${inc.date}</td>
-      <td>${inc.time}</td>
-      <td><span class="status-pill ${inc.status}">${statusLabel(inc.status)}</span></td>
+      <td>${eocEscape(inc.date)}</td>
+      <td>${eocEscape(inc.time)}</td>
+      <td>${reportStatusPill(inc)}</td>
       <td style="white-space:nowrap;">
         <button class="btn-row-action" onclick="openDetail('${inc.id}')" style="margin-right:4px;">View</button>
-        <button class="btn-row-action" onclick="updateReportStatus('${inc._uuid}','acknowledged')" style="border-color:var(--ssu-navy);color:var(--ssu-navy);margin-right:4px;">Ack</button>
-        ${inc._uuid ? `<button class="btn-row-action" onclick="openEditReport('${inc._uuid}')" style="border-color:#b45309;color:#b45309;margin-right:4px;">✏ Edit</button>
+        ${!PI_MODE ? `<button class="btn-row-action" onclick="updateReportStatus('${inc._uuid}','acknowledged')" style="border-color:var(--ssu-navy);color:var(--ssu-navy);margin-right:4px;">Ack</button>` : ''}
+        ${!PI_MODE && inc._uuid ? `<button class="btn-row-action" onclick="openEditReport('${inc._uuid}')" style="border-color:#b45309;color:#b45309;margin-right:4px;">✏ Edit</button>
         <button class="btn-row-action" onclick="deleteReport('${inc._uuid}','${inc.id}')" style="border-color:var(--negative);color:var(--negative);">&#x1f5d1; Del</button>` : ''}
       </td>
     </tr>`).join('');
@@ -3142,16 +3191,16 @@ function buildIncidents() {
         <div class="page-sub">${incidents.length} reports · Samar State University · ESP32 Emergency Stations Only</div>
       </div>
       <div class="page-header-right">
-        <select style="height:34px;border:1px solid var(--border-2);border-radius:6px;padding:0 10px;font-size:13px;background:#fff;" onchange="">
+        <select aria-label="Filter by response status" ${PI_MODE ? 'disabled title="Response status is not tracked on the Pi"' : ''} style="height:34px;border:1px solid var(--border-2);border-radius:6px;padding:0 10px;font-size:13px;background:#fff;" onchange="">
           <option>All Status</option><option>Active</option><option>Pending</option><option>Resolved</option>
         </select>
-        <button class="btn btn-secondary" onclick="fetchReports().then(()=>renderPage('incidents'))">🔄 Refresh</button>
+        <button class="btn btn-secondary" onclick="${PI_MODE ? "piRefreshPage('incidents')" : "fetchReports().then(()=>renderPage('incidents'))"}">🔄 Refresh</button>
       </div>
     </div>
     <div class="panel">
       <div class="panel-header">
         <div class="panel-title">Incident Log</div>
-        <div style="font-size:12px;color:var(--ink-3);">Updated: ${new Date().toLocaleString('en-PH',{month:'short',day:'numeric',year:'numeric',hour:'2-digit',minute:'2-digit'})}</div>
+        <div style="font-size:12px;color:var(--ink-3);">Updated: ${new Date().toLocaleString('en-PH',{month:'short',day:'numeric',year:'numeric',hour:'2-digit',minute:'2-digit',timeZone:PI_MODE ? 'Asia/Manila' : undefined})}</div>
       </div>
       <div style="overflow-x:auto;">
         <table class="incident-table">
@@ -3409,17 +3458,17 @@ function buildReportsAdmin() {
         <div class="page-sub">All campus emergency records · Samar State University</div>
       </div>
       <div class="page-header-right">
-        <button class="btn btn-primary" onclick="fetchReports();renderPage('reports')">🔄 Refresh</button>
+        <button class="btn btn-primary" onclick="${PI_MODE ? "piRefreshPage('reports')" : "fetchReports();renderPage('reports')"}">🔄 Refresh</button>
       </div>
     </div>
     <div class="three-col">
       ${[
-        {title:'Daily Incident Summary',  date:new Date().toLocaleDateString('en-PH',{month:'short',day:'numeric',year:'numeric'}), count:total},
+        {title:'Daily Incident Summary',  date:new Date().toLocaleDateString('en-PH',{month:'short',day:'numeric',year:'numeric',timeZone:PI_MODE ? 'Asia/Manila' : undefined}), count:PI_MODE ? piReportStats(liveIncidents,new Date(),['Today'])[0].value : total},
         {title:'Medical Cases Log',       date:'SSU Clinic Records',        count:medCases},
         {title:'Security Threats Log',    date:'SSU Security Command',      count:secCases},
         {title:'DRRMO Disaster Log',      date:'Disaster Risk Records',     count:drrmoCases},
-        {title:'Campus Station Audits',   date:'IoT Stations Monitor',      count:stationList.length},
-        {title:'All Emergency Logs',      date:'Supabase Table Archive',    count:total},
+        {title:'Campus Station Audits',   date:PI_MODE ? 'Station health not available' : 'IoT Stations Monitor', count:PI_MODE ? '—' : stationList.length},
+        {title:'All Emergency Logs',      date:PI_MODE ? 'Raspberry Pi Records' : 'Supabase Table Archive', count:total},
       ].map(r=>`
         <div class="panel"><div class="panel-body">
           <div style="font-size:22px;margin-bottom:10px;">📄</div>
@@ -3448,15 +3497,21 @@ function buildIncidentLogTable(incs, cols) {
   </div>`;
 }
 
+function reportStatusPill(incident) {
+  return PI_MODE ? '<span class="status-pill untracked" title="Response status is not tracked on the Pi">Not tracked</span>'
+    : `<span class="status-pill ${incident.status}">${statusLabel(incident.status)}</span>`;
+}
+
 /* ─── REPORTS: SCHOOL CLINIC ─────────────────────────────────── */
 function buildReportsClinic() {
   const incs    = liveIncidents.filter(i=>i.category==='medical' || (i.type && i.type.toLowerCase().includes('medic')));
+  const today   = new Date();
   const total   = incs.length;
   const pending = incs.filter(i=>i.status==='active'||i.status==='pending').length;
   const acked   = incs.filter(i=>i.status==='acknowledged').length;
   const resolved= incs.filter(i=>i.status==='resolved').length;
 
-  const statCards = [
+  const statCards = PI_MODE ? piReportStats(incs, today, ['Total Medical Emergencies Today', 'Pending Cases', 'Acknowledged Cases', 'Resolved Cases']) : [
     {label:'Total Medical Emergencies Today', value:total,    color:'var(--ink)'},
     {label:'Pending Cases',                   value:pending,  color:'var(--negative)'},
     {label:'Acknowledged Cases',              value:acked,    color:'var(--warn)'},
@@ -3464,23 +3519,23 @@ function buildReportsClinic() {
   ];
 
   const cols = [
-    {label:'Time Reported',        fn:i=>`<span style="font-size:12px;">${i.time}</span>`},
-    {label:'Building',             fn:i=>i.building},
-    {label:'Floor',                fn:i=>i.floor},
-    {label:'Room',                 fn:i=>`<strong>${i.room}</strong>`},
+    {label:'Time Reported',        fn:i=>`<span style="font-size:12px;">${eocEscape(i.time)}</span>`},
+    {label:'Building',             fn:i=>eocEscape(i.building)},
+    {label:'Floor',                fn:i=>eocEscape(i.floor || '—')},
+    {label:'Room',                 fn:i=>`<strong>${eocEscape(i.room || '—')}</strong>`},
     {label:'Priority',             fn:i=>`<span class="priority-badge priority-${i.priority}">${i.priority.toUpperCase()}</span>`},
     {label:'Transcript Available', fn:i=>i.notes&&i.notes.length>10?'<span style="color:var(--positive);font-weight:600;">✔ Available</span>':'<span style="color:var(--ink-3);">—</span>'},
-    {label:'Current Status',       fn:i=>`<span class="status-pill ${i.status}">${statusLabel(i.status)}</span>`},
+    {label:'Current Status',       fn:reportStatusPill},
   ];
 
   return `
     <div class="page-header">
       <div class="page-header-left">
         <h1 class="page-title">Reports — School Clinic</h1>
-        <div class="page-sub">Medical Emergency Reports · Samar State University</div>
+        <div class="page-sub">Medical Emergency Reports · ${PI_MODE ? 'Response status not tracked on Pi' : 'Samar State University'}</div>
       </div>
       <div class="page-header-right">
-        <button class="btn btn-primary" onclick="fetchReports();renderPage('reports')">🔄 Refresh</button>
+        <button type="button" class="btn btn-primary" onclick="${PI_MODE ? "piRefreshPage('reports')" : "fetchReports();renderPage('reports')"}">🔄 Refresh</button>
       </div>
     </div>
 
@@ -3495,7 +3550,7 @@ function buildReportsClinic() {
     <div class="panel" style="margin-bottom:20px;">
       <div class="panel-header">
         <div class="panel-title">📋 Daily Incident Summary</div>
-        <div style="font-size:12px;color:var(--ink-3);">${new Date().toLocaleDateString('en-PH',{weekday:'long',month:'long',day:'numeric',year:'numeric'})}</div>
+        <div style="font-size:12px;color:var(--ink-3);">${today.toLocaleDateString('en-PH',{dateStyle:'full',timeZone:PI_MODE ? 'Asia/Manila' : undefined})}</div>
       </div>
       <div class="panel-body">
         <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;text-align:center;">
@@ -3526,30 +3581,30 @@ function buildReportsSecurity() {
   const active   = incs.filter(i=>i.status==='active').length;
   const resolved = incs.filter(i=>i.status==='resolved').length;
 
-  const statCards = [
+  const statCards = PI_MODE ? piReportStats(incs, new Date(), ['Total Security Reports Today', 'Active Threats', 'Resolved Threats']) : [
     {label:'Total Security Reports Today', value:total,    color:'var(--ink)'},
     {label:'Active Threats',               value:active,   color:'var(--negative)'},
     {label:'Resolved Threats',             value:resolved, color:'var(--positive)'},
   ];
 
   const cols = [
-    {label:'Time Reported',      fn:i=>`<span style="font-size:12px;">${i.time}</span>`},
-    {label:'Building',           fn:i=>i.building},
-    {label:'Floor',              fn:i=>i.floor},
-    {label:'Room',               fn:i=>`<strong>${i.room}</strong>`},
+    {label:'Time Reported',      fn:i=>`<span style="font-size:12px;">${eocEscape(i.time)}</span>`},
+    {label:'Building',           fn:i=>eocEscape(i.building)},
+    {label:'Floor',              fn:i=>eocEscape(i.floor || '—')},
+    {label:'Room',               fn:i=>`<strong>${eocEscape(i.room || '—')}</strong>`},
     {label:'Priority',           fn:i=>`<span class="priority-badge priority-${i.priority}">${i.priority.toUpperCase()}</span>`},
-    {label:'Threat Description', fn:i=>`<span style="font-size:11px;color:var(--ink-2);">${i.notes.slice(0,60)}${i.notes.length>60?'…':''}</span>`},
-    {label:'Status',             fn:i=>`<span class="status-pill ${i.status}">${statusLabel(i.status)}</span>`},
+    {label:'Threat Description', fn:i=>`<span style="font-size:11px;color:var(--ink-2);">${eocEscape(i.notes.slice(0,60) || '—')}${i.notes.length>60?'…':''}</span>`},
+    {label:'Status',             fn:reportStatusPill},
   ];
 
   return `
     <div class="page-header">
       <div class="page-header-left">
         <h1 class="page-title">Reports — Campus Security</h1>
-        <div class="page-sub">Security Threat Reports · Samar State University</div>
+        <div class="page-sub">Security Threat Reports · ${PI_MODE ? 'Response status not tracked on Pi' : 'Samar State University'}</div>
       </div>
       <div class="page-header-right">
-        <button class="btn btn-primary" onclick="fetchReports();renderPage('reports')">🔄 Refresh</button>
+        <button class="btn btn-primary" onclick="${PI_MODE ? "piRefreshPage('reports')" : "fetchReports();renderPage('reports')"}">🔄 Refresh</button>
       </div>
     </div>
 
@@ -3564,7 +3619,7 @@ function buildReportsSecurity() {
     <div class="panel" style="margin-bottom:20px;">
       <div class="panel-header">
         <div class="panel-title">📋 Daily Incident Summary</div>
-        <div style="font-size:12px;color:var(--ink-3);">${new Date().toLocaleDateString('en-PH',{weekday:'long',month:'long',day:'numeric',year:'numeric'})}</div>
+        <div style="font-size:12px;color:var(--ink-3);">${new Date().toLocaleDateString('en-PH',{weekday:'long',month:'long',day:'numeric',year:'numeric',timeZone:PI_MODE ? 'Asia/Manila' : undefined})}</div>
       </div>
       <div class="panel-body">
         <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;text-align:center;">
@@ -3595,30 +3650,30 @@ function buildReportsDrrmo() {
   const active   = incs.filter(i=>i.status==='active').length;
   const resolved = incs.filter(i=>i.status==='resolved').length;
 
-  const statCards = [
+  const statCards = PI_MODE ? piReportStats(incs, new Date(), ['Total Fire/Disaster Reports Today', 'Active Incidents', 'Resolved Incidents']) : [
     {label:'Total Fire/Disaster Reports Today', value:total,    color:'var(--ink)'},
     {label:'Active Incidents',                  value:active,   color:'var(--negative)'},
     {label:'Resolved Incidents',                value:resolved, color:'var(--positive)'},
   ];
 
   const cols = [
-    {label:'Time Reported',  fn:i=>`<span style="font-size:12px;">${i.time}</span>`},
-    {label:'Building',       fn:i=>i.building},
-    {label:'Floor',          fn:i=>i.floor},
-    {label:'Room',           fn:i=>`<strong>${i.room}</strong>`},
+    {label:'Time Reported',  fn:i=>`<span style="font-size:12px;">${eocEscape(i.time)}</span>`},
+    {label:'Building',       fn:i=>eocEscape(i.building)},
+    {label:'Floor',          fn:i=>eocEscape(i.floor || '—')},
+    {label:'Room',           fn:i=>`<strong>${eocEscape(i.room || '—')}</strong>`},
     {label:'Priority',       fn:i=>`<span class="priority-badge priority-${i.priority}">${i.priority.toUpperCase()}</span>`},
-    {label:'Incident Type',  fn:i=>`<span class="type-badge type-${i.category}">${i.type}</span>`},
-    {label:'Current Status', fn:i=>`<span class="status-pill ${i.status}">${statusLabel(i.status)}</span>`},
+    {label:'Incident Type',  fn:i=>`<span class="type-badge type-${i.category}">${eocEscape(i.type)}</span>`},
+    {label:'Current Status', fn:reportStatusPill},
   ];
 
   return `
     <div class="page-header">
       <div class="page-header-left">
         <h1 class="page-title">Reports — DRRMO</h1>
-        <div class="page-sub">Fire &amp; Disaster Reports · Samar State University</div>
+        <div class="page-sub">Fire &amp; Disaster Reports · ${PI_MODE ? 'Response status not tracked on Pi' : 'Samar State University'}</div>
       </div>
       <div class="page-header-right">
-        <button class="btn btn-primary" onclick="fetchReports();renderPage('reports')">🔄 Refresh</button>
+        <button class="btn btn-primary" onclick="${PI_MODE ? "piRefreshPage('reports')" : "fetchReports();renderPage('reports')"}">🔄 Refresh</button>
       </div>
     </div>
 
@@ -3633,7 +3688,7 @@ function buildReportsDrrmo() {
     <div class="panel" style="margin-bottom:20px;">
       <div class="panel-header">
         <div class="panel-title">📋 Daily Incident Summary</div>
-        <div style="font-size:12px;color:var(--ink-3);">${new Date().toLocaleDateString('en-PH',{weekday:'long',month:'long',day:'numeric',year:'numeric'})}</div>
+        <div style="font-size:12px;color:var(--ink-3);">${new Date().toLocaleDateString('en-PH',{weekday:'long',month:'long',day:'numeric',year:'numeric',timeZone:PI_MODE ? 'Asia/Manila' : undefined})}</div>
       </div>
       <div class="panel-body">
         <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;text-align:center;">
@@ -3659,6 +3714,7 @@ function buildReportsDrrmo() {
 
 /* ─── SETTINGS PAGE ──────────────────────────────────────────── */
 function buildSettings() {
+  if (PI_MODE) return piBuildSettings();
   return `
     <div class="page-header">
       <div class="page-header-left">
@@ -3705,6 +3761,7 @@ function buildSettings() {
 
 /* ─── INCIDENT DETAIL MODAL ──────────────────────────────────── */
 function openDetail(id) {
+  if (PI_MODE) return piOpenDetail(id);
   const inc = liveIncidents.find(i => i.id === id || i._uuid === id);
   if (!inc) return;
   window._detailUUID = inc._uuid || null; // stored for modal footer buttons
@@ -3752,17 +3809,20 @@ function openDetail(id) {
 function closeDetailModal() { document.getElementById('detail-modal').classList.remove('open'); }
 
 /* ─── PANIC MODAL ─────────────────────────────────────────────── */
-function openPanicModal() { document.getElementById('panic-modal').classList.add('open'); }
+function openPanicModal() { if (PI_MODE) return piReadOnly(); document.getElementById('panic-modal').classList.add('open'); }
 function closePanicModal() { document.getElementById('panic-modal').classList.remove('open'); }
 function acknowledgeAlert() {
+  if (PI_MODE) return piReadOnly();
   closePanicModal();
   showToast('Alert acknowledged — responders notified');
 }
 function dispatchResponders() {
+  if (PI_MODE) return piReadOnly();
   closePanicModal();
   showToast('Responders dispatched to Room 101, Engineering Building');
 }
 function resolveAlert() {
+  if (PI_MODE) return piReadOnly();
   closePanicModal();
   showToast('Incident marked as resolved');
 }
@@ -3829,15 +3889,24 @@ document.getElementById('detail-modal').addEventListener('click', e => { if (e.t
 document.getElementById('create-report-modal').addEventListener('click', e => { if (e.target === e.currentTarget) closeCreateReport(); });
 
 /* ─── PWA ────────────────────────────────────────────────────── */
+if (PI_MODE) {
+  document.querySelector('#screen-login .login-sub').textContent =
+    'Sign in with an approved staff account. Your office is assigned by the Pi administrator.';
+  sb.auth.onAuthStateChange((event, session) => {
+    if (event === 'SIGNED_OUT' || currentUser && session?.user?.id !== currentUser.id) {
+      piRequireLogin('Sign in with an approved staff account to view the Pi reports.');
+    }
+  });
+}
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js', { updateViaCache: 'none' }).catch(error => console.warn('CAMPUS-ER offline cache unavailable:', error.message));
 </script>
-<script src="eoc.js?v=637aa66053c73dc8"></script>
-<script src="eoc-monitor.js?v=637aa66053c73dc8"></script>
-<script src="eoc-insights.js?v=637aa66053c73dc8"></script>
-<script src="campus-data.js?v=637aa66053c73dc8"></script>
-<script src="campus-map.js?v=637aa66053c73dc8"></script>
-<script src="emergency-attention.js?v=637aa66053c73dc8"></script>
-<script src="records-design.js?v=637aa66053c73dc8"></script>
-<script type="module" src="eoc-icons.mjs?v=637aa66053c73dc8"></script>
+<script src="eoc.js?v=02bfecede11b2dc4"></script>
+<script src="eoc-monitor.js?v=02bfecede11b2dc4"></script>
+<script src="eoc-insights.js?v=02bfecede11b2dc4"></script>
+<script src="campus-data.js?v=02bfecede11b2dc4"></script>
+<script src="campus-map.js?v=02bfecede11b2dc4"></script>
+<script src="emergency-attention.js?v=02bfecede11b2dc4"></script>
+<script src="records-design.js?v=02bfecede11b2dc4"></script>
+<script type="module" src="eoc-icons.mjs?v=02bfecede11b2dc4"></script>
 </body>
 </html>

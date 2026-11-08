@@ -12,12 +12,14 @@ self.addEventListener('install', event => event.waitUntil((async () => {
   await self.skipWaiting();
 })()));
 self.addEventListener('activate', event => event.waitUntil((async () => {
-  for (const name of await caches.keys()) if (name !== CACHE && (name === 'campus-er-v1' || name.startsWith('campus-er-assets-'))) await caches.delete(name);
+  for (const name of await caches.keys()) if (name !== CACHE && (name === 'campus-er-v1' || name.startsWith('campus-er-assets-') || name.startsWith('campus-er-static-'))) await caches.delete(name);
   await self.clients.claim();
 })()));
 self.addEventListener('fetch', event => {
   const request = event.request, url = new URL(request.url);
   if (request.method !== 'GET' || url.origin !== scope.origin || !url.pathname.startsWith(scope.pathname)) return;
+  const relativePath = url.pathname.slice(scope.pathname.length);
+  if (relativePath === 'campus-er-config.js' || relativePath.startsWith('api/') || relativePath.startsWith('auth/')) return;
   if (request.mode === 'navigate') {
     event.respondWith((async () => {
       const cache = await caches.open(CACHE);
