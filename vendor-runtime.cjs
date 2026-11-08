@@ -1,0 +1,15 @@
+/* Run deliberately to refresh pinned, same-origin browser dependencies. */
+const fs=require('fs'),path=require('path'),crypto=require('crypto');
+const userAgent='Mozilla/5.0 Chrome/132.0.0.0 Safari/537.36';
+const manifest={modules:[],fonts:[],sdk:null};
+const hash=s=>crypto.createHash('sha256').update(s).digest('hex');
+const moduleNames=new Map(),pending=[];
+async function get(url){const response=await fetch(url,{headers:{'user-agent':userAgent}});if(!response.ok)throw Error(response.status+' '+url);return response;}
+function moduleName(url){if(moduleNames.has(url))return moduleNames.get(url);const name=hash(url).slice(0,20)+'.mjs';moduleNames.set(url,name);pending.push({url,name});return name;}
+(async()=>{
+ fs.mkdirSync('vendor/modules',{recursive:true});fs.mkdirSync('vendor/fonts',{recursive:true});
+ for(const [name,url] of [['react','https://esm.sh/react@18.3.1'],['react-dom-client','https://esm.sh/react-dom@18.3.1/client?external=react'],['lucide-react','https://esm.sh/lucide-react@0.468.0?external=react']]){const local=moduleName(url);fs.writeFileSync('vendor/'+name+'.mjs',`export * from './modules/${local}';\n`+(name==='react'?`export {default} from './modules/${local}';\n`:''));}
+ while(pending.length){const {url,name}=pending.shift();let source=await(await get(url)).text();const matches=[...source.matchAll(/\b(?:from\s*|import\s*)["']([^"']+)["']/g)];for(const m of matches){const spec=m[1];if(spec==='react')continue;if(!spec.startsWith('/')&&!spec.startsWith('https://')&&!spec.startsWith('./')&&!spec.startsWith('../'))throw Error('Unsupported bare module '+spec);const dependency=new URL(spec,url).href;const local=moduleName(dependency);source=source.replaceAll(m[0],m[0].replace(spec,'./'+local));}source=source.replace(/\/\/# sourceMappingURL=.*$/gm,'');fs.writeFileSync('vendor/modules/'+name,source);manifest.modules.push({url,file:'vendor/modules/'+name,sha256:hash(source)});}
+ const sdk=await get('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js');const sdkData=Buffer.from(await sdk.arrayBuffer());fs.writeFileSync('vendor/supabase.min.js',sdkData);manifest.sdk={version:sdk.headers.get('x-jsd-version'),sha256:hash(sdkData)};
+ let fonts=await(await get('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap')).text();const fontUrls=[...new Set([...fonts.matchAll(/url\((https:[^)]+)\)/g)].map(m=>m[1]))];for(const url of fontUrls){const data=Buffer.from(await(await get(url)).arrayBuffer());const file=hash(data).slice(0,20)+'.ttf';fs.writeFileSync('vendor/fonts/'+file,data);fonts=fonts.replaceAll(url,'./fonts/'+file);manifest.fonts.push({url,file:'vendor/fonts/'+file,sha256:hash(data)});}fs.writeFileSync('vendor/inter.css',fonts);fs.writeFileSync('vendor/runtime-lock.json',JSON.stringify(manifest,null,2)+'\n');console.log(JSON.stringify({modules:manifest.modules.length,fonts:manifest.fonts.length,supabaseVersion:manifest.sdk.version},null,2));
+})().catch(e=>{console.error(e.message);process.exitCode=1;});

@@ -1,0 +1,80 @@
+{
+  "modules": [
+    {
+      "url": "https://esm.sh/react@18.3.1",
+      "file": "vendor/modules/15f7b5b3574fe4017dbb.mjs",
+      "sha256": "0332d7b591484494431a536e3b6f1b6ebabb1d0f9f9c421f379b48fa1a58a877"
+    },
+    {
+      "url": "https://esm.sh/react-dom@18.3.1/client?external=react",
+      "file": "vendor/modules/57d672fc02832810b61a.mjs",
+      "sha256": "b24d433ff1eab1eddab0ee2a23f2ddc926f90626803aec4dc34b7787d66c9be7"
+    },
+    {
+      "url": "https://esm.sh/lucide-react@0.468.0?external=react",
+      "file": "vendor/modules/aae02972ae474f9835ff.mjs",
+      "sha256": "ea421b8ed5e6db744108eca23ba25d63ae635add3f2c25e87b992fa6e3bdc3c3"
+    },
+    {
+      "url": "https://esm.sh/react@18.3.1/es2022/react.mjs",
+      "file": "vendor/modules/8394cd637e0fc9a263d8.mjs",
+      "sha256": "6c691dfb36c3d786c21d1f08dfcac3aedae05487eccca408f91fb495e38c2d0c"
+    },
+    {
+      "url": "https://esm.sh/react-dom@18.3.1/X-ZXJlYWN0/es2022/react-dom.mjs",
+      "file": "vendor/modules/7276bbcbdea69e43300c.mjs",
+      "sha256": "49cfa2d6768112c6ee84baca69cd0526e4f8fa130a0c46e1719df8a7f20342f3"
+    },
+    {
+      "url": "https://esm.sh/react-dom@18.3.1/X-ZXJlYWN0/es2022/client.mjs",
+      "file": "vendor/modules/16a91057b21f1b968801.mjs",
+      "sha256": "6712192407b4b4a8141dfd5ff27fdb7c1046d3954c472eaaabbe9de19fc11768"
+    },
+    {
+      "url": "https://esm.sh/lucide-react@0.468.0/X-ZXJlYWN0/es2022/lucide-react.mjs",
+      "file": "vendor/modules/0d42069a92e991f0762e.mjs",
+      "sha256": "479425fdecfad264228a089174f696b0179d7533e6cfef71219acaa39187ae37"
+    },
+    {
+      "url": "https://esm.sh/scheduler@^0.23.2?target=es2022",
+      "file": "vendor/modules/12a1c52fb6f752269fe4.mjs",
+      "sha256": "b09642e7d09862fb6d75a1ac717b2c8127fd7f9b8090f766a8760f708dc6ca56"
+    },
+    {
+      "url": "https://esm.sh/scheduler@0.23.2/es2022/scheduler.mjs",
+      "file": "vendor/modules/d4f2f59f0170ceff8542.mjs",
+      "sha256": "f96c7a6981c538ba3ee7afd60ac6661d8b67cfbf4c8fd621b792c19b23435797"
+    }
+  ],
+  "fonts": [
+    {
+      "url": "https://fonts.gstatic.com/s/inter/v20/UcCO3FwrK3iLTeHuS_nVMrMxCp50SjIw2boKoduKmMEVuOKfMZg.ttf",
+      "file": "vendor/fonts/d0f4bc7faca468376e3d.ttf",
+      "sha256": "d0f4bc7faca468376e3db9b5e57afcdc2192134c9ac82a9511f32767b56853a4"
+    },
+    {
+      "url": "https://fonts.gstatic.com/s/inter/v20/UcCO3FwrK3iLTeHuS_nVMrMxCp50SjIw2boKoduKmMEVuLyfMZg.ttf",
+      "file": "vendor/fonts/1b08e7fc267a5c7e1d61.ttf",
+      "sha256": "1b08e7fc267a5c7e1d614100f604b83e7e8a0be241f0f288faa2b3ac93a683ba"
+    },
+    {
+      "url": "https://fonts.gstatic.com/s/inter/v20/UcCO3FwrK3iLTeHuS_nVMrMxCp50SjIw2boKoduKmMEVuI6fMZg.ttf",
+      "file": "vendor/fonts/8c883f63b2c4157d9973.ttf",
+      "sha256": "8c883f63b2c4157d997319f2c8bc6995ed4357ef371940d31ca159004a4aae63"
+    },
+    {
+      "url": "https://fonts.gstatic.com/s/inter/v20/UcCO3FwrK3iLTeHuS_nVMrMxCp50SjIw2boKoduKmMEVuGKYMZg.ttf",
+      "file": "vendor/fonts/e7a1aaf7eda9f2fad413.ttf",
+      "sha256": "e7a1aaf7eda9f2fad4131725fa556265ec75ca7b2d756260173a040363e8d4f7"
+    },
+    {
+      "url": "https://fonts.gstatic.com/s/inter/v20/UcCO3FwrK3iLTeHuS_nVMrMxCp50SjIw2boKoduKmMEVuFuYMZg.ttf",
+      "file": "vendor/fonts/b37284b5701b6b168dfc.ttf",
+      "sha256": "b37284b5701b6b168dfc770aa1a4ac492106422fd3ba76bc7641e37434e8019c"
+    }
+  ],
+  "sdk": {
+    "version": "2.119.0",
+    "sha256": "71e670ca67ad5df7fe3d919f119f30267b44df80df27ac3ac63254a0ba2319df"
+  }
+}

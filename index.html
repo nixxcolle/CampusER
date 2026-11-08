@@ -1,17 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<meta name="campus-er-release" content="637aa66053c73dc8">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>CAMPUS-ER | Samar State University Emergency Reporting System</title>
 <meta name="description" content="CAMPUS-ER — Embedded Campus-Wide Emergency Reporting and Alert System for Samar State University">
-<link rel="manifest" href="manifest.json">
+<link rel="manifest" href="manifest.json?v=637aa66053c73dc8">
 <meta name="theme-color" content="#1a3a6e">
-<link rel="apple-touch-icon" href="images/SSULOGO.png">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<link rel="apple-touch-icon" href="images/SSULOGO.png?v=637aa66053c73dc8">
+<link rel="stylesheet" href="vendor/inter.css?v=637aa66053c73dc8">
+<script src="vendor/supabase.min.js?v=637aa66053c73dc8"></script>
 <style>
 /* ─── TOKENS ─────────────────────────────────────────────────── */
 :root {
@@ -1453,16 +1452,16 @@ body.role-admin {
 .auth-switch a { color: var(--ssu-navy); font-weight: 600; cursor: pointer; text-decoration: none; }
 .auth-switch a:hover { text-decoration: underline; }
 </style>
-<link rel="stylesheet" href="eoc.css">
-<link rel="stylesheet" href="eoc-polish.css">
-<link rel="stylesheet" href="eoc-monitor.css">
-<link rel="stylesheet" href="eoc-insights.css">
-<link rel="stylesheet" href="eoc-brand.css">
-<link rel="stylesheet" href="eoc-signin.css">
-<link rel="stylesheet" href="campus-map.css">
-<link rel="stylesheet" href="emergency-attention.css">
-<link rel="stylesheet" href="records-design.css">
-<script type="importmap">{"imports":{"react":"https://esm.sh/react@18.3.1"}}</script>
+<link rel="stylesheet" href="eoc.css?v=637aa66053c73dc8">
+<link rel="stylesheet" href="eoc-polish.css?v=637aa66053c73dc8">
+<link rel="stylesheet" href="eoc-monitor.css?v=637aa66053c73dc8">
+<link rel="stylesheet" href="eoc-insights.css?v=637aa66053c73dc8">
+<link rel="stylesheet" href="eoc-brand.css?v=637aa66053c73dc8">
+<link rel="stylesheet" href="eoc-signin.css?v=637aa66053c73dc8">
+<link rel="stylesheet" href="campus-map.css?v=637aa66053c73dc8">
+<link rel="stylesheet" href="emergency-attention.css?v=637aa66053c73dc8">
+<link rel="stylesheet" href="records-design.css?v=637aa66053c73dc8">
+<script type="importmap">{"imports":{"react":"./vendor/react.mjs"}}</script>
 </head>
 <body>
 
@@ -1472,7 +1471,7 @@ body.role-admin {
 <div id="screen-login" class="screen active">
   <div class="login-left">
     <div class="login-brand">
-      <span class="ssu-seal"><img src="images/SSULOGO.png" alt="Samar State University seal" width="1200" height="800"></span>
+      <span class="ssu-seal"><img src="images/SSULOGO.png?v=637aa66053c73dc8" alt="Samar State University seal" width="1200" height="800"></span>
       <div class="univ-name">Samar State University</div>
       <div class="app-name">CAMPUS-ER</div>
       <div class="app-subtitle">Embedded Campus-Wide Emergency Reporting and Alert System</div>
@@ -1513,7 +1512,7 @@ body.role-admin {
 <div id="screen-register" class="screen">
   <div class="login-left">
     <div class="login-brand">
-      <span class="ssu-seal"><img src="images/SSULOGO.png" alt="Samar State University seal" width="1200" height="800"></span>
+      <span class="ssu-seal"><img src="images/SSULOGO.png?v=637aa66053c73dc8" alt="Samar State University seal" width="1200" height="800"></span>
       <div class="univ-name">Samar State University</div>
       <div class="app-name">CAMPUS-ER</div>
       <div class="app-subtitle">Embedded Campus-Wide Emergency Reporting and Alert System</div>
@@ -1573,7 +1572,7 @@ body.role-admin {
 <div id="auth-loading" role="status" aria-live="polite" aria-label="Loading CAMPUS-ER">
   <div class="eoc-loading-shell">
     <div class="eoc-loading-content">
-      <span class="ssu-seal"><img src="images/SSULOGO.png" alt="Samar State University seal" width="1200" height="800" fetchpriority="high"></span>
+      <span class="ssu-seal"><img src="images/SSULOGO.png?v=637aa66053c73dc8" alt="Samar State University seal" width="1200" height="800" fetchpriority="high"></span>
       <div class="eoc-loading-institution">Samar State University</div>
       <h1>CAMPUS-ER</h1>
       <p class="eoc-loading-description">Your campus emergency<br>operations workspace.</p>
@@ -1595,7 +1594,7 @@ body.role-admin {
   <header class="app-topbar">
     <div class="topbar-brand">
       <button class="hamburger" id="hamburger-btn" aria-label="Toggle sidebar">☰</button>
-      <span class="ssu-seal"><img src="images/SSULOGO.png" alt="Samar State University seal" width="1200" height="800"></span>
+      <span class="ssu-seal"><img src="images/SSULOGO.png?v=637aa66053c73dc8" alt="Samar State University seal" width="1200" height="800"></span>
       <div class="topbar-brand-text">
         <div class="tb-univ">Samar State University</div>
         <div class="tb-app" id="topbar-app-name">CAMPUS-ER</div>
@@ -3830,15 +3829,15 @@ document.getElementById('detail-modal').addEventListener('click', e => { if (e.t
 document.getElementById('create-report-modal').addEventListener('click', e => { if (e.target === e.currentTarget) closeCreateReport(); });
 
 /* ─── PWA ────────────────────────────────────────────────────── */
-if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js', { updateViaCache: 'none' }).catch(error => console.warn('CAMPUS-ER offline cache unavailable:', error.message));
 </script>
-<script src="eoc.js"></script>
-<script src="eoc-monitor.js"></script>
-<script src="eoc-insights.js"></script>
-<script src="campus-data.js"></script>
-<script src="campus-map.js"></script>
-<script src="emergency-attention.js"></script>
-<script src="records-design.js"></script>
-<script type="module" src="eoc-icons.mjs"></script>
+<script src="eoc.js?v=637aa66053c73dc8"></script>
+<script src="eoc-monitor.js?v=637aa66053c73dc8"></script>
+<script src="eoc-insights.js?v=637aa66053c73dc8"></script>
+<script src="campus-data.js?v=637aa66053c73dc8"></script>
+<script src="campus-map.js?v=637aa66053c73dc8"></script>
+<script src="emergency-attention.js?v=637aa66053c73dc8"></script>
+<script src="records-design.js?v=637aa66053c73dc8"></script>
+<script type="module" src="eoc-icons.mjs?v=637aa66053c73dc8"></script>
 </body>
 </html>

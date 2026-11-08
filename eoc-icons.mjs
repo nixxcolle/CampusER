@@ -1,6 +1,6 @@
-import React from 'https://esm.sh/react@18.3.1';
-import {createRoot} from 'https://esm.sh/react-dom@18.3.1/client?external=react';
-import * as icons from 'https://esm.sh/lucide-react@0.468.0?external=react';
+import React from './vendor/react.mjs';
+import {createRoot} from './vendor/react-dom-client.mjs';
+import * as icons from './vendor/lucide-react.mjs';
 
 // Small React roots keep the existing vanilla-JavaScript application intact.
 const roots=new Map();
