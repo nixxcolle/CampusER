@@ -1461,6 +1461,7 @@ body.role-admin {
 <link rel="stylesheet" href="eoc-signin.css">
 <link rel="stylesheet" href="campus-map.css">
 <link rel="stylesheet" href="emergency-attention.css">
+<link rel="stylesheet" href="records-design.css">
 <script type="importmap">{"imports":{"react":"https://esm.sh/react@18.3.1"}}</script>
 </head>
 <body>
@@ -1501,16 +1502,6 @@ body.role-admin {
       </div>
       <button type="submit" id="login-btn" class="btn-login">Sign In to CAMPUS-ER</button>
     </form>
-
-    <div class="signin-quick-access">
-      <div class="signin-quick-heading">Office quick access</div>
-      <div class="signin-quick-grid">
-        <button type="button" class="btn btn-secondary" style="font-size:11px;height:32px;justify-content:center;color:#15803d;border-color:#bbf7d0;background:#f0fdf4;" onclick="quickAccessRole('School Clinic','Dr. Maria Santos')">🏥 School Clinic </button>
-        <button type="button" class="btn btn-secondary" style="font-size:11px;height:32px;justify-content:center;color:#1e3a8a;border-color:#bfdbfe;background:#eff6ff;" onclick="quickAccessRole('Campus Security','Officer Roberto Cruz')">🛡️ Security </button>
-        <button type="button" class="btn btn-secondary" style="font-size:11px;height:32px;justify-content:center;color:#c2410c;border-color:#fed7aa;background:#fff7ed;" onclick="quickAccessRole('DRRMO','Chief Eduardo Reyes')">🚨 DRRMO </button>
-        <button type="button" class="btn btn-secondary" style="font-size:11px;height:32px;justify-content:center;color:#6b21a8;border-color:#e9d5ff;background:#faf5ff;" onclick="quickAccessRole('Administrator','Dean Arthur Salazar')">🏛️ Admin </button>
-      </div>
-    </div>
 
     <p class="auth-switch">Don't have an account? <a onclick="showRegister()">Create account</a></p>
   </div>
@@ -1620,16 +1611,7 @@ body.role-admin {
         </div>
       </div>
     </div>
-    <div class="topbar-right">
-      <div class="topbar-user">
-        <div class="user-avatar" id="user-avatar">AD</div>
-        <div class="user-info">
-          <div class="ui-name" id="user-name">SSU Admin</div>
-          <div class="ui-role" id="user-role">Administrator</div>
-        </div>
-      </div>
-      <button class="btn-logout" onclick="doLogout()">Sign Out</button>
-    </div>
+    <div hidden aria-hidden="true"><span id="user-avatar"></span><span id="user-name"></span></div>
   </header>
 
   <div class="app-body">
@@ -1637,16 +1619,8 @@ body.role-admin {
     <nav class="sidebar" id="sidebar" aria-label="Main navigation">
       <div class="sidebar-section" id="sidebar-nav"></div>
       <div class="sidebar-bottom">
-        <div class="sidebar-role-card">
-          <div class="src-label">On-Duty Shift</div>
-          <div class="src-name" id="sidebar-role-name" style="margin-bottom:6px;">School Clinic</div>
-          <select id="role-shift-switcher" onchange="switchRoleShift(this.value)" style="width:100%;font-size:11px;font-weight:600;padding:4px 6px;border-radius:4px;border:1px solid var(--role-hue-3);background:#fff;color:var(--ink);">
-            <option value="clinic">🏥 School Clinic </option>
-            <option value="security">🛡️ Campus Security </option>
-            <option value="drrmo">🚨 DRRMO </option>
-            <option value="admin">🏛️ Administrator </option>
-          </select>
-        </div>
+        <div class="sidebar-office-label"><span class="eoc-icon" data-lucide-react="Building2" aria-hidden="true"></span><span id="user-role">School Clinic</span></div>
+        <button type="button" class="btn-logout" onclick="doLogout()"><span class="eoc-icon" data-lucide-react="LogOut" aria-hidden="true"></span>Sign Out</button>
       </div>
     </nav>
 
@@ -1896,7 +1870,7 @@ async function doLogin(e) {
   btn.textContent = 'Sign In to CAMPUS-ER'; btn.disabled = false;
   if (error) {
     if (error.message && error.message.toLowerCase().includes('confirm')) {
-      errEl.innerHTML = `Email confirmation pending in Supabase. <div style="margin-top:6px;"><button type="button" class="btn btn-secondary" style="font-size:11px;height:28px;" onclick="bypassLogin('${email}')">Access Dashboard as On-Duty Staff →</button></div>`;
+      errEl.textContent = 'Please confirm your email before signing in. Check your inbox or contact your administrator.';
       errEl.classList.add('visible');
       return;
     }
@@ -1905,41 +1879,6 @@ async function doLogin(e) {
     return;
   }
   await loadProfileAndShow(data.user);
-}
-
-function quickAccessRole(office, name) {
-  currentRole = OFFICE_TO_ROLE[office] || 'clinic';
-  currentProfile = { fullname: name, office: office, employee_id: 'SSU-DUTY-2026' };
-  showApp(currentProfile);
-}
-
-async function bypassLogin(email) {
-  const { data: p } = await sb.from('profiles').select('*').eq('email', email).maybeSingle();
-  const profile = p || { fullname: email.split('@')[0], office: 'School Clinic', employee_id: 'SSU-2026' };
-  currentProfile = profile;
-  currentRole = OFFICE_TO_ROLE[profile.office] || 'clinic';
-  showApp(profile);
-}
-
-function switchRoleShift(newRole) {
-  currentRole = newRole;
-  const roleOffices = {
-    clinic: 'School Clinic',
-    security: 'Campus Security',
-    drrmo: 'DRRMO',
-    admin: 'Administrator'
-  };
-  const roleNames = {
-    clinic: 'Dr. Maria Santos',
-    security: 'Officer Roberto Cruz',
-    drrmo: 'Chief Eduardo Reyes',
-    admin: 'Dean Arthur Salazar'
-  };
-  currentProfile.office = roleOffices[newRole] || 'School Clinic';
-  if (!currentUser) {
-    currentProfile.fullname = roleNames[newRole];
-  }
-  showApp(currentProfile);
 }
 
 async function doRegister(e) {
@@ -2030,16 +1969,12 @@ function showApp(profile) {
   const officeName  = currentProfile.office || r.label;
   document.getElementById('user-name').textContent = displayName;
   document.getElementById('user-role').textContent = officeName;
-  document.getElementById('sidebar-role-name').textContent = officeName;
   
   // Set On-Duty Personnel in topbar header
   const tbOnDuty = document.getElementById('topbar-onduty-text');
   if (tbOnDuty) {
     tbOnDuty.textContent = displayName + ' · ' + officeName;
   }
-
-  const switcher = document.getElementById('role-shift-switcher');
-  if (switcher) switcher.value = currentRole;
 
   buildSidebar();
   // load live data and stations in parallel, then navigate
@@ -3903,6 +3838,7 @@ if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
 <script src="campus-data.js"></script>
 <script src="campus-map.js"></script>
 <script src="emergency-attention.js"></script>
+<script src="records-design.js"></script>
 <script type="module" src="eoc-icons.mjs"></script>
 </body>
 </html>

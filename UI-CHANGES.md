@@ -52,4 +52,16 @@ Dismiss/Escape closes the popup while the indicator and card highlight remain. V
 
 The attention treatment now uses a persistent 1.6-second red pulse/glow on the alert card, a pulsing red header indicator, a red top-edge cue, and a glowing modal with an “EMERGENCY — IMMEDIATE ATTENTION” banner. The notification urgency label does not change the report's saved incident priority. Shadows/outlines and header color effects do not move components. Reduced-motion preferences show steady red emphasis instead of animation. The Administrator popup, ongoing pulse, layout geometry, and existing acknowledgement/routing behavior were verified using the same mocked browser suite.
 
+### Account-based dashboard access, November 8, 2026
+
+Removed the sidebar On-Duty Shift card/office selector, sign-in office quick-access buttons, and their quickAccessRole/switchRoleShift handlers. Removed the email-confirmation dashboard bypass and bypassLogin handler. The four dashboards remain available through the existing Supabase sign-in/profile loading path. Confirmation errors stay on the login screen. Removed references to deleted sidebar elements from showApp; Sign Out remains in the lower sidebar. Database policies, signup/profile storage, report routing, and realtime queries were not changed. These UI removals do not replace backend authorization.
+
+`node verify-office-access.cjs` verifies all four signed-in office profiles, absence of shortcuts and bypass functions, blocked confirmation-error access, sidebar logout, and mobile overflow with mocked authentication. Live authentication and authorization policies were not exercised.
+
+### Incident Reports and Reports presentation
+
+`records-design.js` and `records-design.css` wrap the existing Incident Reports and Reports renderers without changing their queries, office selection, data values, refresh handlers, CRUD actions, or print/navigation handlers. Incident location details share one cell, and date/time share one cell, preserving all values. Modern Lucide icons, consistent status/priority badges, long-ID wrapping, sticky table headings, bounded scrolling, office-accent report cards, compact summaries, responsive layout, and print styling are scoped to these two pages. Existing controls are retained; no new filtering or backend behavior is introduced.
+
+`node verify-records-design.cjs` verifies original application-script equality, all four office variants, preservation of every incident field and handler, View/Acknowledge/Edit/Delete/Print actions, empty states, and page overflow at 1024×600 and 390px. Backend calls are mocked. The supplied Raspberry Pi screenshot is used as a design reference; no separate Pi read-only source was present or changed, and the physical Raspberry Pi was not deployed to or tested. These files were installed in Desktop/CampusER.
+
 Serve over HTTP(S) for module loading. Existing service-worker caching may require a hard reload or clearing site data to show the updated HTML. No live backend or physical emergency hardware was exercised.
