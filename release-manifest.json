@@ -1,5 +1,5 @@
 {
-  "release": "637aa66053c73dc8",
+  "release": "02bfecede11b2dc4",
   "files": [
     {
       "file": "campus-data.js",
@@ -19,7 +19,7 @@
     },
     {
       "file": "emergency-attention.js",
-      "sha256": "8569a22487c7117982c8fd5d837cfcfcd9daf34c087274d46c4c96ade6aca0be"
+      "sha256": "9a29c9b15a3ccdcf961ecbb5d6c99a9eb297eb26d136effca3bed22fdeae6c63"
     },
     {
       "file": "eoc-brand.css",
@@ -59,7 +59,7 @@
     },
     {
       "file": "eoc.js",
-      "sha256": "c8306aa3e0204d11bae9876dec8e79f0bd5c34468012299db5893cf2318982d2"
+      "sha256": "59384ad7fe4ba2ae3192c54a294ef1bb188c88865731866ed0516815c98d4a5c"
     },
     {
       "file": "images/SSU.png",
@@ -71,11 +71,19 @@
     },
     {
       "file": "index.html",
-      "sha256": "8662b883503cdf517b9c57c9b24c2605e63e5ee7efc35c0e4c2987a843fcd1ef"
+      "sha256": "db8a29b300c844a2032eb68dc698a9cc32bdb4dc8041e44cec1ccac7c2f89fc4"
     },
     {
       "file": "manifest.json",
       "sha256": "f3b49d0814331fe70b7b77f94901f60aa438802d46d6ec615c3d169633ced40f"
+    },
+    {
+      "file": "pi-dashboard.css",
+      "sha256": "f439b49ca79a3bba6f826549d172feaf58cfa94af33d04ecf7d57df53bac24b6"
+    },
+    {
+      "file": "pi-dashboard.js",
+      "sha256": "9cab17a7a42974fefec7b243049a6ed6274b6cc24c6f5f0f4933b1b3a8e664bc"
     },
     {
       "file": "records-design.css",
@@ -163,7 +171,7 @@
     },
     {
       "file": "sw.js",
-      "sha256": "e2afc4d1681ebb8165859687b823719abc27b1dca8a5037fa5eab059a2b06f4e"
+      "sha256": "d74a75825540b5bbdc16f7cdfe9e331c420fbcd1cfcdb2e5a9692c9237ef8130"
     }
   ]
 }

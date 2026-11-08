@@ -30,6 +30,10 @@ function emergencySyncAttention(){
   const displayed=eocDemo||eocSelected();
   if((displayed?._uuid||displayed?.id)===(inc._uuid||inc.id))document.querySelector('.eoc-incident')?.classList.add('emergency-attention-highlight');
 }
+function emergencyClearAttention() {
+  emergencyAttention = null;
+  emergencySyncAttention();
+}
 function emergencyOpenPopup(){
   const inc=emergencyCurrentAttention();if(!inc)return;
   emergencyPopup.querySelector('h2').textContent=inc.type||'Emergency report';
@@ -62,4 +66,4 @@ triggerAutoAlert=function(inc){emergencyOriginalAutoAlert(inc);emergencyShowAtte
 const emergencyOriginalRender=renderPage;
 renderPage=function(page){emergencyOriginalRender(page);emergencySyncAttention();};
 const emergencyOriginalLogout=doLogout;
-doLogout=async function(){emergencyAttention=null;emergencySyncAttention();return emergencyOriginalLogout();};
+doLogout=async function(){emergencyClearAttention();return emergencyOriginalLogout();};

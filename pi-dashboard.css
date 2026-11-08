@@ -1,0 +1,36 @@
+.pi-mode #screen-login .auth-switch,
+.pi-mode #screen-register,
+.pi-mode .eoc-response-actions,
+.pi-mode .eoc-demo-banner,
+.pi-mode .eoc-health footer button,
+.pi-mode [onclick*="openCreateReport("],
+.pi-mode [onclick*="openEditReport("],
+.pi-mode [onclick*="deleteReport("],
+.pi-mode [onclick*="updateReportStatus("],
+.pi-mode [onclick*="openPanicModal("] {
+  display: none !important;
+}
+
+#pi-dashboard-status {
+  display: none;
+}
+
+.pi-mode #pi-dashboard-status.is-stale {
+  display: block;
+  margin-bottom: 24px;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  background: #fff4db;
+  color: #714900;
+}
+
+.pi-mode .pi-event-id,
+.pi-mode .eoc-incident-topline .eoc-eyebrow {
+  overflow-wrap: anywhere;
+}
+
+.pi-mode .status-pill.untracked {
+  background: #eef2f6;
+  color: #77899c;
+}

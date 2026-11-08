@@ -1,5 +1,5 @@
 /* Generated release values; requests to authentication/API services are never cached. */
-const RELEASE = '637aa66053c73dc8';
+const RELEASE = '02bfecede11b2dc4';
 const CACHE = 'campus-er-assets-' + RELEASE;
 const FILES = [
   "campus-data.js",
@@ -21,6 +21,8 @@ const FILES = [
   "images/SSULOGO.png",
   "index.html",
   "manifest.json",
+  "pi-dashboard.css",
+  "pi-dashboard.js",
   "records-design.css",
   "records-design.js",
   "vendor/fonts/1b08e7fc267a5c7e1d61.ttf",
@@ -53,12 +55,14 @@ self.addEventListener('install', event => event.waitUntil((async () => {
   await self.skipWaiting();
 })()));
 self.addEventListener('activate', event => event.waitUntil((async () => {
-  for (const name of await caches.keys()) if (name !== CACHE && (name === 'campus-er-v1' || name.startsWith('campus-er-assets-'))) await caches.delete(name);
+  for (const name of await caches.keys()) if (name !== CACHE && (name === 'campus-er-v1' || name.startsWith('campus-er-assets-') || name.startsWith('campus-er-static-'))) await caches.delete(name);
   await self.clients.claim();
 })()));
 self.addEventListener('fetch', event => {
   const request = event.request, url = new URL(request.url);
   if (request.method !== 'GET' || url.origin !== scope.origin || !url.pathname.startsWith(scope.pathname)) return;
+  const relativePath = url.pathname.slice(scope.pathname.length);
+  if (relativePath === 'campus-er-config.js' || relativePath.startsWith('api/') || relativePath.startsWith('auth/')) return;
   if (request.mode === 'navigate') {
     event.respondWith((async () => {
       const cache = await caches.open(CACHE);

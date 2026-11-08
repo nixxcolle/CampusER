@@ -6,7 +6,7 @@ const eocDemoForOffice = () => [...eocDemoReports.values()].filter(eocReceives);
 let eocVoiceLanguage = 'en';
 const eocResponses = new Map();
 let eocUtterance = null;
-const eocPriority = inc => ['critical','high','medium','low'].includes(String(inc?.priority).toLowerCase()) ? String(inc.priority).toUpperCase() : 'UNASSIGNED';
+const eocPriority = inc => ['critical','high','medium','low','unassessed'].includes(String(inc?.priority).toLowerCase()) ? String(inc.priority).toUpperCase() : 'UNASSIGNED';
 const eocResponseKey = inc => `${currentUser?.id || 'guest'}:${inc?._uuid}`;
 const eocResponse = inc => inc?.status==='resolved' ? '' : inc && eocDemoReports.get(inc.id)===inc ? inc.response || '' : eocResponses.get(eocResponseKey(inc)) || '';
 const eocEscape = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
