@@ -50,6 +50,9 @@ async function main() {
   sandbox.fixture = fixture;
   assert.throws(() => run('piRowToIncident({ ...fixture, event_id: undefined })'), /Invalid Pi incident/);
   assert.throws(() => run('piRowToIncident({ ...fixture, category: "__proto__" })'), /Invalid Pi incident/);
+  assert.throws(() => run('piRowToIncident({ ...fixture, audio_available: true, audio_sha256: "invalid", audio_duration_ms: 3000 })'), /Invalid Pi audio metadata/);
+  assert.throws(() => run('piRowToIncident({ ...fixture, audio_available: true, audio_sha256: "a".repeat(64), audio_duration_ms: 10001 })'), /Invalid Pi audio metadata/);
+  assert.equal(run('piRowToIncident({ ...fixture, audio_available: true, audio_sha256: "a".repeat(64), audio_duration_ms: 3000 }).audioSha256'), 'a'.repeat(64));
   await run('piLoadProfileAndShow({ id: "fixture-staff", email: "staff@example.test" })');
   assert.equal(sandbox.currentProfile.office, 'School Clinic');
   assert.equal(sandbox.currentProfile.fullname, 'staff@example.test');

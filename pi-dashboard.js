@@ -26,6 +26,7 @@ const PI_CATEGORIES = {
 };
 
 function piStop() {
+  if (typeof piResetAudio === 'function') piResetAudio();
   piDashboard.generation++;
   piDashboard.controller?.abort();
   clearTimeout(piDashboard.timer);
@@ -150,12 +151,17 @@ function piRowToIncident(row) {
   const category = Object.hasOwn(PI_CATEGORIES, row?.category) ? PI_CATEGORIES[row.category] : null;
   const office = Object.hasOwn(PI_OFFICES, row?.receiving_office) ? PI_OFFICES[row.receiving_office] : null;
   const received = new Date(row?.received_at);
+  const audioAvailable = row?.audio_available === true;
   if (!category || !office || typeof row.location !== 'string' || !row.location.trim() ||
       typeof row.event_id !== 'string' || typeof row.station_id !== 'string' ||
       typeof row.received_at !== 'string' ||
       !/^[A-Za-z0-9_-]{1,79}$/.test(row.event_id) ||
       !/^STATION-[0-9]{2}$/.test(row.station_id) || !Number.isFinite(received.getTime())) {
     throw new Error('Invalid Pi incident');
+  }
+  if (audioAvailable && (!/^[a-f0-9]{64}$/.test(row.audio_sha256) ||
+      !Number.isInteger(row.audio_duration_ms) || row.audio_duration_ms < 1 || row.audio_duration_ms > 10000)) {
+    throw new Error('Invalid Pi audio metadata');
   }
   return {
     id: row.event_id,
@@ -170,6 +176,9 @@ function piRowToIncident(row) {
     date: received.toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'Asia/Manila' }),
     time: received.toLocaleTimeString('en-PH', { hour: '2-digit', minute: '2-digit', second: '2-digit', timeZone: 'Asia/Manila' }),
     receivedAt: row.received_at,
+    audioAvailable,
+    audioSha256: audioAvailable ? row.audio_sha256 : null,
+    audioDurationMs: audioAvailable ? row.audio_duration_ms : null,
     occurredAtUnix: row.occurred_at_unix,
     uptimeMs: row.uptime_ms,
     status: 'active',
@@ -275,5 +284,5 @@ function piBuildSettings() {
     <div class="panel-body"><p>Signed in for ${eocEscape(piDashboard.office)}.</p>
     <p>Incident records come from the Raspberry Pi. This staff view refreshes every five seconds.
     Authentication uses Supabase and the Pi's approved office assignment.</p>
-    <p>Station health, response changes, audio, and synchronization are separate integration steps.</p></div></div>`;
+    <p>Original station recordings are available when attached to a report. Station health, response changes, transcription and synchronization are separate integration steps.</p></div></div>`;
 }

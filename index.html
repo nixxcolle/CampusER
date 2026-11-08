@@ -1,16 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta name="campus-er-release" content="a58e76057e913df2">
+<meta name="campus-er-release" content="046aee6ac3ee2938">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>CAMPUS-ER | Samar State University Emergency Reporting System</title>
 <meta name="description" content="CAMPUS-ER — Embedded Campus-Wide Emergency Reporting and Alert System for Samar State University">
-<link rel="manifest" href="manifest.json?v=a58e76057e913df2">
+<link rel="manifest" href="manifest.json?v=046aee6ac3ee2938">
 <meta name="theme-color" content="#1a3a6e">
-<link rel="apple-touch-icon" href="images/SSULOGO.png?v=a58e76057e913df2">
-<link rel="stylesheet" href="vendor/inter.css?v=a58e76057e913df2">
-<script src="vendor/supabase.min.js?v=a58e76057e913df2"></script>
+<link rel="apple-touch-icon" href="images/SSULOGO.png?v=046aee6ac3ee2938">
+<link rel="stylesheet" href="vendor/inter.css?v=046aee6ac3ee2938">
+<script src="vendor/supabase.min.js?v=046aee6ac3ee2938"></script>
 <style>
 /* ─── TOKENS ─────────────────────────────────────────────────── */
 :root {
@@ -1452,18 +1452,19 @@ body.role-admin {
 .auth-switch a { color: var(--ssu-navy); font-weight: 600; cursor: pointer; text-decoration: none; }
 .auth-switch a:hover { text-decoration: underline; }
 </style>
-<link rel="stylesheet" href="eoc.css?v=a58e76057e913df2">
-<link rel="stylesheet" href="eoc-polish.css?v=a58e76057e913df2">
-<link rel="stylesheet" href="eoc-monitor.css?v=a58e76057e913df2">
-<link rel="stylesheet" href="eoc-insights.css?v=a58e76057e913df2">
-<link rel="stylesheet" href="eoc-brand.css?v=a58e76057e913df2">
-<link rel="stylesheet" href="eoc-signin.css?v=a58e76057e913df2">
-<link rel="stylesheet" href="campus-map.css?v=a58e76057e913df2">
-<link rel="stylesheet" href="emergency-attention.css?v=a58e76057e913df2">
-<link rel="stylesheet" href="records-design.css?v=a58e76057e913df2">
-<link rel="stylesheet" href="pi-dashboard.css?v=a58e76057e913df2">
+<link rel="stylesheet" href="eoc.css?v=046aee6ac3ee2938">
+<link rel="stylesheet" href="eoc-polish.css?v=046aee6ac3ee2938">
+<link rel="stylesheet" href="eoc-monitor.css?v=046aee6ac3ee2938">
+<link rel="stylesheet" href="eoc-insights.css?v=046aee6ac3ee2938">
+<link rel="stylesheet" href="eoc-brand.css?v=046aee6ac3ee2938">
+<link rel="stylesheet" href="eoc-signin.css?v=046aee6ac3ee2938">
+<link rel="stylesheet" href="campus-map.css?v=046aee6ac3ee2938">
+<link rel="stylesheet" href="emergency-attention.css?v=046aee6ac3ee2938">
+<link rel="stylesheet" href="records-design.css?v=046aee6ac3ee2938">
+<link rel="stylesheet" href="pi-dashboard.css?v=046aee6ac3ee2938">
 <script src="campus-er-config.js"></script>
-<script src="pi-dashboard.js?v=a58e76057e913df2"></script>
+<script src="pi-audio.js?v=046aee6ac3ee2938"></script>
+<script src="pi-dashboard.js?v=046aee6ac3ee2938"></script>
 <script type="importmap">{"imports":{"react":"./vendor/react.mjs"}}</script>
 </head>
 <body>
@@ -1474,7 +1475,7 @@ body.role-admin {
 <div id="screen-login" class="screen active">
   <div class="login-left">
     <div class="login-brand">
-      <span class="ssu-seal"><img src="images/SSULOGO.png?v=a58e76057e913df2" alt="Samar State University seal" width="1200" height="800"></span>
+      <span class="ssu-seal"><img src="images/SSULOGO.png?v=046aee6ac3ee2938" alt="Samar State University seal" width="1200" height="800"></span>
       <div class="univ-name">Samar State University</div>
       <div class="app-name">CAMPUS-ER</div>
       <div class="app-subtitle">Embedded Campus-Wide Emergency Reporting and Alert System</div>
@@ -1515,7 +1516,7 @@ body.role-admin {
 <div id="screen-register" class="screen">
   <div class="login-left">
     <div class="login-brand">
-      <span class="ssu-seal"><img src="images/SSULOGO.png?v=a58e76057e913df2" alt="Samar State University seal" width="1200" height="800"></span>
+      <span class="ssu-seal"><img src="images/SSULOGO.png?v=046aee6ac3ee2938" alt="Samar State University seal" width="1200" height="800"></span>
       <div class="univ-name">Samar State University</div>
       <div class="app-name">CAMPUS-ER</div>
       <div class="app-subtitle">Embedded Campus-Wide Emergency Reporting and Alert System</div>
@@ -1575,7 +1576,7 @@ body.role-admin {
 <div id="auth-loading" role="status" aria-live="polite" aria-label="Loading CAMPUS-ER">
   <div class="eoc-loading-shell">
     <div class="eoc-loading-content">
-      <span class="ssu-seal"><img src="images/SSULOGO.png?v=a58e76057e913df2" alt="Samar State University seal" width="1200" height="800" fetchpriority="high"></span>
+      <span class="ssu-seal"><img src="images/SSULOGO.png?v=046aee6ac3ee2938" alt="Samar State University seal" width="1200" height="800" fetchpriority="high"></span>
       <div class="eoc-loading-institution">Samar State University</div>
       <h1>CAMPUS-ER</h1>
       <p class="eoc-loading-description">Your campus emergency<br>operations workspace.</p>
@@ -1597,7 +1598,7 @@ body.role-admin {
   <header class="app-topbar">
     <div class="topbar-brand">
       <button class="hamburger" id="hamburger-btn" aria-label="Toggle sidebar">☰</button>
-      <span class="ssu-seal"><img src="images/SSULOGO.png?v=a58e76057e913df2" alt="Samar State University seal" width="1200" height="800"></span>
+      <span class="ssu-seal"><img src="images/SSULOGO.png?v=046aee6ac3ee2938" alt="Samar State University seal" width="1200" height="800"></span>
       <div class="topbar-brand-text">
         <div class="tb-univ">Samar State University</div>
         <div class="tb-app" id="topbar-app-name">CAMPUS-ER</div>
@@ -2124,18 +2125,9 @@ function playEmergencyBeep() {
   } catch(e) { /* audio ctx blocked */ }
 }
 
-function speakEmergencyAlert(inc) {
-  if (audioMuted || !('speechSynthesis' in window)) return;
-  window.speechSynthesis.cancel();
-  const text = `Emergency Alert: ${inc.type || 'Emergency'} detected in ${inc.building || 'campus'}, ${inc.room || 'area'}. Respond immediately.`;
-  const utter = new SpeechSynthesisUtterance(text);
-  utter.rate = 0.92; utter.pitch = 1; utter.volume = audioVolume;
-  window.speechSynthesis.speak(utter);
-}
-
 function triggerAutoAlert(inc) {
   playEmergencyBeep();
-  setTimeout(() => speakEmergencyAlert(inc), 1100);
+  if (PI_MODE) piQueueRecording(inc);
 }
 
 /* ─── REALTIME UPDATES ───────────────────────────────────────── */
@@ -2368,6 +2360,7 @@ function renderPage(page) {
     default: div.innerHTML = `<div class="empty-state"><div class="es-icon">🚧</div><div class="es-text">Page not found</div></div>`;
   }
   canvas.appendChild(div);
+  if (PI_MODE) piAudioSync();
   initMapIfNeeded();
   animateCharts();
 }
@@ -2588,26 +2581,8 @@ function generateAIAnalysis(inc) {
   }
 }
 
-/* ─── VOICE PLAYBACK (SPEECH SYNTHESIS) ───────────────────────── */
-function playIncidentAudio(text) {
-  if (!('speechSynthesis' in window)) {
-    showToast('Voice audio not supported in this browser');
-    return;
-  }
-  if (window.speechSynthesis.speaking) {
-    window.speechSynthesis.cancel();
-    setWaveformState(false);
-    return;
-  }
-  const clean = (text || '').replace(/\[Station:[^\]]+\]/g, '').trim();
-  const utter = new SpeechSynthesisUtterance(clean || 'Emergency panic alert activated on campus');
-  utter.rate = 0.95;
-  utter.pitch = 1.0;
-  setWaveformState(true);
-  utter.onend = () => setWaveformState(false);
-  utter.onerror = () => setWaveformState(false);
-  window.speechSynthesis.speak(utter);
-}
+/* Voice playback uses the original recording, never transcript-to-speech. */
+function playIncidentAudio() { return eocPlay(); }
 
 function setWaveformState(isPlaying) {
   const box = document.getElementById('vt-waveform');
@@ -3827,17 +3802,13 @@ function resolveAlert() {
   showToast('Incident marked as resolved');
 }
 function playAlert() {
-  // Use Web Speech API as fallback for audio
-  if ('speechSynthesis' in window) {
-    const u = new SpeechSynthesisUtterance('Medical Emergency activated in Room 101, Engineering Building');
-    u.rate = 0.9; u.pitch = 1;
-    speechSynthesis.speak(u);
-  }
+  return eocPlay();
 }
 
 /* ─── AUDIO ALERT CONTROLS ───────────────────────────────────── */
 function toggleMute() {
   audioMuted = !audioMuted;
+  if (PI_MODE) piAudioVolume();
   const btn = document.getElementById('audio-mute-btn');
   if (btn) btn.textContent = audioMuted ? '🔇 Unmute' : '🔊 Mute';
   showToast(audioMuted ? '🔇 Alert audio muted' : '🔊 Alert audio enabled');
@@ -3845,6 +3816,7 @@ function toggleMute() {
 
 function setAudioVolume(val) {
   audioVolume = parseFloat(val);
+  if (PI_MODE) piAudioVolume();
 }
 
 function testAlert() {
@@ -3900,13 +3872,13 @@ if (PI_MODE) {
 }
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js', { updateViaCache: 'none' }).catch(error => console.warn('CAMPUS-ER offline cache unavailable:', error.message));
 </script>
-<script src="eoc.js?v=a58e76057e913df2"></script>
-<script src="eoc-monitor.js?v=a58e76057e913df2"></script>
-<script src="eoc-insights.js?v=a58e76057e913df2"></script>
-<script src="campus-data.js?v=a58e76057e913df2"></script>
-<script src="campus-map.js?v=a58e76057e913df2"></script>
-<script src="emergency-attention.js?v=a58e76057e913df2"></script>
-<script src="records-design.js?v=a58e76057e913df2"></script>
-<script type="module" src="eoc-icons.mjs?v=a58e76057e913df2"></script>
+<script src="eoc.js?v=046aee6ac3ee2938"></script>
+<script src="eoc-monitor.js?v=046aee6ac3ee2938"></script>
+<script src="eoc-insights.js?v=046aee6ac3ee2938"></script>
+<script src="campus-data.js?v=046aee6ac3ee2938"></script>
+<script src="campus-map.js?v=046aee6ac3ee2938"></script>
+<script src="emergency-attention.js?v=046aee6ac3ee2938"></script>
+<script src="records-design.js?v=046aee6ac3ee2938"></script>
+<script type="module" src="eoc-icons.mjs?v=046aee6ac3ee2938"></script>
 </body>
 </html>

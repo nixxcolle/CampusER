@@ -5,7 +5,6 @@ const eocReceives = inc => currentRole==='admin' || OFFICE_TO_ROLE[inc?.office]=
 const eocDemoForOffice = () => [...eocDemoReports.values()].filter(eocReceives);
 let eocVoiceLanguage = 'en';
 const eocResponses = new Map();
-let eocUtterance = null;
 const eocPriority = inc => ['critical','high','medium','low','unassessed'].includes(String(inc?.priority).toLowerCase()) ? String(inc.priority).toUpperCase() : 'UNASSIGNED';
 const eocResponseKey = inc => `${currentUser?.id || 'guest'}:${inc?._uuid}`;
 const eocResponse = inc => inc?.status==='resolved' ? '' : inc && eocDemoReports.get(inc.id)===inc ? inc.response || '' : eocResponses.get(eocResponseKey(inc)) || '';
@@ -71,7 +70,7 @@ function buildOverview() {
         </section>
       </div>
       <aside class="eoc-intelligence"><div class="eoc-intel-title">${eocIcon('ScanLine')} EMERGENCY INTELLIGENCE</div>
-        <section class="eoc-card eoc-voice"><header><h2>${eocIcon('AudioLines')} Voice Recording</h2>${demo?'<span class="eoc-recording-dot" aria-label="Simulated recording"></span>':''}</header><div class="eoc-transcript">${inc?`${demo?`<div class="eoc-player"><button class="eoc-player-button" id="eoc-voice-play" onclick="eocPlay()" aria-label="Play simulated voice recording">${eocIcon('Play')}</button><div class="eoc-audio-bars" aria-hidden="true">${Array.from({length:24},(_,i)=>`<i style="--bar:${[8,16,24,12,28,20,14][i%7]}px;--delay:${i*.04}s"></i>`).join('')}</div></div><p class="eoc-sample-note">Simulated hardware voice</p>`:'<p class="eoc-help">No voice recording attached.</p>'}<div class="eoc-transcript-heading">${eocIcon('TextQuote')} Transcript</div><p class="eoc-transcript-text" dir="auto">${eocEscape(inc.notes==='No transcript.'?'Transcript not yet available.':inc.notes)}</p>`:'<p class="eoc-help">Voice recording and transcript will appear with a report.</p>'}</div></section>
+        <section class="eoc-card eoc-voice"><header><h2>${eocIcon('AudioLines')} Voice Recording</h2></header><div class="eoc-transcript">${inc?`${PI_MODE?piAudioMarkup(inc):'<p class="eoc-help">No hardware microphone recording attached.</p>'}<div class="eoc-transcript-heading">${eocIcon('TextQuote')} Transcript</div><p class="eoc-transcript-text" dir="auto">${eocEscape(inc.notes&&inc.notes!=='No transcript.'?inc.notes:'Transcript not yet available.')}</p>`:'<p class="eoc-help">Voice recording and transcript will appear with a report.</p>'}</div></section>
         <section class="eoc-card eoc-ai"><header><h2>${eocIcon('Sparkles')} AI Analysis</h2></header><div class="eoc-ai-priority"><span class="eoc-eyebrow">PRIORITY LEVEL</span><strong class="level-${priority.toLowerCase()}">${inc?eocIcon('ShieldAlert')+' '+priority:'—'}</strong></div><details class="eoc-recommendations"><summary>${eocIcon('ListChecks')} Recommendations ${eocIcon('ChevronDown')}</summary><div>${ai?`<ul>${ai.protocol.map(p=>`<li>${eocEscape(p)}</li>`).join('')}</ul>`:'<p class="eoc-help">Select a report to view recommendations.</p>'}</div></details></section>
       </aside>
     </div>
@@ -91,26 +90,12 @@ async function eocDispatch(){
   catch{showToast('Dispatch could not be saved. Please retry.');}
   finally{eocDispatching.delete(key);}
 }
-function eocVoiceState(playing){
-  document.querySelector('.eoc-player')?.classList.toggle('is-playing',playing);
-  const button=document.getElementById('eoc-voice-play');if(button){button.innerHTML=eocIcon(playing?'Pause':'Play');button.setAttribute('aria-label',playing?'Stop simulated voice recording':'Play simulated voice recording');}
-}
-function eocStopVoice(){if(eocUtterance&&'speechSynthesis' in window)window.speechSynthesis.cancel();eocUtterance=null;eocVoiceState(false);}
+function eocStopVoice(){if(typeof piStopAudio==='function')piStopAudio();}
 function eocPlay(automatic=false){
-  const i=eocDemo;if(!i)return;
-  if(eocUtterance&&!automatic){eocStopVoice();return;}
-  eocStopVoice();if(audioMuted||audioVolume===0){if(!automatic)showToast('Audio is muted. Enable alert audio to play the sample.');return;}
-  if(!('speechSynthesis' in window)){showToast('Voice playback is unavailable in this browser. The sample transcript is ready.');return;}
-  // shortcut: speech synthesis stands in for hardware recordings in this mockup; replace when the hardware audio feed exists.
-  const utter=new SpeechSynthesisUtterance(i.notes);const lang={en:'en-PH',fil:'fil-PH',war:'war-PH'}[i.voiceLanguage]||'en-PH';
-  const voice=speechSynthesis.getVoices().find(v=>v.lang.toLowerCase().split('-')[0]===lang.split('-')[0]);
-  utter.lang=lang;if(voice)utter.voice=voice;utter.rate=.92;utter.volume=audioVolume;
-  eocUtterance=utter;eocVoiceState(true);
-  utter.onend=()=>{if(eocUtterance===utter){eocUtterance=null;eocVoiceState(false);}};
-  utter.onerror=e=>{if(eocUtterance!==utter)return;eocUtterance=null;eocVoiceState(false);if(!['canceled','interrupted'].includes(e.error))showToast('Voice playback could not start. Press Play to retry; the transcript remains available.');};
-  try{speechSynthesis.speak(utter);}catch{eocUtterance=null;eocVoiceState(false);showToast('Press Play to start the sample voice.');}
+  if(PI_MODE&&!eocDemo)return piPlayAudio();
+  if(!automatic)showToast('No hardware microphone recording is attached to this report.');
 }
-function eocToggleMute(button){toggleMute();if(audioMuted)eocStopVoice();button.innerHTML=eocIcon(audioMuted?'VolumeX':'Volume2')+' '+(audioMuted?'Unmute':'Mute');}
+function eocToggleMute(button){toggleMute();if(audioMuted){eocStopVoice();if(PI_MODE)piAudioSync();}button.innerHTML=eocIcon(audioMuted?'VolumeX':'Volume2')+' '+(audioMuted?'Unmute':'Mute');}
 function eocClearDemo(){eocStopVoice();eocDemoReports.clear();eocDemo=null;renderPage('overview');}
 function eocSimulate(type){
   const cases={medical:['Medical Emergency','College of Engineering','Room 101','School Clinic','A student needs medical assistance in Room 101.'],security:['Security Threat','CIT','Room 202','Campus Security','An unauthorized entry has been reported near the Room 202.'],fire:['Fire/Disaster','Old CAS','Room 204','DRRMO','Smoke has been reported in Room 204. Please assess the area.'],general:['General Emergency','CONHS','Faculty Room','Administrator','Assistance requested at the Faculty Room.']};
