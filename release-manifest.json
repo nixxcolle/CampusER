@@ -1,5 +1,5 @@
 {
-  "release": "3fde9813f74665db",
+  "release": "a58e76057e913df2",
   "files": [
     {
       "file": "campus-data.js",
@@ -19,7 +19,7 @@
     },
     {
       "file": "emergency-attention.js",
-      "sha256": "4b07e7fe10486cb0ed7137943f92b5a95078e1ec1a50382dcdba9228baecaebe"
+      "sha256": "d2e2f9fea9903bcf0b73e9eb6944f1fc04156e83719c1cedb3ab86bd95d6643d"
     },
     {
       "file": "eoc-brand.css",
@@ -71,7 +71,7 @@
     },
     {
       "file": "index.html",
-      "sha256": "8bfd984441810a83f798657d069d4f4d585861a0a5bc1ccd9a6d4fd398deed11"
+      "sha256": "28949b6c5c7f987760f278f050305f55b1d64a591719f050abaf83ccef0d4b4e"
     },
     {
       "file": "manifest.json",
@@ -171,7 +171,7 @@
     },
     {
       "file": "sw.js",
-      "sha256": "b21a6f485afadfcb230fb2fe7e9ea5e1b9825fa523d221c224a64aef79dfdf5e"
+      "sha256": "8e5bace622698a2dbf4e21f80bfa9acf763254a28d52b2a9ed51bcae2f4f5336"
     }
   ]
 }

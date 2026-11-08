@@ -14,11 +14,16 @@ document.body.append(emergencyPopup);
 emergencyPopup.querySelectorAll('.emergency-popup-dismiss').forEach(button=>button.onclick=()=>emergencyPopup.close());
 function emergencyActiveAlerts(){
   if(!document.getElementById('screen-app').classList.contains('active'))return [];
-  const rows=new Map();
-  for(const inc of liveIncidents){const key=emergencyKey(inc);emergencyArrivals.delete(key);rows.set(key,inc);}
-  for(const [key,inc] of emergencyArrivals)if(!rows.has(key))rows.set(key,inc);
-  for(const inc of eocDemoReports.values())rows.set(emergencyKey(inc),inc);
-  return [...rows.values()].filter(inc=>eocReceives(inc)&&['active','pending'].includes(inc.status));
+  const reports=new Map(liveIncidents.map(inc=>[emergencyKey(inc),inc])),rows=[];
+  // Only arrival events enter the queue; loading report history never creates notifications.
+  for(const [key,alert] of emergencyArrivals){
+    if(alert.user!==(currentUser?.id||'guest')){emergencyArrivals.delete(key);continue;}
+    const inc=alert.demo?eocDemoReports.get(key):reports.get(key)||alert.incident;
+    if(!inc||!['active','pending'].includes(inc.status)){emergencyArrivals.delete(key);continue;}
+    alert.incident=inc;
+    if(eocReceives(inc))rows.push(inc);
+  }
+  return rows;
 }
 function emergencyCards(rows){return rows.map(inc=>`<article class="emergency-alert-card" data-emergency-id="${eocEscape(emergencyKey(inc))}"><div class="emergency-alert-badges"><strong>${eocIcon('Siren')} ${eocEscape(String(inc.priority||'UNASSESSED').toUpperCase())} PRIORITY</strong><span>${eocEscape(statusLabel(inc.status))}</span></div><h3>${eocEscape(inc.type||'Emergency report')}</h3><p>${eocEscape([inc.building,inc.floor,inc.room].filter(Boolean).join(' · '))}</p><p class="emergency-alert-meta">Receiving office: ${eocEscape(inc.office||'')}<br><time>${eocEscape([inc.date,inc.time].filter(Boolean).join(' · ')||'Time unavailable')}</time> · ${eocEscape(inc.id||emergencyKey(inc))}</p><button type="button" class="btn btn-secondary emergency-alert-view">View Emergency ${eocIcon('ArrowUpRight')}</button></article>`).join('');}
 let emergencySnapshot='';
@@ -34,14 +39,14 @@ function emergencySyncAttention(){
     emergencySnapshot=snapshot;
     emergencyTray.innerHTML='<header role="status" aria-live="assertive" aria-atomic="true">'+eocIcon('Siren')+' '+rows.length+' emergencies awaiting acknowledgement</header><div class="emergency-tray-list">'+emergencyCards(rows)+'</div>';
     emergencyPopup.querySelector('.emergency-popup-list').innerHTML=emergencyCards(rows);
-    emergencyPopup.querySelector('h2').textContent=rows.length+' active emergenc'+(rows.length===1?'y':'ies');
+    emergencyPopup.querySelector('h2').textContent=rows.length+' new emergenc'+(rows.length===1?'y':'ies');
   }
   if(!rows.length&&emergencyPopup.open)emergencyPopup.close();
 }
 function emergencyOpenPopup(){emergencySyncAttention();if(emergencyActiveAlerts().length&&!emergencyPopup.open)emergencyPopup.showModal();}
 function emergencyShowAttention(inc,demo=false){
   if(!inc||!eocReceives(inc)||!['active','pending'].includes(inc.status))return;
-  if(!demo&&!liveIncidents.some(i=>emergencyKey(i)===emergencyKey(inc)))emergencyArrivals.set(emergencyKey(inc),inc);
+  emergencyArrivals.set(emergencyKey(inc),{incident:inc,demo,user:currentUser?.id||'guest'});
   emergencySyncAttention();emergencyOpenPopup();
 }
 function emergencyView(event){
