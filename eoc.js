@@ -45,6 +45,7 @@ function buildOverview() {
   const all=myIncidents();
   const inc=eocDemo || all.find(i=>i.id===selectedIncidentId||i._uuid===selectedIncidentId) || all.find(i=>i.status==='active') || all[0];
   const demo=!!eocDemo;
+  if (PI_MODE && inc && !demo) selectedIncidentId = inc.id;
   const piRecording = PI_MODE && !demo;
   const transcript = inc && (piRecording ? piTranscriptDisplay(inc)
     : inc.notes && inc.notes !== 'No transcript.' ? inc.notes : 'Transcript not yet available.');

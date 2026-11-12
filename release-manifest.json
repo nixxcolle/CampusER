@@ -1,5 +1,5 @@
 {
-  "release": "32971059dd06dccc",
+  "release": "27a6d6d29b940d34",
   "files": [
     {
       "file": "campus-data.js",
@@ -59,7 +59,7 @@
     },
     {
       "file": "eoc.js",
-      "sha256": "3e93af09f377d3ca7e8651ebf6a36fb9185593fd1cac34afefe4482ddee90817"
+      "sha256": "1d6266992c55943b2701f46919a7917ddcf937a6c317b7970fcc631f93d2e698"
     },
     {
       "file": "images/SSU.png",
@@ -71,7 +71,7 @@
     },
     {
       "file": "index.html",
-      "sha256": "c0d2b9e173041fe0ac65b7814cf24455b7bf831d1ed1ce782d7c68267dfbed13"
+      "sha256": "af6b8fe98e23dd3e4a2c122379d757e64125de26c4a120cffff5fcdb2913ecd7"
     },
     {
       "file": "manifest.json",
@@ -179,7 +179,7 @@
     },
     {
       "file": "sw.js",
-      "sha256": "1d3e87090378bf1728c12538dc435b58d63903c8ba3690d800c65d88f57058ad"
+      "sha256": "14e13910ed230445ccd0a6fb972d840996a4ab357d6cbf43592beab1e7b2aeba"
     }
   ]
 }
