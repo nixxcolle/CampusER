@@ -40,6 +40,7 @@ function createTranscriptionWorker({ db, audioDirectory, transcribe, publish }) 
       [claim],
     );
     if (!job) return false;
+    const started = performance.now();
     if (!signal.aborted) notify(job);
 
     let status = 'failed';
@@ -70,7 +71,10 @@ function createTranscriptionWorker({ db, audioDirectory, transcribe, publish }) 
        RETURNING event_id`,
       [job.event_id, claim, status, text],
     );
-    if (rows.length && !signal.aborted) notify(job);
+    if (rows.length && !signal.aborted) {
+      console.info(`TRANSCRIPTION event=${job.event_id} status=${status} elapsed_ms=${Math.round(performance.now() - started)}`);
+      notify(job);
+    }
     return true;
   }
 

@@ -4,6 +4,8 @@ After a station WAV is stored, the Pi transcribes it with whisper.cpp and saves 
 
 The first deployment uses whisper.cpp v1.8.6, the multilingual tiny model, Silero voice activity detection, automatic language detection and two CPU threads. One recording is processed at a time. Processing has a 60-second timeout. The first install builds the engine and downloads approximately 79 MB of model files over the internet. Subsequent recognition runs locally on the Pi.
 
+For an English demonstration, use `CAMPUS_ER_WHISPER_LANGUAGE=en`. The English tuning package supplies that override in `40-transcription-language.conf`. Automatic language detection on a short clip can select an unintended language. The adapter uses the model's default audio context for recognition quality. A completed job logs its Event ID, status and `elapsed_ms` so the Pi's processing time can be measured without logging recognized speech.
+
 The queue records pending, processing, ready, no_speech or failed for each saved WAV. Migration 004 also queues recordings saved before installation, with the newest recordings processed first. A normal service restart returns its unfinished job to pending. After a sudden shutdown, the job becomes available again when its five-minute lease expires. A failed job leaves the original report and recording available.
 
 ## Install on the existing Pi

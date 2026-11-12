@@ -61,7 +61,7 @@ function createLocalTranscriber({ binary, model, vadModel, language = 'auto', th
       const output = path.join(temp, 'result');
       const args = [
         '--model', model, '--file', wavPath, '--language', language, '--threads', String(threads),
-        '--audio-ctx', '768', '--no-gpu', '--no-prints', '--output-json', '--output-file', output,
+        '--no-gpu', '--no-prints', '--output-json', '--output-file', output,
       ];
       if (vadModel) args.push('--vad', '--vad-model', vadModel);
       await new Promise((resolve, reject) => {

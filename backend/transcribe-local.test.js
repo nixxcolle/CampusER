@@ -44,6 +44,7 @@ test('Whisper runs with bounded execution and removes its private output', async
     assert.equal(args[args.indexOf('--file') + 1], wavPath);
     assert.equal(args[args.indexOf('--model') + 1], model);
     assert.equal(args[args.indexOf('--language') + 1], 'tl');
+    assert.equal(args.includes('--audio-ctx'), false, 'Use the model context for recognition quality.');
     assert.equal(args[args.indexOf('--vad-model') + 1], model);
     assert.equal(options.signal, signal);
     assert.equal(options.timeout, 500);
