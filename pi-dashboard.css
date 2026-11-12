@@ -26,8 +26,13 @@
 }
 
 .pi-mode .pi-event-id,
+.pi-mode .eoc-transcript-text,
 .pi-mode .eoc-incident-topline .eoc-eyebrow {
   overflow-wrap: anywhere;
+}
+
+.pi-mode .eoc-transcript-text {
+  white-space: pre-wrap;
 }
 
 .pi-mode .status-pill.untracked {

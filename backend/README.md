@@ -1,5 +1,7 @@
 # General alerts and acknowledgment update
 
+Automatic recording transcription is available through the [local transcription setup](TRANSCRIPTION.md). Install its matching backend, migration and PWA package to enable the saved-WAV queue and live transcript display.
+
 This is the Pi backend source accompanying the shared dashboard. It keeps the existing station credentials, Supabase staff verification, office assignments, incident IDs, private WAV storage and device receipts. Do not put private configuration, database credentials, tokens or WAV files in this repository or the frontend directory.
 
 General incidents remain a single stored incident and are readable by every approved office. Medical, Security and Fire/Disaster incidents retain their existing office restrictions; Administrator continues monitoring all incidents. The same authorization applies to recording playback.

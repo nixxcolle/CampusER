@@ -7,6 +7,7 @@ const { Pool } = require('pg');
 const { createStaffAuth } = require('./staff-auth');
 const { createAudioRoutes } = require('./audio');
 const { createResponseWorkflow } = require('./response-workflow');
+const { createTranscriptionWorker } = require('./transcription-worker');
 
 const host = '127.0.0.1';
 const port = 3000;
@@ -51,13 +52,17 @@ function createApp(db, dashboardConfig = null, verifyUserFetch = fetch, options 
     path.join(os.homedir(), '.local', 'share', 'campus-er', 'incident-audio'));
   const authenticateStaff = dashboardConfig ? createStaffAuth(dashboardConfig, verifyUserFetch) : null;
   const responses = createResponseWorkflow({pool:db,authenticateStaff});
+  const transcription = options.transcribe
+    ? createTranscriptionWorker({ db, audioDirectory, transcribe: options.transcribe, publish: responses.publish })
+    : null;
+  app.locals.transcription = transcription;
 
   app.get('/health', async (_req, res) => {
     try {
       await db.query('SELECT 1 FROM stations LIMIT 1');
       await db.query('SELECT 1 FROM incident_audio LIMIT 1');
       await db.query('SELECT response_status, acknowledged_at FROM incidents LIMIT 1');
-      res.json({ status: 'ok' });
+      res.json(transcription ? { status: 'ok', transcription: true } : { status: 'ok' });
     } catch {
       res.status(503).json({ error: 'Database, station or audio schema unavailable' });
     }
@@ -114,7 +119,15 @@ function createApp(db, dashboardConfig = null, verifyUserFetch = fetch, options 
     return sendStoredReceipt(res, 200, report.event_id);
   });
 
-  app.use(createAudioRoutes({ pool: db, authenticateStaff, audioDirectory, onAudioStored: responses.publish }));
+  app.use(createAudioRoutes({
+    pool: db,
+    authenticateStaff,
+    audioDirectory,
+    onAudioStored(incident) {
+      transcription?.wake();
+      responses.publish(incident);
+    },
+  }));
   app.use(responses.router);
 
   if (dashboardConfig) {
@@ -136,7 +149,9 @@ function createApp(db, dashboardConfig = null, verifyUserFetch = fetch, options 
     };
 
     app.get('/api/v1/staff/session', noStore, authenticateStaff, (req, res) => {
-      res.json({ office: req.staff.office, features:{acknowledgements:true,live_updates:true} });
+      const features = { acknowledgements: true, live_updates: true };
+      if (transcription) features.transcription = true;
+      res.json({ office: req.staff.office, features });
     });
     app.get('/api/v1/reports', noStore, authenticateStaff, async (req, res) => {
       const office = staffOfficeCode.get(req.staff.office);
@@ -145,7 +160,7 @@ function createApp(db, dashboardConfig = null, verifyUserFetch = fetch, options 
                 i.received_at, i.occurred_at_unix, i.uptime_ms,
                 i.response_status, i.acknowledged_at, i.acknowledged_by, i.acknowledged_office,
                 a.event_id IS NOT NULL AS audio_available, a.sha256 AS audio_sha256,
-                a.duration_ms AS audio_duration_ms
+                a.duration_ms AS audio_duration_ms${transcription ? ', a.transcript_status, a.transcript_text' : ''}
          FROM incidents i LEFT JOIN incident_audio a ON a.event_id = i.event_id
          WHERE ($1::text IS NULL OR i.receiving_office = $1 OR i.category = 'GENERAL')
          ORDER BY i.received_at DESC, i.event_id DESC`,
@@ -180,7 +195,24 @@ function createApp(db, dashboardConfig = null, verifyUserFetch = fetch, options 
   return app;
 }
 
-if (require.main === module) {
+async function configuredTranscriber(db) {
+  try {
+    const { localTranscriberFromEnv } = require('./transcribe-local');
+    const transcribe = localTranscriberFromEnv();
+    if (!transcribe) return null;
+    // Verify the migration and the service role's permissions without changing any rows.
+    await db.query(`UPDATE public.incident_audio
+      SET transcript_status = transcript_status, transcript_text = transcript_text,
+          transcription_claim = transcription_claim, transcription_lease_until = transcription_lease_until
+      WHERE false`);
+    return transcribe;
+  } catch (error) {
+    console.error('Local transcription unavailable:', error.code || error.name);
+    return null;
+  }
+}
+
+async function startBackend() {
   const db = new Pool({ connectionTimeoutMillis: 5000 });
   db.on('error', (error) => console.error('Idle database connection failed:', error.code || error.name));
   let app;
@@ -193,7 +225,7 @@ if (require.main === module) {
         throw new Error('Unable to read dashboard configuration JSON.');
       }
     }
-    app = createApp(db, dashboardConfig);
+    app = createApp(db, dashboardConfig, fetch, { transcribe: await configuredTranscriber(db) });
   } catch (error) {
     console.error(error.message);
     process.exitCode = 1;
@@ -202,6 +234,7 @@ if (require.main === module) {
   }
   const server = app.listen(port, host);
   server.on('listening', () => {
+    app.locals.transcription?.start();
     console.log(`CAMPUS-ER report API is listening on http://${host}:${port}`);
   });
   server.on('error', (error) => {
@@ -209,6 +242,26 @@ if (require.main === module) {
     process.exitCode = 1;
     db.end();
   });
+  if (app.locals.transcription) {
+    let stopping = false;
+    const stop = async () => {
+      if (stopping) return;
+      stopping = true;
+      server.close();
+      server.closeAllConnections();
+      try {
+        await app.locals.transcription.stop();
+        await db.end();
+      } catch (error) {
+        console.error('Unable to stop the report API cleanly:', error.code || error.name);
+        process.exitCode = 1;
+      }
+    };
+    process.once('SIGTERM', stop);
+    process.once('SIGINT', stop);
+  }
 }
+
+if (require.main === module) startBackend();
 
 module.exports = { createApp };
