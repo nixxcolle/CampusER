@@ -59,9 +59,13 @@ async function syncDirectory(directory) {
   }
 }
 
+function storedAudioPath(directory, sha256) {
+  if (!/^[0-9a-f]{64}$/.test(sha256)) throw new Error('Invalid stored audio');
+  return path.join(directory, sha256 + '.wav');
+}
+
 async function openStoredAudio(directory, metadata) {
-  if (!/^[0-9a-f]{64}$/.test(metadata.sha256)) throw new Error('Invalid stored audio');
-  const handle = await fs.open(path.join(directory, metadata.sha256 + '.wav'),
+  const handle = await fs.open(storedAudioPath(directory, metadata.sha256),
     constants.O_RDONLY | (constants.O_NOFOLLOW || 0));
   try {
     const stat = await handle.stat();
@@ -94,7 +98,7 @@ async function persistAudio(directory, bytes, metadata) {
     await syncDirectory(boundary);
   }
   const temporary = path.join(directory, randomUUID() + '.tmp');
-  const final = path.join(directory, metadata.sha256 + '.wav');
+  const final = storedAudioPath(directory, metadata.sha256);
   let handle;
   try {
     handle = await fs.open(temporary, 'wx', 0o600);
@@ -236,4 +240,4 @@ function createAudioRoutes({ pool, authenticateStaff = null, onAudioStored, audi
   return router;
 }
 
-module.exports = { createAudioRoutes, validateWav, MAX_AUDIO_BYTES };
+module.exports = { createAudioRoutes, validateWav, MAX_AUDIO_BYTES, openStoredAudio, storedAudioPath };

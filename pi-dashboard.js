@@ -29,6 +29,12 @@ const PI_CATEGORIES = {
   FIRE_DISASTER: ['Fire/Disaster', 'fire'],
   GENERAL: ['General Emergency', 'general'],
 };
+const PI_TRANSCRIPT_MESSAGES = {
+  pending: 'Waiting to transcribe the recording…',
+  processing: 'Transcribing the recording…',
+  no_speech: 'No clear speech detected. Play the recording to check.',
+  failed: 'Transcription failed. You can still play the recording.',
+};
 
 function piStop() {
   if (typeof piResetAudio === 'function') piResetAudio();
@@ -181,6 +187,12 @@ function piRowToIncident(row) {
       !Number.isInteger(row.audio_duration_ms) || row.audio_duration_ms < 1 || row.audio_duration_ms > 10000)) {
     throw new Error('Invalid Pi audio metadata');
   }
+  const transcriptText = audioAvailable && row.transcript_status === 'ready' &&
+    typeof row.transcript_text === 'string' && Array.from(row.transcript_text).length <= 4000
+    ? row.transcript_text.trim() : '';
+  const transcriptStatus = transcriptText ? 'ready'
+    : audioAvailable && Object.hasOwn(PI_TRANSCRIPT_MESSAGES, row.transcript_status) ? row.transcript_status
+    : null;
   return {
     id: row.event_id,
     _uuid: row.event_id,
@@ -197,6 +209,8 @@ function piRowToIncident(row) {
     audioAvailable,
     audioSha256: audioAvailable ? row.audio_sha256 : null,
     audioDurationMs: audioAvailable ? row.audio_duration_ms : null,
+    transcriptStatus,
+    transcriptText,
     occurredAtUnix: row.occurred_at_unix,
     uptimeMs: row.uptime_ms,
     status: ['active','pending','acknowledged','resolved'].includes(row.response_status)?row.response_status:'active',
@@ -207,6 +221,11 @@ function piRowToIncident(row) {
     reporter: row.station_id,
     notes: '',
   };
+}
+
+function piTranscriptDisplay(incident) {
+  if (!incident.audioAvailable) return 'No recording attached.';
+  return incident.transcriptText || PI_TRANSCRIPT_MESSAGES[incident.transcriptStatus] || 'Transcription unavailable.';
 }
 
 function piUpdateStatus(stale = piDashboard.stale) {
@@ -298,7 +317,7 @@ function piOpenDetail(id) {
     ['Event ID', incident.id], ['Station', incident.stationId],
     ['Registered location', incident.location], ['Receiving office', reportOfficeLabel(incident)],
     ['Pi received at', incident.receivedAt], ['Storage', 'Saved on Raspberry Pi'],
-    ['Priority', 'Unassessed'], ['Voice transcript', 'Not available'],
+    ['Priority', 'Unassessed'], ['Voice transcript', piTranscriptDisplay(incident)],
     ['Status',incident.responseTracked?statusLabel(incident.status):'Not tracked'],
     ['Acknowledged at',acknowledgmentTime(incident.acknowledgedAt)],['Acknowledged by',acknowledgmentActor(incident)],
     ['Device occurrence (Unix seconds)', incident.occurredAtUnix ?? 'Clock unsynchronized at activation'],
@@ -313,7 +332,7 @@ function piBuildSettings() {
     <div class="panel-body"><p>Signed in for ${eocEscape(piDashboard.office)}.</p>
     <p>Incident records come from the Raspberry Pi. Live updates refresh reports as they are saved. The dashboard checks every five seconds when live updates are unavailable.
     Authentication uses Supabase and the Pi's approved office assignment.</p>
-    <p>Original station recordings are available when attached to a report. ${piDashboard.acknowledgementsAvailable?'Acknowledge reports from Incident Reports to save a shared response receipt.':'Acknowledgment requires the matching backend update.'} Station health, dispatch tracking, transcription and synchronization are separate integration steps.</p></div></div>`;
+    <p>Play original station recordings and read their transcripts in Overview. ${piDashboard.acknowledgementsAvailable?'Acknowledge reports from Incident Reports to save a shared response receipt.':'Acknowledgment requires the matching backend update.'}</p></div></div>`;
 }
 
 async function piStartLiveUpdates() {

@@ -55,6 +55,12 @@ async function main() {
   assert.throws(() => run('piRowToIncident({ ...fixture, audio_available: true, audio_sha256: "invalid", audio_duration_ms: 3000 })'), /Invalid Pi audio metadata/);
   assert.throws(() => run('piRowToIncident({ ...fixture, audio_available: true, audio_sha256: "a".repeat(64), audio_duration_ms: 10001 })'), /Invalid Pi audio metadata/);
   assert.equal(run('piRowToIncident({ ...fixture, audio_available: true, audio_sha256: "a".repeat(64), audio_duration_ms: 3000 }).audioSha256'), 'a'.repeat(64));
+  sandbox.audioFixture = { ...fixture, audio_available: true, audio_sha256: 'a'.repeat(64), audio_duration_ms: 3000 };
+  assert.equal(run('piRowToIncident({ ...audioFixture, transcript_status: "ready", transcript_text: "Station one." }).transcriptText'), 'Station one.');
+  assert.equal(run('piRowToIncident({ ...audioFixture, transcript_status: "ready", transcript_text: "💬".repeat(4000) }).transcriptText'), '💬'.repeat(4000));
+  assert.equal(run('piRowToIncident({ ...audioFixture, transcript_status: "ready", transcript_text: "x".repeat(4001) }).transcriptText'), '');
+  assert.equal(run('piRowToIncident({ ...audioFixture, transcript_status: "processing", transcript_text: "Incomplete output" }).transcriptText'), '');
+  assert.equal(run('piRowToIncident({ ...fixture, transcript_status: "ready", transcript_text: "Unbound output" }).transcriptText'), '');
   await run('piLoadProfileAndShow({ id: "fixture-staff", email: "staff@example.test" })');
   assert.equal(sandbox.currentProfile.office, 'School Clinic');
   assert.equal(sandbox.currentProfile.fullname, 'staff@example.test');

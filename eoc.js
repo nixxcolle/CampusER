@@ -45,6 +45,9 @@ function buildOverview() {
   const all=myIncidents();
   const inc=eocDemo || all.find(i=>i.id===selectedIncidentId||i._uuid===selectedIncidentId) || all.find(i=>i.status==='active') || all[0];
   const demo=!!eocDemo;
+  const piRecording = PI_MODE && !demo;
+  const transcript = inc && (piRecording ? piTranscriptDisplay(inc)
+    : inc.notes && inc.notes !== 'No transcript.' ? inc.notes : 'Transcript not yet available.');
   const ai=inc?generateAIAnalysis(inc):null;
   const priority=eocPriority(inc);
   const response=eocResponse(inc);
@@ -70,7 +73,12 @@ function buildOverview() {
         </section>
       </div>
       <aside class="eoc-intelligence"><div class="eoc-intel-title">${eocIcon('ScanLine')} EMERGENCY INTELLIGENCE</div>
-        <section class="eoc-card eoc-voice"><header><h2>${eocIcon('AudioLines')} Voice Recording</h2></header><div class="eoc-transcript">${inc?`${PI_MODE?piAudioMarkup(inc):'<p class="eoc-help">No hardware microphone recording attached.</p>'}<div class="eoc-transcript-heading">${eocIcon('TextQuote')} Transcript</div><p class="eoc-transcript-text" dir="auto">${eocEscape(inc.notes&&inc.notes!=='No transcript.'?inc.notes:'Transcript not yet available.')}</p>`:'<p class="eoc-help">Voice recording and transcript will appear with a report.</p>'}</div></section>
+        <section class="eoc-card eoc-voice"><header><h2>${eocIcon('AudioLines')} Voice Recording</h2></header><div class="eoc-transcript">${inc?`
+          ${PI_MODE?piAudioMarkup(inc):'<p class="eoc-help">No hardware microphone recording attached.</p>'}
+          ${!piRecording || inc.audioAvailable ? `
+            <div class="eoc-transcript-heading">${eocIcon('TextQuote')} ${piRecording ? 'Automatic transcript' : 'Transcript'}</div>
+            <p class="eoc-transcript-text" dir="auto">${eocEscape(transcript)}</p>` : ''}
+        `:'<p class="eoc-help">Voice recording and transcript will appear with a report.</p>'}</div></section>
         <section class="eoc-card eoc-ai"><header><h2>${eocIcon('Sparkles')} AI Analysis</h2></header><div class="eoc-ai-priority"><span class="eoc-eyebrow">PRIORITY LEVEL</span><strong class="level-${priority.toLowerCase()}">${inc?eocIcon('ShieldAlert')+' '+priority:'—'}</strong></div><details class="eoc-recommendations"><summary>${eocIcon('ListChecks')} Recommendations ${eocIcon('ChevronDown')}</summary><div>${ai?`<ul>${ai.protocol.map(p=>`<li>${eocEscape(p)}</li>`).join('')}</ul>`:'<p class="eoc-help">Select a report to view recommendations.</p>'}</div></details></section>
       </aside>
     </div>

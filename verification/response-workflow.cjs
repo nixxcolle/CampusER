@@ -4,9 +4,11 @@ const {createApp}=require('../backend/server');
 const {chromium}=require('playwright');
 const actors={clinic:{id:'11111111-1111-4111-8111-111111111111',office:'School Clinic'},security:{id:'22222222-2222-4222-8222-222222222222',office:'Campus Security'},drrmo:{id:'33333333-3333-4333-8333-333333333333',office:'DRRMO'},admin:{id:'44444444-4444-4444-8444-444444444444',office:'Administrator'}};
 const token='a'.repeat(64),hash=s=>crypto.createHash('sha256').update(s).digest('hex');
+const transcriptFixture='Fixture transcription from the station.';
+let transcription;
 (async()=>{const db=await PGlite.create(),temp=fs.mkdtempSync(path.join(os.tmpdir(),'campus-response-'));let server,browser,delayedRead,releaseRead;const streams=[];
 try{
-await db.exec('CREATE ROLE campus_er_app;');for(const name of ['001_station_incidents.sql','002_incident_audio.sql','003_response_workflow.sql'])await db.exec(fs.readFileSync(path.join(__dirname,'../backend/migrations',name),'utf8'));
+await db.exec('CREATE ROLE campus_er_app;');for(const name of ['001_station_incidents.sql','002_incident_audio.sql','003_response_workflow.sql','004_incident_transcripts.sql'])await db.exec(fs.readFileSync(path.join(__dirname,'../backend/migrations',name),'utf8'));
 await db.exec(fs.readFileSync(path.join(__dirname,'../backend/migrations/003_response_workflow.sql'),'utf8'));
 assert.equal((await db.query("SELECT has_column_privilege('campus_er_app','incidents','acknowledged_at','UPDATE') AS allowed")).rows[0].allowed,true);assert.equal((await db.query("SELECT has_column_privilege('campus_er_app','incidents','station_id','UPDATE') AS allowed")).rows[0].allowed,false);
 await db.query('INSERT INTO stations VALUES($1,$2,$3)',['STATION-01','Station 1 Bench',hash(token)]);
@@ -14,7 +16,12 @@ await db.exec('GRANT SELECT,INSERT ON stations,incidents,incident_audio TO campu
 const config={supabaseUrl:'https://example.supabase.co',supabaseAnonKey:'sb_publishable_fixture',pwaDirectory:path.resolve(__dirname,'..'),staff:Object.fromEntries(Object.values(actors).map(a=>[a.id,a.office]))};
 const authFetch=async(_url,options)=>{const role=options.headers.Authorization.replace('Bearer ','');return actors[role]?{ok:true,status:200,json:async()=>({id:actors[role].id})}:{ok:false,status:401};};
 const pool={query:async(...args)=>{const result=await db.query(...args);if(delayedRead&&args[0].includes('SELECT i.event_id')&&args[1]?.[0]==='security'){const hold=delayedRead;delayedRead=null;hold.started();await hold.done;}return result;}};
-const app=createApp(pool,config,authFetch,{audioDirectory:path.join(temp,'audio')});server=await new Promise(resolve=>{const s=app.listen(0,'127.0.0.1',()=>resolve(s));});const origin='http://127.0.0.1:'+server.address().port;
+const app=createApp(pool,config,authFetch,{
+  audioDirectory:path.join(temp,'audio'),
+  transcribe:async()=>transcriptFixture,
+});
+transcription=app.locals.transcription;
+server=await new Promise(resolve=>{const s=app.listen(0,'127.0.0.1',()=>resolve(s));});const origin='http://127.0.0.1:'+server.address().port;
 const request=(role,url,options={})=>fetch(origin+url,{...options,headers:{Authorization:'Bearer '+role,...options.headers}});
 async function subscribe(role,query=''){const controller=new AbortController(),r=await request(role,'/api/v1/events'+query,{signal:controller.signal});assert.equal(r.status,200);const stream={controller,events:[]};streams.push(stream);stream.task=(async()=>{const reader=r.body.getReader(),decoder=new TextDecoder();let pending='';try{for(;;){const {value,done}=await reader.read();if(done)break;pending+=decoder.decode(value,{stream:true});let i;while((i=pending.indexOf('\n\n'))>=0){const frame=pending.slice(0,i);pending=pending.slice(i+2);if(frame.startsWith('data:')){const data=JSON.parse(frame.slice(5));if(data.event_id)stream.events.push(data.event_id);}}}}catch(e){if(e.name!=='AbortError')throw e;}})();return stream;}
 const offices={};for(const role of Object.keys(actors))offices[role]=await subscribe(role,role==='security'?'?office=Administrator':'');
@@ -95,8 +102,13 @@ await clinicPage.waitForFunction(id=>liveIncidents.some(i=>i.id===id),fallback,{
 assert(reportReads>0,'Polling resumes while live updates are disconnected');
 allowReconnect=true;
 await clinicPage.waitForFunction(()=>piDashboard.eventsConnected);
+await clinicPage.evaluate(id=>{clearTimeout(piDashboard.timer);navigate('overview');eocInspect(id);},liveAudio);
+assert.equal(await clinicPage.locator('.eoc-transcript-text').textContent(),'Waiting to transcribe the recording…');
+transcription.start();
+await clinicPage.waitForFunction(text=>document.querySelector('.eoc-transcript-text')?.textContent===text,transcriptFixture,{timeout:4500});
+assert.equal((await clinicPage.locator('.eoc-priority-tag').textContent()).trim(),'UNASSESSED PRIORITY');
 assert(await clinicPage.evaluate(()=>{const connection=piDashboard.eventsController;piStop();return connection.signal.aborted;}));
 
 for(const {errors} of Object.values(pages))assert.deepEqual(errors,[]);
-console.log('PASS: PostgreSQL storage and receipts; office-scoped live reports, audio and acknowledgments; reconnect catch-up, polling fallback and logout; persisted history and mobile layout.');
-}finally{releaseRead?.();streams.forEach(s=>s.controller.abort());await browser?.close();if(server){server.closeAllConnections();await new Promise(r=>server.close(r));}await db.close();assert(path.dirname(temp)===os.tmpdir()&&path.basename(temp).startsWith('campus-response-'));fs.rmSync(temp,{recursive:true,force:true});}})().catch(e=>{console.error(e.stack||e);process.exitCode=1;});
+console.log('PASS: PostgreSQL storage and receipts; office-scoped live reports, audio and acknowledgments; transcript completion reaches the selected report via SSE; reconnect catch-up, polling fallback and logout; persisted history and mobile layout.');
+}finally{releaseRead?.();await transcription?.stop();streams.forEach(s=>s.controller.abort());await browser?.close();if(server){server.closeAllConnections();await new Promise(r=>server.close(r));}await db.close();assert(path.dirname(temp)===os.tmpdir()&&path.basename(temp).startsWith('campus-response-'));fs.rmSync(temp,{recursive:true,force:true});}})().catch(e=>{console.error(e.stack||e);process.exitCode=1;});
