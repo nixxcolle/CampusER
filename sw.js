@@ -1,5 +1,5 @@
 /* Generated release values; requests to authentication/API services are never cached. */
-const RELEASE = '42303887a06d09ab';
+const RELEASE = 'f7b86680c6d8c5d8';
 const CACHE = 'campus-er-assets-' + RELEASE;
 const FILES = [
   "campus-data.js",

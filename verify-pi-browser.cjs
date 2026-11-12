@@ -387,9 +387,16 @@ const {chromium}=require('playwright');
     await page.evaluate(()=>navigate('incidents'));
     await page.locator('[data-ack-id="aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee"]').click();
     await page.waitForFunction(()=>liveIncidents[0]?.status==='acknowledged');
+    assert.equal(await page.locator('[data-ack-id="aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee"]').count(),0,'Saved acknowledgments leave the active incident list');
+    assert.match(await incidentPage.locator('.records-empty-row').innerText(),/No active incident reports/);
+    assert.equal(await page.locator('#nav-incidents .nav-badge').count(),0);
     assert.deepEqual(await page.evaluate(()=>fixtureRpcCalls),[{name:'acknowledge_emergency_report',args:{p_report_id:'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee'}}]);
     await page.evaluate(()=>navigate('reports'));
     assert.match(await page.locator('.acknowledgment-details').innerText(),/School Clinic/);
+    assert.equal(await page.locator('.acknowledgment-details time').getAttribute('datetime'),'2026-11-07T16:30:00Z');
+    assert.equal(await reportsPage.locator('.records-table tbody tr').count(),1,'The original report appears once in history');
+    await page.evaluate(async()=>{await fetchReports();navigate('incidents');});
+    assert.equal(await page.locator('[data-ack-id="aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee"]').count(),0,'Refreshing must not return an acknowledged report to the active queue');
     await page.evaluate(async()=>{
       Object.assign(fixtureCloudReports[0],{status:'pending',acknowledged_at:null,acknowledged_by:null,acknowledged_office:null});
       fixtureFailAck=true;await fetchReports();navigate('incidents');
