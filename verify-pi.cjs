@@ -85,6 +85,14 @@ async function main() {
   assert.ok(!table.includes("updateReportStatus('"));
   assert.ok(!table.includes("openEditReport('"));
   assert.ok(table.includes("piRefreshPage('incidents')"));
+  const originalIncident=sandbox.liveIncidents[0];
+  sandbox.liveIncidents=[originalIncident,...['pending','acknowledged','resolved'].map(status=>({...originalIncident,id:'QUEUE-'+status,status}))];
+  const activeTable=run('buildIncidents()');
+  assert.ok(activeTable.includes('QUEUE-pending'));
+  assert.ok(!activeTable.includes('QUEUE-acknowledged'));
+  assert.ok(!activeTable.includes('QUEUE-resolved'));
+  assert.equal(sandbox.liveIncidents.length,4,'Filtering the active view must retain all stored reports for history');
+  sandbox.liveIncidents=[originalIncident];
   assert.equal(sandbox.liveIncidents[0].notes, '');
   run(`piOpenDetail('${fixture.event_id}')`);
   assert.ok(!element('detail-body').innerHTML.includes('<img'));

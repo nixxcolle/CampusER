@@ -41,7 +41,7 @@ async function acknowledgeReport(id) {
     renderPage(currentPage);
     const saved = liveIncidents.find(row=>(row._uuid||row.id)===id);
     if (!saved?.acknowledgedAt || !['acknowledged','resolved'].includes(saved.status)) throw new Error('The saved acknowledgment could not be confirmed. Refresh and retry.');
-    showToast('Report acknowledged\n'+acknowledgmentActor(saved)+'\n'+acknowledgmentTime(saved.acknowledgedAt));
+    showToast('Report acknowledged — saved in Reports history\n'+acknowledgmentActor(saved)+'\n'+acknowledgmentTime(saved.acknowledgedAt));
     return true;
   } catch (error) {
     if (currentUser?.id===user && error.name!=='AbortError') showToast(error.code==='PGRST202'?'Acknowledgment is not available yet. Please contact your administrator.':'Acknowledgment could not be confirmed. Refresh and retry.');
