@@ -1,5 +1,5 @@
 {
-  "release": "42303887a06d09ab",
+  "release": "4d60238a514f1dc9",
   "files": [
     {
       "file": "campus-data.js",
@@ -71,7 +71,7 @@
     },
     {
       "file": "index.html",
-      "sha256": "0f33f58096d1cf56826ca4dcf1529626886adb28a67fbc008885348f23b99ce7"
+      "sha256": "4770f04210a6c1f1e0e6b92070d4154e0a07f6de08fecdda4995e1dfd423c634"
     },
     {
       "file": "manifest.json",
@@ -87,7 +87,7 @@
     },
     {
       "file": "pi-dashboard.js",
-      "sha256": "54ab67a0f604747c67a799c55345b305f8c92418806d76a5e6b1c8d5d50cbbd9"
+      "sha256": "4e3d44efca0cfe5631898010a628f8bfac91f180532e8e634d3ad384b63cf10f"
     },
     {
       "file": "records-design.css",
@@ -179,7 +179,7 @@
     },
     {
       "file": "sw.js",
-      "sha256": "49f26966c3d098d3443f22d9d20a759994a1aaaad855a4451a0bb07390460bbb"
+      "sha256": "04e0f4e58510e2cb6d8bc530fda439c66299c823ccd1b79d20914ef5dd9a9ae1"
     }
   ]
 }

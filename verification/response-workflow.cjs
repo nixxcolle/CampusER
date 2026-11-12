@@ -18,10 +18,13 @@ const app=createApp(pool,config,authFetch,{audioDirectory:path.join(temp,'audio'
 const request=(role,url,options={})=>fetch(origin+url,{...options,headers:{Authorization:'Bearer '+role,...options.headers}});
 async function subscribe(role,query=''){const controller=new AbortController(),r=await request(role,'/api/v1/events'+query,{signal:controller.signal});assert.equal(r.status,200);const stream={controller,events:[]};streams.push(stream);stream.task=(async()=>{const reader=r.body.getReader(),decoder=new TextDecoder();let pending='';try{for(;;){const {value,done}=await reader.read();if(done)break;pending+=decoder.decode(value,{stream:true});let i;while((i=pending.indexOf('\n\n'))>=0){const frame=pending.slice(0,i);pending=pending.slice(i+2);if(frame.startsWith('data:')){const data=JSON.parse(frame.slice(5));if(data.event_id)stream.events.push(data.event_id);}}}}catch(e){if(e.name!=='AbortError')throw e;}})();return stream;}
 const offices={};for(const role of Object.keys(actors))offices[role]=await subscribe(role,role==='security'?'?office=Administrator':'');
-async function post(id,category){const r=await fetch(origin+'/api/v1/reports',{method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json','Idempotency-Key':id},body:JSON.stringify({event_id:id,station_id:'STATION-01',location:'Station 1 Bench',category,trigger:'physical_button',uptime_ms:1000,occurred_at_unix:null})});assert.equal(r.status,201);assert.equal(r.headers.get('X-Report-ID'),id);return id;}
+async function post(id,category,expectedStatus=201){const r=await fetch(origin+'/api/v1/reports',{method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json','Idempotency-Key':id},body:JSON.stringify({event_id:id,station_id:'STATION-01',location:'Station 1 Bench',category,trigger:'physical_button',uptime_ms:1000,occurred_at_unix:null})});assert.equal(r.status,expectedStatus);assert.equal(r.headers.get('X-Report-ID'),id);return id;}
 async function waitFor(fn){const until=Date.now()+5000;while(!fn()){if(Date.now()>until)throw Error('Event not delivered');await new Promise(r=>setTimeout(r,15));}}
 const general=await post('STATION-01-general-1','GENERAL');await waitFor(()=>Object.values(offices).every(s=>s.events.includes(general)));
-const medical=await post('STATION-01-medical-1','MEDICAL');await waitFor(()=>offices.clinic.events.includes(medical)&&offices.admin.events.includes(medical));await new Promise(r=>setTimeout(r,100));assert(!offices.security.events.includes(medical)&&!offices.drrmo.events.includes(medical));
+const medical=await post('STATION-01-medical-1','MEDICAL');await waitFor(()=>offices.clinic.events.includes(medical)&&offices.admin.events.includes(medical));
+await post(medical,'MEDICAL',200);await new Promise(r=>setTimeout(r,100));
+assert.equal(offices.clinic.events.filter(id=>id===medical).length,1,'A repeated station receipt must stay quiet');
+assert(!offices.security.events.includes(medical)&&!offices.drrmo.events.includes(medical));
 for(const role of Object.keys(actors)){const r=await request(role,'/api/v1/reports'),data=await r.json();assert(data.incidents.some(i=>i.event_id===general));assert.equal(data.incidents.some(i=>i.event_id===medical),['clinic','admin'].includes(role));}
 assert.equal((await request('security','/api/v1/reports/'+medical+'/acknowledge',{method:'POST'})).status,404);
 assert.equal((await request('security','/api/v1/reports/'+general+'/acknowledge',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({acknowledged_by:actors.admin.id})})).status,400);
@@ -30,6 +33,8 @@ for(const role of Object.keys(actors)){const data=await(await request(role,'/api
 assert.equal((await request('invalid','/api/v1/events')).status,401);assert.equal((await request('invalid','/api/v1/reports/'+general+'/acknowledge',{method:'POST'})).status,401);
 const wave=Buffer.alloc(76);wave.write('RIFF');wave.writeUInt32LE(68,4);wave.write('WAVEfmt ',8);wave.writeUInt32LE(16,16);wave.writeUInt16LE(1,20);wave.writeUInt16LE(1,22);wave.writeUInt32LE(16000,24);wave.writeUInt32LE(32000,28);wave.writeUInt16LE(2,32);wave.writeUInt16LE(16,34);wave.write('data',36);wave.writeUInt32LE(32,40);
 for(const id of [general,medical])assert.equal((await request(token,'/api/v1/reports/'+id+'/audio',{method:'POST',headers:{'Content-Type':'audio/wav'},body:wave})).status,201);
+await waitFor(()=>offices.clinic.events.filter(id=>id===medical).length===2&&offices.admin.events.filter(id=>id===medical).length===2);
+assert(!offices.security.events.includes(medical)&&!offices.drrmo.events.includes(medical),'Audio availability obeys report office access');
 for(const role of Object.keys(actors)){const audio=await request(role,'/api/v1/reports/'+general+'/audio');assert.equal(audio.status,200);assert(Buffer.from(await audio.arrayBuffer()).equals(wave));}
 assert.equal((await request('security','/api/v1/reports/'+medical+'/audio')).status,404);
 assert.equal((await fetch(origin+'/backend/package.json')).status,404);assert.equal((await fetch(origin+'/%62ackend/package.json')).status,404);
@@ -58,6 +63,40 @@ for(const {page} of Object.values(pages))await page.waitForFunction(id=>liveInci
 await pages.security.page.waitForFunction(()=>acknowledgmentRequests.size===0);
 assert((await pages.security.page.evaluate(()=>fixtureRetryToasts)).some(message=>message.startsWith('Report acknowledged')),'An older in-flight read must not mask a successful acknowledgment');
 await pages.clinic.page.reload();await pages.clinic.page.waitForSelector('.eoc-dashboard');await pages.clinic.page.evaluate(()=>{clearTimeout(piDashboard.timer);navigate('reports');});assert((await pages.clinic.page.locator('.records-table').textContent()).includes('Campus Security'),'Receipt survives a fresh browser load');assert.deepEqual((await pages.clinic.page.locator('.stat-row .stat-value').allTextContents()).slice(1),['1','3','0'],'History summary counts use the saved response states');assert(await pages.clinic.page.locator('.emergency-attention-popup').isHidden());await pages.clinic.page.setViewportSize({width:390,height:844});assert(await pages.clinic.page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));await pages.clinic.page.screenshot({path:path.resolve(__dirname,'../preview-acknowledgment-history-mobile.png'),animations:'disabled'});
+
+const clinicPage=pages.clinic.page;
+await clinicPage.waitForFunction(()=>piDashboard.eventsConnected&&!piDashboard.refresh);
+const liveAudio=await post('STATION-01-live-audio-1','MEDICAL');
+await clinicPage.waitForFunction(id=>liveIncidents.some(i=>i.id===id&&!i.audioAvailable),liveAudio,{timeout:4500});
+assert.equal((await request(token,'/api/v1/reports/'+liveAudio+'/audio',{method:'POST',headers:{'Content-Type':'audio/wav'},body:wave})).status,201);
+await clinicPage.waitForFunction(id=>liveIncidents.some(i=>i.id===id&&i.audioAvailable),liveAudio,{timeout:4500});
+assert.equal(await clinicPage.locator('.emergency-popup-list [data-emergency-id="'+liveAudio+'"]').count(),1);
+
+let allowReconnect=false;
+await clinicPage.route('**/api/v1/events',route=>allowReconnect?route.continue():route.abort());
+await clinicPage.evaluate(()=>piDashboard.eventsController.abort());
+await clinicPage.waitForFunction(()=>!piDashboard.eventsConnected);
+const missed=await post('STATION-01-reconnect-1','MEDICAL');
+assert.equal(await clinicPage.evaluate(id=>liveIncidents.some(i=>i.id===id),missed),false);
+allowReconnect=true;
+await clinicPage.waitForFunction(id=>piDashboard.eventsConnected&&liveIncidents.some(i=>i.id===id),missed,{timeout:4500});
+await clinicPage.waitForFunction(()=>!piDashboard.refresh);
+
+let reportReads=0;
+clinicPage.on('request',request=>{if(new URL(request.url()).pathname==='/api/v1/reports')reportReads++;});
+await clinicPage.evaluate(()=>piStartPolling());
+await new Promise(resolve=>setTimeout(resolve,5250));
+assert.equal(reportReads,0,'A healthy SSE connection should not poll reports');
+allowReconnect=false;
+await clinicPage.evaluate(()=>piDashboard.eventsController.abort());
+await clinicPage.waitForFunction(()=>!piDashboard.eventsConnected);
+const fallback=await post('STATION-01-poll-fallback-1','MEDICAL');
+await clinicPage.waitForFunction(id=>liveIncidents.some(i=>i.id===id),fallback,{timeout:6000});
+assert(reportReads>0,'Polling resumes while live updates are disconnected');
+allowReconnect=true;
+await clinicPage.waitForFunction(()=>piDashboard.eventsConnected);
+assert(await clinicPage.evaluate(()=>{const connection=piDashboard.eventsController;piStop();return connection.signal.aborted;}));
+
 for(const {errors} of Object.values(pages))assert.deepEqual(errors,[]);
-console.log('PASS: real PostgreSQL migrations and column grants; station receipts; General live broadcast to all four offices; Medical isolation; spoofing/unauthorized denial; simultaneous first-writer receipt; four real browser dashboards update via live events with polling disabled; persisted history, server clock, mobile layout.');
+console.log('PASS: PostgreSQL storage and receipts; office-scoped live reports, audio and acknowledgments; reconnect catch-up, polling fallback and logout; persisted history and mobile layout.');
 }finally{releaseRead?.();streams.forEach(s=>s.controller.abort());await browser?.close();if(server){server.closeAllConnections();await new Promise(r=>server.close(r));}await db.close();assert(path.dirname(temp)===os.tmpdir()&&path.basename(temp).startsWith('campus-response-'));fs.rmSync(temp,{recursive:true,force:true});}})().catch(e=>{console.error(e.stack||e);process.exitCode=1;});

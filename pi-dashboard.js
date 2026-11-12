@@ -7,7 +7,11 @@ const piDashboard = {
   seen: null,
   lastUpdated: null,
   stale: false,
-  acknowledgementsAvailable:false, liveUpdatesAvailable:false, eventsController:null, eventsTimer:null,
+  acknowledgementsAvailable: false,
+  liveUpdatesAvailable: false,
+  eventsConnected: false,
+  eventsController: null,
+  eventsTimer: null,
 };
 const piReady = document.readyState === 'loading'
   ? new Promise(resolve => document.addEventListener('DOMContentLoaded', resolve, { once: true }))
@@ -30,8 +34,11 @@ function piStop() {
   if (typeof piResetAudio === 'function') piResetAudio();
   piDashboard.eventsController?.abort();
   clearTimeout(piDashboard.eventsTimer);
-  piDashboard.eventsController=null;piDashboard.eventsTimer=null;
-  piDashboard.acknowledgementsAvailable=false;piDashboard.liveUpdatesAvailable=false;
+  piDashboard.eventsController = null;
+  piDashboard.eventsTimer = null;
+  piDashboard.eventsConnected = false;
+  piDashboard.acknowledgementsAvailable = false;
+  piDashboard.liveUpdatesAvailable = false;
   piDashboard.generation++;
   piDashboard.controller?.abort();
   clearTimeout(piDashboard.timer);
@@ -73,7 +80,7 @@ function piReadOnly() {
   showToast(piDashboard.acknowledgementsAvailable?'Acknowledge reports from Incident Reports. Other report changes are unavailable.':'This Pi dashboard displays stored reports. Response and report changes are unavailable.');
 }
 
-async function piRequest(path, signal = piDashboard.controller?.signal, options = {}) {
+async function piRequest(path, signal = piDashboard.controller?.signal, { method = 'GET', stream = false } = {}) {
   const { data, error } = await sb.auth.getSession();
   const session = data?.session;
   if (error || !session?.access_token || session.user?.id !== currentUser?.id) {
@@ -81,9 +88,12 @@ async function piRequest(path, signal = piDashboard.controller?.signal, options 
     failure.status = 401;
     throw failure;
   }
+  const headers = { Authorization: `Bearer ${session.access_token}` };
+  if (stream) headers.Accept = 'text/event-stream';
   const response = await fetch(path, {
-    method:options.method || 'GET',redirect:'error',
-    headers: { Authorization: `Bearer ${session.access_token}` },
+    method,
+    redirect: 'error',
+    headers,
     cache: 'no-store',
     signal,
   });
@@ -96,7 +106,7 @@ async function piRequest(path, signal = piDashboard.controller?.signal, options 
     failure.status = response.status;
     throw failure;
   }
-  return response.json();
+  return stream ? response : response.json();
 }
 
 async function piSignIn(event) {
@@ -205,9 +215,10 @@ function piUpdateStatus(stale = piDashboard.stale) {
   if (!element) return;
   element.classList.toggle('is-stale', stale);
   const updated = piDashboard.lastUpdated?.toLocaleTimeString('en-PH') || 'not yet loaded';
+  const updates = piDashboard.eventsConnected ? 'Live updates' : 'Checking every 5 seconds';
   element.textContent = stale
     ? `Pi refresh failed. Last update ${updated}. Displayed reports may be stale.`
-    : `Raspberry Pi · ${piDashboard.acknowledgementsAvailable?'staff response view':'read-only staff view'} · Updated ${updated} · Refresh every 5 seconds · Station health unavailable`;
+    : `Raspberry Pi · ${piDashboard.acknowledgementsAvailable?'staff response view':'read-only staff view'} · Updated ${updated} · ${updates} · Station health unavailable`;
 }
 
 async function piFetchReports() {
@@ -245,9 +256,11 @@ function piStartPolling() {
   const generation = piDashboard.generation;
   const poll = async () => {
     if (generation !== piDashboard.generation) return;
-    await piFetchReports();
-    if (generation !== piDashboard.generation) return;
-    renderPage(currentPage);
+    if (!piDashboard.eventsConnected || piDashboard.stale) {
+      await piFetchReports();
+      if (generation !== piDashboard.generation) return;
+      renderPage(currentPage);
+    }
     piDashboard.timer = setTimeout(poll, 5000);
   };
   piUpdateStatus();
@@ -298,7 +311,7 @@ function piOpenDetail(id) {
 function piBuildSettings() {
   return `<div class="page-header"><h1 class="page-title">Pi Dashboard</h1></div><div class="panel">
     <div class="panel-body"><p>Signed in for ${eocEscape(piDashboard.office)}.</p>
-    <p>Incident records come from the Raspberry Pi. This staff view refreshes every five seconds.
+    <p>Incident records come from the Raspberry Pi. Live updates refresh reports as they are saved. The dashboard checks every five seconds when live updates are unavailable.
     Authentication uses Supabase and the Pi's approved office assignment.</p>
     <p>Original station recordings are available when attached to a report. ${piDashboard.acknowledgementsAvailable?'Acknowledge reports from Incident Reports to save a shared response receipt.':'Acknowledgment requires the matching backend update.'} Station health, dispatch tracking, transcription and synchronization are separate integration steps.</p></div></div>`;
 }
@@ -307,34 +320,59 @@ async function piStartLiveUpdates() {
   if (!piDashboard.liveUpdatesAvailable || !piDashboard.office || !currentUser) return;
   piDashboard.eventsController?.abort();
   clearTimeout(piDashboard.eventsTimer);
-  const generation=piDashboard.generation, controller=new AbortController();
-  piDashboard.eventsController=controller;
-  const current=()=>generation===piDashboard.generation&&!controller.signal.aborted;
+  const generation = piDashboard.generation;
+  const controller = new AbortController();
+  piDashboard.eventsController = controller;
+  const ownsStream = () => generation === piDashboard.generation && piDashboard.eventsController === controller;
+  const current = () => ownsStream() && !controller.signal.aborted;
+  let watchdog;
+  function expectData() {
+    clearTimeout(watchdog);
+    // A lost connection can leave a browser read pending after heartbeats stop.
+    watchdog = setTimeout(() => controller.abort(), 20000);
+  }
   try {
-    const {data,error}=await sb.auth.getSession();
+    expectData();
+    const response = await piRequest('/api/v1/events', controller.signal, { stream: true });
     if (!current()) return;
-    const session=data?.session;
-    if (error||!session?.access_token||session.user?.id!==currentUser?.id) { piRequireLogin('Sign in again to receive live updates.');return; }
-    const response=await fetch('/api/v1/events',{headers:{Authorization:`Bearer ${session.access_token}`,Accept:'text/event-stream'},cache:'no-store',redirect:'error',signal:controller.signal});
-    if (!current()) return;
-    if ([401,403].includes(response.status)) {piRequireLogin('Your staff access could not be verified.');return;}
-    if (!response.ok||!response.headers.get('content-type')?.includes('text/event-stream')||!response.body) throw new Error('Live updates unavailable');
-    const reader=response.body.getReader(),decoder=new TextDecoder();let pending='';
-    while(current()) {
-      const {done,value}=await reader.read();if(done)break;
-      pending+=decoder.decode(value,{stream:true});
-      if(pending.length>65536)throw new Error('Invalid live update');
-      let boundary;
-      while((boundary=pending.indexOf('\n\n'))!==-1) {
-        const frame=pending.slice(0,boundary);pending=pending.slice(boundary+2);
-        if(!frame.split('\n').some(line=>line.startsWith('data:')))continue;
-        // An invalidation must fetch after any older in-flight snapshot finishes.
-        if(piDashboard.refresh)await piDashboard.refresh;
-        if(!current())return;
-        await piFetchReports();
-        if(current())renderPage(currentPage);
-      }
+    if (!response.headers.get('content-type')?.startsWith('text/event-stream') || !response.body) {
+      throw new Error('Live updates unavailable');
     }
-  } catch(error) { /* Existing polling continues while the live connection reconnects. */ }
-  finally {if(current())piDashboard.eventsTimer=setTimeout(piStartLiveUpdates,1500);}
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let pending = '';
+    while (current()) {
+      const { done, value } = await reader.read();
+      if (done || !current()) break;
+      expectData();
+      pending += decoder.decode(value, { stream: true });
+      if (pending.length > 65536) throw new Error('Invalid live update');
+      let boundary;
+      let refresh = false;
+      while ((boundary = pending.indexOf('\n\n')) !== -1) {
+        const frame = pending.slice(0, boundary);
+        pending = pending.slice(boundary + 2);
+        refresh ||= frame.split('\n').some(line => line.startsWith('data:'));
+      }
+      // The server sends a data frame on connection, including reconnections.
+      if (!refresh) continue;
+      piDashboard.eventsConnected = true;
+      piUpdateStatus();
+      await piDashboard.refresh;
+      if (!current()) return;
+      await piFetchReports();
+      if (current()) renderPage(currentPage);
+    }
+  } catch (error) {
+    if (current() && (error.status === 401 || error.status === 403)) piRequireLogin(error.message);
+  } finally {
+    clearTimeout(watchdog);
+    controller.abort();
+    if (ownsStream()) {
+      piDashboard.eventsController = null;
+      piDashboard.eventsConnected = false;
+      piUpdateStatus();
+      piDashboard.eventsTimer = setTimeout(piStartLiveUpdates, 1500);
+    }
+  }
 }
