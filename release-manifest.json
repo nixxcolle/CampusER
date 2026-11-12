@@ -1,5 +1,5 @@
 {
-  "release": "046aee6ac3ee2938",
+  "release": "42303887a06d09ab",
   "files": [
     {
       "file": "campus-data.js",
@@ -11,7 +11,7 @@
     },
     {
       "file": "campus-map.js",
-      "sha256": "3dcb6823e81befc5b8995fd1552ddccf537960839420aa878f7ea99bdb28098d"
+      "sha256": "a96b1fe76f696d1e3be84727b2f667f44ff3603d49bd64be3a876f4666682338"
     },
     {
       "file": "emergency-attention.css",
@@ -19,7 +19,7 @@
     },
     {
       "file": "emergency-attention.js",
-      "sha256": "d2e2f9fea9903bcf0b73e9eb6944f1fc04156e83719c1cedb3ab86bd95d6643d"
+      "sha256": "ec3491b317d1bf80d51c76e050ed70f884dabc7840165a8c895b971a119606ac"
     },
     {
       "file": "eoc-brand.css",
@@ -43,7 +43,7 @@
     },
     {
       "file": "eoc-monitor.js",
-      "sha256": "a45bb5d04e0f3442a2e939d29ff6552579e63161e3161be11608567edfc5a6a5"
+      "sha256": "25e4614b387058f5a30c583344fbd156fec99cbe8956adfdbbaac2ca989b31fc"
     },
     {
       "file": "eoc-polish.css",
@@ -59,7 +59,7 @@
     },
     {
       "file": "eoc.js",
-      "sha256": "3f6062809e7652773547abc7901a955b2a577b447593fe3a14565f85b143828a"
+      "sha256": "8f1812dd064f3ac6de0239f29f19cb195a22f31a3b7475a6da9b82e6083ba3ad"
     },
     {
       "file": "images/SSU.png",
@@ -71,7 +71,7 @@
     },
     {
       "file": "index.html",
-      "sha256": "cef8219fce85daa1bcdcee70d4523937a15b307716264bfd4acbc76e2b8b6828"
+      "sha256": "0f33f58096d1cf56826ca4dcf1529626886adb28a67fbc008885348f23b99ce7"
     },
     {
       "file": "manifest.json",
@@ -87,15 +87,19 @@
     },
     {
       "file": "pi-dashboard.js",
-      "sha256": "aa4df94b3d1b41f1bcad74a1f212d711c622162251b80999acfa2db0c592b31d"
+      "sha256": "54ab67a0f604747c67a799c55345b305f8c92418806d76a5e6b1c8d5d50cbbd9"
     },
     {
       "file": "records-design.css",
-      "sha256": "c051bcfd58104092a1957d14ea8fe654984a19ee164ab831b202dec3f67e9300"
+      "sha256": "4fe2aba1bca046124c1fb5e15f268cd7b5b6406b5b384e2c88b44b7211b5b7e3"
     },
     {
       "file": "records-design.js",
-      "sha256": "cd505885ab3873ac75429d100145badd447fa8148d7671fc95a8001f7d4f2f2c"
+      "sha256": "72dd144f806a8454e320b31961a2988244760abb561ea7c105c0d64127324694"
+    },
+    {
+      "file": "response-workflow.js",
+      "sha256": "4de008f84b5b52e5a0bb9e98b8fc26e245e5b46164ee9afcbda87742eb04845f"
     },
     {
       "file": "vendor/fonts/1b08e7fc267a5c7e1d61.ttf",
@@ -175,7 +179,7 @@
     },
     {
       "file": "sw.js",
-      "sha256": "07f772065b8ecefb69ecf6779dc993580a793be471553bacb649882350f012a5"
+      "sha256": "49f26966c3d098d3443f22d9d20a759994a1aaaad855a4451a0bb07390460bbb"
     }
   ]
 }

@@ -1,0 +1,6 @@
+backend/node_modules/
+backend/dashboard-config.json
+backend/.env*
+*.wav
+
+verification/node_modules/

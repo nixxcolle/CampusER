@@ -7,6 +7,7 @@ const piDashboard = {
   seen: null,
   lastUpdated: null,
   stale: false,
+  acknowledgementsAvailable:false, liveUpdatesAvailable:false, eventsController:null, eventsTimer:null,
 };
 const piReady = document.readyState === 'loading'
   ? new Promise(resolve => document.addEventListener('DOMContentLoaded', resolve, { once: true }))
@@ -27,6 +28,10 @@ const PI_CATEGORIES = {
 
 function piStop() {
   if (typeof piResetAudio === 'function') piResetAudio();
+  piDashboard.eventsController?.abort();
+  clearTimeout(piDashboard.eventsTimer);
+  piDashboard.eventsController=null;piDashboard.eventsTimer=null;
+  piDashboard.acknowledgementsAvailable=false;piDashboard.liveUpdatesAvailable=false;
   piDashboard.generation++;
   piDashboard.controller?.abort();
   clearTimeout(piDashboard.timer);
@@ -65,10 +70,10 @@ function piRequireLogin(message) {
 }
 
 function piReadOnly() {
-  showToast('This Pi dashboard displays stored reports. Response and report changes are unavailable.');
+  showToast(piDashboard.acknowledgementsAvailable?'Acknowledge reports from Incident Reports. Other report changes are unavailable.':'This Pi dashboard displays stored reports. Response and report changes are unavailable.');
 }
 
-async function piRequest(path, signal = piDashboard.controller?.signal) {
+async function piRequest(path, signal = piDashboard.controller?.signal, options = {}) {
   const { data, error } = await sb.auth.getSession();
   const session = data?.session;
   if (error || !session?.access_token || session.user?.id !== currentUser?.id) {
@@ -77,6 +82,7 @@ async function piRequest(path, signal = piDashboard.controller?.signal) {
     throw failure;
   }
   const response = await fetch(path, {
+    method:options.method || 'GET',redirect:'error',
     headers: { Authorization: `Bearer ${session.access_token}` },
     cache: 'no-store',
     signal,
@@ -127,11 +133,13 @@ async function piLoadProfileAndShow(user) {
   piDashboard.controller = new AbortController();
   const generation = piDashboard.generation;
   try {
-    const { office } = await piRequest('/api/v1/staff/session');
+    const { office,features } = await piRequest('/api/v1/staff/session');
     await piReady;
     if (generation !== piDashboard.generation) return;
     if (!Object.hasOwn(OFFICE_TO_ROLE, office)) throw new Error('Unknown staff office');
     piDashboard.office = office;
+    piDashboard.acknowledgementsAvailable=features?.acknowledgements===true;
+    piDashboard.liveUpdatesAvailable=features?.live_updates===true;
     currentRole = OFFICE_TO_ROLE[office];
     currentProfile = {
       fullname: user.user_metadata?.fullname || user.email || 'Staff',
@@ -181,7 +189,9 @@ function piRowToIncident(row) {
     audioDurationMs: audioAvailable ? row.audio_duration_ms : null,
     occurredAtUnix: row.occurred_at_unix,
     uptimeMs: row.uptime_ms,
-    status: 'active',
+    status: ['active','pending','acknowledged','resolved'].includes(row.response_status)?row.response_status:'active',
+    responseTracked:['active','pending','acknowledged','resolved'].includes(row.response_status),
+    acknowledgedAt:row.acknowledged_at||null, acknowledgedBy:row.acknowledged_by||null, acknowledgedOffice:row.acknowledged_office||null,
     priority: 'unassessed',
     office,
     reporter: row.station_id,
@@ -197,7 +207,7 @@ function piUpdateStatus(stale = piDashboard.stale) {
   const updated = piDashboard.lastUpdated?.toLocaleTimeString('en-PH') || 'not yet loaded';
   element.textContent = stale
     ? `Pi refresh failed. Last update ${updated}. Displayed reports may be stale.`
-    : `Raspberry Pi · read-only staff view · Updated ${updated} · Refresh every 5 seconds · Station health unavailable`;
+    : `Raspberry Pi · ${piDashboard.acknowledgementsAvailable?'staff response view':'read-only staff view'} · Updated ${updated} · Refresh every 5 seconds · Station health unavailable`;
 }
 
 async function piFetchReports() {
@@ -251,7 +261,11 @@ function piReportStats(incidents, today, labels) {
   return [
     { label: labels[0], value: receivedToday, color: 'var(--ink)' },
     ...labels.slice(1).map(label => ({
-      label, value: '—', color: 'var(--ink-3)',
+      label,
+      value: piDashboard.acknowledgementsAvailable && incidents.every(incident=>incident.responseTracked)
+        ? incidents.filter(incident=>/acknowledged/i.test(label)?incident.status==='acknowledged':/resolved/i.test(label)?incident.status==='resolved':['active','pending'].includes(incident.status)).length
+        : '—',
+      color: piDashboard.acknowledgementsAvailable ? 'var(--ink)' : 'var(--ink-3)',
     })),
   ];
 }
@@ -269,9 +283,11 @@ function piOpenDetail(id) {
   document.getElementById('detail-subtitle').textContent = incident.id;
   document.getElementById('detail-body').innerHTML = `<div class="detail-grid">${[
     ['Event ID', incident.id], ['Station', incident.stationId],
-    ['Registered location', incident.location], ['Receiving office', incident.office],
+    ['Registered location', incident.location], ['Receiving office', reportOfficeLabel(incident)],
     ['Pi received at', incident.receivedAt], ['Storage', 'Saved on Raspberry Pi'],
     ['Priority', 'Unassessed'], ['Voice transcript', 'Not available'],
+    ['Status',incident.responseTracked?statusLabel(incident.status):'Not tracked'],
+    ['Acknowledged at',acknowledgmentTime(incident.acknowledgedAt)],['Acknowledged by',acknowledgmentActor(incident)],
     ['Device occurrence (Unix seconds)', incident.occurredAtUnix ?? 'Clock unsynchronized at activation'],
     ['Device uptime (milliseconds)', incident.uptimeMs],
   ].map(([label, value]) => `<div class="detail-field"><label>${eocEscape(label)}</label>
@@ -284,5 +300,41 @@ function piBuildSettings() {
     <div class="panel-body"><p>Signed in for ${eocEscape(piDashboard.office)}.</p>
     <p>Incident records come from the Raspberry Pi. This staff view refreshes every five seconds.
     Authentication uses Supabase and the Pi's approved office assignment.</p>
-    <p>Original station recordings are available when attached to a report. Station health, response changes, transcription and synchronization are separate integration steps.</p></div></div>`;
+    <p>Original station recordings are available when attached to a report. ${piDashboard.acknowledgementsAvailable?'Acknowledge reports from Incident Reports to save a shared response receipt.':'Acknowledgment requires the matching backend update.'} Station health, dispatch tracking, transcription and synchronization are separate integration steps.</p></div></div>`;
+}
+
+async function piStartLiveUpdates() {
+  if (!piDashboard.liveUpdatesAvailable || !piDashboard.office || !currentUser) return;
+  piDashboard.eventsController?.abort();
+  clearTimeout(piDashboard.eventsTimer);
+  const generation=piDashboard.generation, controller=new AbortController();
+  piDashboard.eventsController=controller;
+  const current=()=>generation===piDashboard.generation&&!controller.signal.aborted;
+  try {
+    const {data,error}=await sb.auth.getSession();
+    if (!current()) return;
+    const session=data?.session;
+    if (error||!session?.access_token||session.user?.id!==currentUser?.id) { piRequireLogin('Sign in again to receive live updates.');return; }
+    const response=await fetch('/api/v1/events',{headers:{Authorization:`Bearer ${session.access_token}`,Accept:'text/event-stream'},cache:'no-store',redirect:'error',signal:controller.signal});
+    if (!current()) return;
+    if ([401,403].includes(response.status)) {piRequireLogin('Your staff access could not be verified.');return;}
+    if (!response.ok||!response.headers.get('content-type')?.includes('text/event-stream')||!response.body) throw new Error('Live updates unavailable');
+    const reader=response.body.getReader(),decoder=new TextDecoder();let pending='';
+    while(current()) {
+      const {done,value}=await reader.read();if(done)break;
+      pending+=decoder.decode(value,{stream:true});
+      if(pending.length>65536)throw new Error('Invalid live update');
+      let boundary;
+      while((boundary=pending.indexOf('\n\n'))!==-1) {
+        const frame=pending.slice(0,boundary);pending=pending.slice(boundary+2);
+        if(!frame.split('\n').some(line=>line.startsWith('data:')))continue;
+        // An invalidation must fetch after any older in-flight snapshot finishes.
+        if(piDashboard.refresh)await piDashboard.refresh;
+        if(!current())return;
+        await piFetchReports();
+        if(current())renderPage(currentPage);
+      }
+    }
+  } catch(error) { /* Existing polling continues while the live connection reconnects. */ }
+  finally {if(current())piDashboard.eventsTimer=setTimeout(piStartLiveUpdates,1500);}
 }

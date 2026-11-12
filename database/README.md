@@ -1,5 +1,7 @@
 # Campus station inventory
 
+The separate `20261112_general_broadcast_acknowledgment.sql` migration implements General visibility and acknowledgment receipts for **Supabase**. It is independent of the station inventory migration below and of the Pi migration in `../backend/migrations`. The response migration is repeatable and additive; it preserves existing incident rows and does not fabricate receipt times for legacy acknowledged records. Review the existing policies and apply it with the project owner connection before enabling the cloud acknowledgment workflow.
+
 Applied through the existing Supabase SQL Editor to project `tqdalphmeycgrfaxxbqk` on October 30, 2026. The final SQL result verified six buildings, each with 17 station locations, 3 floors, and 17 distinct rooms (102 locations total). All newly inserted stations are offline; none are claimed to be connected hardware.
 
 ## Schema

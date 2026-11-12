@@ -40,6 +40,7 @@ async function main() {
     showApp() {}, showLogin() {}, buildSidebar() {}, renderPage() {},
     myIncidents: () => sandbox.liveIncidents,
     triggerAutoAlert: incident => alerts.push(incident.id),
+    eocReceives: incident => incident.office===sandbox.currentProfile.office || incident.category==='general',
     eocEscape: value => String(value ?? '').replace(/[&<>"']/g, character => ({
       '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
     }[character])),
@@ -47,6 +48,7 @@ async function main() {
   const context = vm.createContext(sandbox);
   const run = code => vm.runInContext(code, context);
   vm.runInContext(fs.readFileSync(path.join(__dirname, 'pi-dashboard.js'), 'utf8'), context);
+  vm.runInContext(fs.readFileSync(path.join(__dirname, 'response-workflow.js'), 'utf8'), context);
   sandbox.fixture = fixture;
   assert.throws(() => run('piRowToIncident({ ...fixture, event_id: undefined })'), /Invalid Pi incident/);
   assert.throws(() => run('piRowToIncident({ ...fixture, category: "__proto__" })'), /Invalid Pi incident/);

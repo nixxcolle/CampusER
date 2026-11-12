@@ -1,7 +1,7 @@
 /* Presentation layer only. Demo incidents never enter liveIncidents or Supabase. */
 let eocDemo = null;
 const eocDemoReports = new Map();
-const eocReceives = inc => currentRole==='admin' || OFFICE_TO_ROLE[inc?.office]===currentRole;
+const eocReceives = inc => Object.hasOwn(ROLES,currentRole) && (currentRole==='admin' || reportIsGeneral(inc) || OFFICE_TO_ROLE[inc?.office]===currentRole);
 const eocDemoForOffice = () => [...eocDemoReports.values()].filter(eocReceives);
 let eocVoiceLanguage = 'en';
 const eocResponses = new Map();

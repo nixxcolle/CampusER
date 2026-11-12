@@ -1,0 +1,1 @@
+{"name":"campus-er-verification","private":true,"scripts":{"test:database":"node response-database.cjs","test:workflow":"node response-workflow.cjs"},"devDependencies":{"@electric-sql/pglite":"0.5.16","playwright":"1.62.1"}}

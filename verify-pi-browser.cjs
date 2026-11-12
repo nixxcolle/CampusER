@@ -17,10 +17,10 @@ const {chromium}=require('playwright');
   }];
   rows.push({...rows[0],event_id:'STATION-01-0011223344556677-0',location:'Station 1 Bench',received_at:'2026-11-07T15:55:00Z'});
   const roleCases=[
-    {role:'clinic',office:'School Clinic',category:'medical',type:'Medical Emergency',title:'Reports — School Clinic',headers:['Time Reported','Building','Floor','Room','Priority','Transcript Available','Current Status'],stats:4},
-    {role:'security',office:'Campus Security',category:'security',type:'Security Threat',title:'Reports — Campus Security',headers:['Time Reported','Building','Floor','Room','Priority','Threat Description','Status'],stats:3},
-    {role:'drrmo',office:'DRRMO',category:'fire',type:'Fire/Disaster',title:'Reports — DRRMO',headers:['Time Reported','Building','Floor','Room','Priority','Incident Type','Current Status'],stats:3},
-    {role:'admin',office:'Administrator',category:'general',type:'General Emergency',title:'Reports — Administrator',headers:[],stats:0},
+    {role:'clinic',office:'School Clinic',category:'medical',type:'Medical Emergency',title:'Reports — School Clinic',headers:['Incident ID','Emergency Type','Time Reported','Building','Floor','Room','Priority','Transcript Available','Current Status'],stats:4},
+    {role:'security',office:'Campus Security',category:'security',type:'Security Threat',title:'Reports — Campus Security',headers:['Incident ID','Emergency Type','Time Reported','Building','Floor','Room','Priority','Threat Description','Status'],stats:3},
+    {role:'drrmo',office:'DRRMO',category:'fire',type:'Fire/Disaster',title:'Reports — DRRMO',headers:['Incident ID','Emergency Type','Time Reported','Building','Floor','Room','Priority','Incident Type','Current Status'],stats:3},
+    {role:'admin',office:'Administrator',category:'general',type:'General Emergency',title:'Reports — Administrator',headers:['Incident','Emergency Type','Location','Reported','Status / acknowledgment'],stats:0},
   ];
   async function roleReports(fixture){
     return page.evaluate(fixture=>{
@@ -136,7 +136,7 @@ const {chromium}=require('playwright');
       const staff={id:'fixture-staff',email:'staff@example.test',user_metadata:{}};
       const cloudReports=[{id:'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee',emergency_type:'Medical Emergency',assigned_office:'School Clinic',building:'Cloud Clinic',floor:'Ground Floor',room:'Room 101',created_at:'2026-11-07T10:08:00Z',status:'pending',priority_level:'medium'}];
       window.fixtureUser=${mode==='pi'?'staff':'null'};
-      window.fixtureQueries=[];
+      window.fixtureQueries=[];window.fixtureTypeQueries=[];window.fixtureRpcCalls=[];window.fixtureCloudReports=cloudReports;window.fixtureFailAck=false;
       const listeners=[];
       window.supabase={createClient:()=>({
         auth:{
@@ -147,10 +147,21 @@ const {chromium}=require('playwright');
         },
         from:table=>{
           fixtureQueries.push(table);
-          const q={select:()=>q,eq:()=>q,order:()=>q,single:async()=>({data:{fullname:'Cloud Staff',office:'School Clinic',employee_id:'fixture'},error:null}),then:fn=>Promise.resolve({data:table==='emergency_reports'?cloudReports:[],error:null}).then(fn)};
+          let types;
+          const q={select:()=>q,eq:()=>q,in:(column,values)=>{types=values;fixtureTypeQueries.push([column,values]);return q;},order:()=>q,single:async()=>({data:{fullname:'Cloud Staff',office:'School Clinic',employee_id:'fixture'},error:null}),then:fn=>{
+            const payload={data:table==='emergency_reports'?structuredClone(cloudReports.filter(row=>!types||types.includes(row.emergency_type))):[],error:null};
+            return (table==='emergency_reports'&&window.fixtureDelayReports?new Promise(resolve=>{window.fixtureReleaseReports=()=>resolve(payload);}):Promise.resolve(payload)).then(fn);
+          }};
           return q;
         },
-        channel:()=>{const q={on:()=>q,subscribe:()=>q};return q;},
+        rpc:async(name,args)=>{
+          fixtureRpcCalls.push({name,args});
+          if(fixtureFailAck)return {error:{message:'fixture unavailable'}};
+          const report=cloudReports.find(row=>row.id===args.p_report_id);
+          if(report)Object.assign(report,{status:'acknowledged',acknowledged_at:'2026-11-07T16:30:00Z',acknowledged_by:staff.id,acknowledged_office:'School Clinic'});
+          return {data:report?[report]:[],error:null};
+        },
+        channel:()=>{const q={on:(_kind,_filter,fn)=>{window.fixtureRealtime=fn;return q;},subscribe:()=>q};return q;},
         removeChannel:()=>{}
       })};
     `}));
@@ -184,7 +195,7 @@ const {chromium}=require('playwright');
     assert.equal(await piRow.locator('.status-pill').innerText(),'Not tracked');
     assert.equal(await piRow.locator('.status-pill.active,.status-pill.pending,.status-pill.resolved').count(),0);
     assert.equal(await piTable.locator('img').count(),0);
-    assert.equal(await piRow.locator('button').count(),1);
+    assert.equal(await piRow.locator('button').count(),2);assert.equal(await piRow.locator('[data-ack-id]').isDisabled(),true,'Old Pi APIs must not pretend to save acknowledgments');
     const statusFilter=incidentPage.locator('.page-header-right select');
     assert.equal(await statusFilter.isDisabled(),true);
     assert.match(await statusFilter.getAttribute('title'),/response status.*not tracked/i);
@@ -206,8 +217,8 @@ const {chromium}=require('playwright');
     assert.equal(await reportsPage.locator('h1').innerText(),'Reports — School Clinic');
     assert.deepEqual(await reportsPage.locator('.stat-row .stat-value').allInnerTexts(),['1','—','—','—']);
     assert.match(await reportsPage.innerText(),/Daily Incident Summary/);
-    assert.match(await reportsPage.innerText(),/Medical Cases Log/);
-    assert.match(await reportsPage.innerText(),/Response status not tracked on Pi/);
+    assert.match(await reportsPage.innerText(),/Medical & General Incident History/);
+    assert.match(await reportsPage.innerText(),/Not tracked/);
     await assertActive('reports');
     await capture('pi-reports');
     const piReportLayout=await layoutSnapshot('reports');
@@ -226,10 +237,10 @@ const {chromium}=require('playwright');
       }else{
         assert.deepEqual(view.stats,['1',...Array(fixture.stats-1).fill('—')]);
         assert.equal(view.rows.length,2);
-        assert.equal(view.rows[0][1],rows[0].location);
-        assert.deepEqual([view.rows[0][2],view.rows[0][3]],['—','—']);
-        assert.equal(view.rows[0][4].toLowerCase(),'unassessed');
-        if(fixture.role==='clinic')assert.equal(view.rows[0][5],'—');
+        assert.equal(view.rows[0][3],rows[0].location);
+        assert.deepEqual([view.rows[0][4],view.rows[0][5]],['—','—']);
+        assert.equal(view.rows[0][6].toLowerCase(),'unassessed');
+        if(fixture.role==='clinic')assert.equal(view.rows[0][7],'—');
         assert.equal(view.rowButtons,0);
         assert.deepEqual(view.statuses.map(status=>status.text),['Not tracked','Not tracked']);
         assert.equal(view.statuses.every(status=>status.className==='status-pill untracked'),true);
@@ -352,7 +363,7 @@ const {chromium}=require('playwright');
     assert.deepEqual(cloudIncidentLayout,piIncidentLayout,'Pi/cloud empty Incident Records geometry and computed styles');
     await page.locator('#nav-reports').click();
     assert.match(await reportsPage.innerText(),/Daily Incident Summary/);
-    assert.match(await reportsPage.innerText(),/Medical Cases Log/);
+    assert.match(await reportsPage.innerText(),/Medical & General Incident History/);
     assert.doesNotMatch(await reportsPage.innerText(),/Response status not tracked on Pi/);
     await assertActive('reports');
     await capture('cloud-reports');
@@ -370,9 +381,44 @@ const {chromium}=require('playwright');
         assert.match(view.catalogs.find(text=>text.includes('Campus Station Audits')),/0 records loaded/);
       }else{
         assert.equal(view.rows.length,1);
-        assert.deepEqual(view.rows[0].slice(1,4),['Cloud Clinic','Ground Floor','Room 101']);
+        assert.deepEqual(view.rows[0].slice(3,6),['Cloud Clinic','Ground Floor','Room 101']);
       }
     }
+    await page.evaluate(()=>navigate('incidents'));
+    await page.locator('[data-ack-id="aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee"]').click();
+    await page.waitForFunction(()=>liveIncidents[0]?.status==='acknowledged');
+    assert.deepEqual(await page.evaluate(()=>fixtureRpcCalls),[{name:'acknowledge_emergency_report',args:{p_report_id:'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee'}}]);
+    await page.evaluate(()=>navigate('reports'));
+    assert.match(await page.locator('.acknowledgment-details').innerText(),/School Clinic/);
+    await page.evaluate(async()=>{
+      Object.assign(fixtureCloudReports[0],{status:'pending',acknowledged_at:null,acknowledged_by:null,acknowledged_office:null});
+      fixtureFailAck=true;await fetchReports();navigate('incidents');
+    });
+    await page.locator('[data-ack-id="aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee"]').click();
+    await page.waitForFunction(()=>acknowledgmentRequests.size===0);
+    assert.equal(await page.evaluate(()=>liveIncidents[0].status),'pending');
+    assert.equal(await page.locator('[data-ack-id="aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee"]').isEnabled(),true);
+    await page.evaluate(()=>fixtureCloudReports.push({id:'bbbbbbbb-bbbb-4ccc-8ddd-eeeeeeeeeeee',emergency_type:'General Emergency',assigned_office:'Administrator',created_at:'2026-11-07T16:30:00Z',status:'active',priority_level:'high'}));
+    for(const role of ['clinic','security','drrmo','admin']){
+      const types=await page.evaluate(async role=>{currentRole=role;await fetchReports();return liveIncidents.map(i=>i.category).sort();},role);
+      assert(types.includes('general'));
+      assert.equal(types.includes('medical'),['clinic','admin'].includes(role));
+    }
+    assert((await page.evaluate(()=>fixtureTypeQueries)).every(([field,values])=>field==='emergency_type'&&values.includes('General Emergency')));
+    assert.equal(await page.evaluate(()=>{currentRole='clinic';return eocReceives({type:'Unknown report type',category:'general',office:'Administrator'});}),false,'Fallback classification must not expand General broadcast authorization');
+    await page.evaluate(()=>{window.fixtureDelayReports=true;window.fixtureOlderSnapshot=fetchReports();});
+    await page.waitForFunction(()=>typeof fixtureReleaseReports==='function');
+    await page.evaluate(async()=>{
+      fixtureDelayReports=false;
+      Object.assign(fixtureCloudReports[1],{status:'acknowledged',acknowledged_at:'2026-11-07T16:35:00Z',acknowledged_by:'fixture-staff',acknowledged_office:'School Clinic'});
+      await fetchReports();fixtureReleaseReports();await fixtureOlderSnapshot;
+    });
+    assert.equal(await page.evaluate(()=>liveIncidents.find(i=>i.type==='General Emergency').status),'acknowledged','An older cloud response must not overwrite a saved acknowledgment');
+    await page.evaluate(()=>{window.fixtureDelayReports=true;window.fixturePendingReports=fixtureRealtime({eventType:'INSERT',new:fixtureCloudReports[1]});});
+    await page.waitForFunction(()=>typeof fixtureReleaseReports==='function');
+    await page.evaluate(()=>{currentUser={id:'different-staff'};currentRole='security';liveIncidents=[];fixtureReleaseReports();});
+    await page.evaluate(()=>fixturePendingReports);
+    assert.equal(await page.evaluate(()=>liveIncidents.length),0,'A delayed cloud read must not replace another staff session or office data');
     mode='missing';
     await page.goto(origin,{waitUntil:'domcontentloaded'});
     assert.equal(await page.evaluate(()=>PI_MODE),true);

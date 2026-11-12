@@ -25,12 +25,12 @@ function recordsStyleTable(table,kind){
     row.cells[0]?.classList.add('records-identifier');
     row.querySelectorAll('.btn-row-action').forEach(button=>{
       const text=button.textContent.trim();
-      const label=/^View/.test(text)?'View':/^Ack/.test(text)?'Acknowledge':/Edit/.test(text)?'Edit':/Del/.test(text)?'Delete':text;
-      const icon={View:'Eye',Acknowledge:'CheckCheck',Edit:'Pencil',Delete:'Trash2'}[label];
+      const label=/^View/.test(text)?'View':text==='Acknowledged'?'Acknowledged':/^Ack/.test(text)?'Acknowledge':/Edit/.test(text)?'Edit':/Del/.test(text)?'Delete':text;
+      const icon={View:'Eye',Acknowledge:'CheckCheck',Acknowledged:'CheckCheck',Edit:'Pencil',Delete:'Trash2'}[label];
       if(!icon)return;
       button.classList.add('records-action',label==='Delete'?'records-action-danger':'records-action-neutral');
       button.title=label;button.setAttribute('aria-label',label+' report '+row.cells[0].textContent.trim());
-      button.innerHTML=eocIcon(icon)+(label==='View'?'<span>View</span>':'');
+      button.innerHTML=eocIcon(icon)+(['View','Acknowledge','Acknowledged'].includes(label)?'<span>'+label+'</span>':'');
     });
   });
   const parent=table.parentElement;

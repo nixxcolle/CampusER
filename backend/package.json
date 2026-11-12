@@ -1,0 +1,17 @@
+{
+  "name": "campus-er-backend",
+  "version": "0.1.0",
+  "private": true,
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "test:staff": "node --test staff-auth.test.js",
+    "test:audio": "node --test audio.test.js"
+  },
+  "dependencies": {
+    "express": "5.3.0",
+    "pg": "8.23.1"
+  }
+}

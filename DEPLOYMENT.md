@@ -18,9 +18,19 @@ GitHub Pages serves the repository's `campus-er-config.js`, which selects Supaba
 
 Deploy the files listed in `release-manifest.json` plus the manifest itself and `campus-er-config.js` into the Pi backend's frontend directory. Keep the backend's private database and staff settings on the Pi. Run `node verify-pi.cjs` when changing the Pi view. With Playwright available and Chrome installed, run `node verify-pi-browser.cjs` to check shared layouts, safe Pi fields, authentication and refresh behavior. After updating a Pi, confirm that the dashboard displays the Pi reports for an approved staff account.
 
-The Pi reads its own PostgreSQL incidents while GitHub Pages reads Supabase. Database synchronization is a separate implementation step. Preserve full hardware Event IDs in the Pi data mapping. Show **Not tracked** for unavailable Pi response status and a dash for response metrics the Pi cannot calculate.
+The Pi reads its own PostgreSQL incidents while GitHub Pages reads Supabase. Database synchronization is a separate implementation step. Preserve full hardware Event IDs in the Pi data mapping. Older Pi APIs still show **Not tracked** and unavailable response counts; the response-workflow backend exposes saved statuses and receipts after its migration.
 
-Emergency popups are created only by new-arrival events. Signing in, refreshing the report history, or repeating a Pi poll does not add old records to the popup. Separate new events, including simultaneous reports from the same location, remain separate cards until their recorded status is acknowledged or resolved. Closing the popup keeps those cards in the alert tray. The Pi's current read-only API does not supply acknowledgement or resolution status; its cards remain pending during the session rather than inventing a response confirmation.
+Emergency popups are created only by new-arrival events. Signing in, refreshing history, or repeating a poll does not add old records to the popup. Separate new events remain separate cards until their saved status is acknowledged or resolved. Closing the popup keeps those cards in the alert tray. Legacy Pi APIs retain the previous unavailable-status behavior; the frontend never invents a saved receipt.
+
+## General broadcast and acknowledgment
+
+General emergencies are visible to School Clinic, Campus Security, DRRMO and Administrator. Category-specific alerts remain restricted to their assigned office and Administrator. One incident is stored; its display label is **All authorized offices**. Staff access still comes from the existing authenticated profile/approved Pi office mapping.
+
+The Incident Reports Acknowledge button saves a shared receipt with database time, authenticated user UUID and approved office. The first successful receipt is preserved during concurrent requests. Its status, Manila date/time and office appear in Reports history and incident details. There is no optimistic acknowledgment on a failed write, and legacy records without audit data are not assigned fabricated dates.
+
+For Supabase, review and apply `database/20261112_general_broadcast_acknowledgment.sql` using the project owner connection. It adds receipt fields, a narrow General SELECT policy for approved offices, an authenticated acknowledgment RPC and server-side stamping/immutability for existing status-update paths. It preserves existing office policies and uses the existing emergency-report realtime subscription/publication. Review any existing restrictive policies before activation. Test SQL/RLS in isolation with `node verification/response-database.cjs`.
+
+For the Pi, follow `backend/README.md`: apply the additive migration and install the matching backend source before deploying the frontend. Approved staff receive immediate event-driven refreshes; polling remains a fallback. Old backends keep acknowledgment disabled until they advertise support. Supabase RPC failures also leave report status unchanged. Neither migration has been applied to production by preparing or publishing these files.
 
 ## Original hardware microphone audio
 

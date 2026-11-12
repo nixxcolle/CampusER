@@ -1,5 +1,5 @@
 /* Generated release values; requests to authentication/API services are never cached. */
-const RELEASE = '046aee6ac3ee2938';
+const RELEASE = '42303887a06d09ab';
 const CACHE = 'campus-er-assets-' + RELEASE;
 const FILES = [
   "campus-data.js",
@@ -26,6 +26,7 @@ const FILES = [
   "pi-dashboard.js",
   "records-design.css",
   "records-design.js",
+  "response-workflow.js",
   "vendor/fonts/1b08e7fc267a5c7e1d61.ttf",
   "vendor/fonts/8c883f63b2c4157d9973.ttf",
   "vendor/fonts/b37284b5701b6b168dfc.ttf",
