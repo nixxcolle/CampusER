@@ -6,7 +6,7 @@ General incidents remain a single stored incident and are readable by every appr
 
 `POST /api/v1/reports/:eventId/acknowledge` accepts the existing staff Bearer token and **no request body**. A single atomic database update records `response_status`, `acknowledged_at`, `acknowledged_by` and `acknowledged_office`. Concurrent acknowledgments preserve the first receipt. The actor and office come from verified staff access, and the timestamp comes from PostgreSQL. Repeated requests return that receipt without replacing its identity or time. Acknowledgment confirms receipt; it does not claim responders have been dispatched.
 
-`GET /api/v1/events` is an authenticated, office-filtered server-sent event stream. It invalidates report views after a stored incident or acknowledgment. General invalidations reach every approved office; other categories reach their office and Administrator. Connections expire after 25 seconds so reconnection rechecks staff access. The dashboard retains its five-second polling as recovery and refreshes after reconnecting. Events and staff API responses remain outside the offline cache.
+`GET /api/v1/events` is an authenticated, office-filtered server-sent event stream. It tells the dashboard to refresh after the Pi saves a new incident, recording or acknowledgment. General updates reach every approved office. Other categories reach their receiving office and Administrator. Connections expire after 25 seconds so reconnection rechecks staff access. The dashboard refreshes after reconnecting and checks every five seconds if live updates are unavailable or a report refresh fails. Events and staff API responses stay outside the offline cache.
 
 ## Update an existing Pi
 

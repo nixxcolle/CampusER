@@ -33,7 +33,7 @@ function wav(samples = 160, value = 0) {
 async function setup(t, playback = true) {
   const temporary = await fs.mkdtemp(path.join(os.tmpdir(), 'campus-er-audio-'));
   const directory = path.join(temporary, 'private', 'audio');
-  const incidents = new Map([[eventId, { station_id: 'STATION-01', receiving_office: 'clinic' }]]);
+  const incidents = new Map([[eventId, { station_id: 'STATION-01', category: 'MEDICAL', receiving_office: 'clinic' }]]);
   const stations = new Map([[hash(token), 'STATION-01'], [hash(otherToken), 'STATION-02']]);
   const audio = new Map();
   const state = { failRead: false, failAfterInsert: false };
@@ -43,8 +43,11 @@ async function setup(t, playback = true) {
       const stationId = stations.get(values[0]);
       return { rows: stationId ? [{ station_id: stationId }] : [] };
     }
-    if (sql.startsWith('SELECT event_id FROM incidents')) {
-      return { rows: incidents.get(values[0])?.station_id === values[1] ? [{ event_id: values[0] }] : [] };
+    if (sql.startsWith('SELECT event_id, category, receiving_office FROM incidents')) {
+      const incident = incidents.get(values[0]);
+      return { rows: incident?.station_id === values[1] ? [{
+        event_id: values[0], category: incident.category, receiving_office: incident.receiving_office,
+      }] : [] };
     }
     if (sql.startsWith('SELECT sha256')) return { rows: audio.has(values[0]) ? [audio.get(values[0])] : [] };
     if (sql.includes('INSERT INTO incident_audio')) {
@@ -74,7 +77,11 @@ async function setup(t, playback = true) {
     next();
   };
   const app = express();
-  app.use(createAudioRoutes({ pool, authenticateStaff: playback ? authenticateStaff : null, audioDirectory: directory }));
+  const audioEvents = [];
+  app.use(createAudioRoutes({
+    pool, authenticateStaff: playback ? authenticateStaff : null, audioDirectory: directory,
+    onAudioStored: incident => audioEvents.push(incident),
+  }));
   const server = app.listen(0, '127.0.0.1');
   await new Promise(resolve => server.once('listening', resolve));
   const origin = 'http://127.0.0.1:' + server.address().port;
@@ -90,7 +97,7 @@ async function setup(t, playback = true) {
   const download = (credential = 'clinic-staff', id = eventId) => fetch(url(id), {
     headers: { Authorization: `Bearer ${credential}` },
   });
-  return { directory, audio, state, incidents, origin, upload, download };
+  return { directory, audio, audioEvents, state, incidents, origin, upload, download };
 }
 
 test('WAV validation bounds RIFF chunks, exact PCM format, and ten-second duration', () => {
@@ -149,6 +156,7 @@ test('stored audio retries are immutable, private, and restricted to the receivi
   const originalStat = await fs.stat(file);
   assert.equal((await api.upload(bytes)).status, 200);
   assert.equal((await api.upload(wav(160, 7))).status, 409);
+  assert.deepEqual(api.audioEvents, [{ event_id: eventId, category: 'MEDICAL', receiving_office: 'clinic' }]);
   assert.equal((await fs.stat(file)).mtimeMs, originalStat.mtimeMs);
   assert.deepEqual(await fs.readdir(api.directory), [hash(bytes) + '.wav']);
   if (process.platform !== 'win32') {

@@ -114,7 +114,7 @@ function createApp(db, dashboardConfig = null, verifyUserFetch = fetch, options 
     return sendStoredReceipt(res, 200, report.event_id);
   });
 
-  app.use(createAudioRoutes({ pool: db, authenticateStaff, audioDirectory }));
+  app.use(createAudioRoutes({ pool: db, authenticateStaff, audioDirectory, onAudioStored: responses.publish }));
   app.use(responses.router);
 
   if (dashboardConfig) {

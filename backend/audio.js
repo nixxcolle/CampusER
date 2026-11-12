@@ -116,7 +116,7 @@ async function persistAudio(directory, bytes, metadata) {
   }
 }
 
-function createAudioRoutes({ pool, authenticateStaff = null, audioDirectory =
+function createAudioRoutes({ pool, authenticateStaff = null, onAudioStored, audioDirectory =
   process.env.CAMPUS_ER_AUDIO_DIR || path.join(os.homedir(), '.local', 'share', 'campus-er', 'incident-audio') }) {
   if (!pool || typeof pool.query !== 'function' || typeof audioDirectory !== 'string' || !audioDirectory.trim() ||
       (authenticateStaff !== null && typeof authenticateStaff !== 'function')) {
@@ -144,10 +144,11 @@ function createAudioRoutes({ pool, authenticateStaff = null, audioDirectory =
         return res.status(401).set('WWW-Authenticate', 'Bearer').json({ error: 'Invalid station credential.' });
       }
       const { rows: [incident] } = await pool.query(
-        'SELECT event_id FROM incidents WHERE event_id = $1 AND station_id = $2',
+        'SELECT event_id, category, receiving_office FROM incidents WHERE event_id = $1 AND station_id = $2',
         [req.params.eventId, station.station_id]);
       if (!incident) return res.status(404).json({ error: 'No incident is available for this station.' });
       if (!req.is('audio/wav')) return res.status(415).json({ error: 'Upload audio/wav.' });
+      res.locals.incident = incident;
       next();
     } catch {
       res.status(503).json({ error: 'Audio storage is unavailable. Retry the same recording.' });
@@ -185,8 +186,16 @@ function createAudioRoutes({ pool, authenticateStaff = null, audioDirectory =
           }
         }
       }
-      return res.status(status).set('X-Audio-Stored', 'true').set('X-Audio-SHA256', metadata.sha256)
+      const receipt = res.status(status).set('X-Audio-Stored', 'true').set('X-Audio-SHA256', metadata.sha256)
         .json({ event_id: req.params.eventId, ...metadata });
+      if (status === 201) {
+        try {
+          onAudioStored?.(res.locals.incident);
+        } catch (error) {
+          console.error('Audio update notification failed:', error.code || error.name);
+        }
+      }
+      return receipt;
     } catch {
       return res.status(503).json({ error: 'Audio storage could not be confirmed. Retry the same recording.' });
     }

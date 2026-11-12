@@ -5,23 +5,39 @@ const eventIdPattern = /^[A-Za-z0-9_-]{1,79}$/;
 function createResponseWorkflow({ pool, authenticateStaff }) {
   const router = express.Router(), clients = new Set();
   const auth = authenticateStaff || ((_req,res) => res.status(404).json({error:'Staff responses are unavailable.'}));
+  function send(client, message) {
+    const { res } = client;
+    if (res.destroyed || res.writableEnded) return;
+    try {
+      if (res.write(message)) return;
+    } catch {
+      // The dashboard reconnects and fetches a fresh snapshot when a stream closes.
+    }
+    res.destroy();
+  }
   const publish = incident => {
     const message = 'data: '+JSON.stringify({event_id:incident.event_id})+'\n\n';
     for (const client of clients) if (client.office === 'Administrator' || incident.category === 'GENERAL' || offices.get(client.office) === incident.receiving_office) {
-      try { if (!client.res.destroyed && !client.res.writableEnded && !client.res.write(message)) client.res.end(); }
-      catch { client.res.destroy(); }
+      send(client, message);
     }
   };
   router.get('/api/v1/events', auth, (req,res) => {
+    if (res.destroyed) return;
     res.status(200).set({'Content-Type':'text/event-stream','Cache-Control':'no-store','X-Accel-Buffering':'no'});
-    res.flushHeaders();
+    if (req.method === 'HEAD') return res.end();
     const client = { office:req.staff.office, res };
     clients.add(client);
-    res.write('data: {"connected":true}\n\n');
-    const heartbeat = setInterval(() => res.write(': heartbeat\n\n'), 10000);
+    const heartbeat = setInterval(() => send(client, ': heartbeat\n\n'), 10000);
     // Reconnects recheck the current staff token and approved office.
     const expiry = setTimeout(() => res.end(), 25000);
-    res.on('close', () => { clients.delete(client); clearInterval(heartbeat); clearTimeout(expiry); });
+    const cleanup = () => {
+      clients.delete(client);
+      clearInterval(heartbeat);
+      clearTimeout(expiry);
+    };
+    res.once('close', cleanup);
+    res.once('error', cleanup);
+    send(client, 'data: {"connected":true}\n\n');
   });
   router.post('/api/v1/reports/:eventId/acknowledge', auth, async (req,res) => {
     res.set('Cache-Control','no-store');
